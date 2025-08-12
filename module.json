@@ -1,0 +1,54 @@
+{
+  "id": "task-and-trigger",
+  "name": "task-and-trigger",
+  "title": "Task & Trigger",
+  "description": "Advanced task scheduling and automation system with real-time and game-time support, calendar integration, and JavaScript execution capabilities.",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "11",
+    "verified": "13",
+    "maximum": "13"
+  },
+  "authors": [
+    {
+      "name": "David Raynes",
+      "discord": "rayners78",
+      "url": "https://github.com/rayners"
+    }
+  ],
+  "esmodules": ["module.js"],
+  "styles": ["styles/task-and-trigger.css"],
+  "templates": [
+    "templates/task-manager.hbs",
+    "templates/task-form.hbs",
+    "templates/task-storage-page.hbs"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "languages/en.json"
+    }
+  ],
+  "relationships": {
+    "recommends": [
+      {
+        "id": "seasons-and-stars",
+        "type": "module",
+        "reason": "Enhanced calendar integration and visual task scheduling"
+      },
+      {
+        "id": "errors-and-echoes",
+        "type": "module", 
+        "reason": "Advanced error reporting and debugging capabilities"
+      }
+    ]
+  },
+  "socket": true,
+  "url": "https://github.com/rayners/fvtt-task-and-trigger",
+  "manifest": "https://github.com/rayners/fvtt-task-and-trigger/releases/download/v0.1.0/module.json",
+  "download": "https://github.com/rayners/fvtt-task-and-trigger/releases/download/v0.1.0/module.zip",
+  "license": "LICENSE",
+  "readme": "README.md",
+  "changelog": "CHANGELOG.md"
+}

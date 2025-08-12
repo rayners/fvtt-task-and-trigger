@@ -1,0 +1,115 @@
+<div class="task-storage-page">
+  <div class="storage-header">
+    <h2>
+      <i class="fas fa-database"></i>
+      Task & Trigger Storage
+      <span class="scope-indicator {{scope}}">{{capitalize scope}}</span>
+    </h2>
+    <p class="storage-description">
+      This journal page contains {{scope}} task data for the Task & Trigger module. 
+      {{#if (eq scope "world")}}
+        These tasks are shared across all users in this world.
+      {{else}}
+        These tasks are personal to your client.
+      {{/if}}
+    </p>
+  </div>
+
+  <div class="storage-statistics">
+    <div class="stat-row">
+      <span class="stat-label">Total Tasks:</span>
+      <span class="stat-value">{{tasks.length}}</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Active Tasks:</span>
+      <span class="stat-value">{{activeTasks}}</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">UI-Configured Tasks:</span>
+      <span class="stat-value">{{uiTasks}}</span>
+    </div>
+    <div class="stat-row">
+      <span class="stat-label">Last Updated:</span>
+      <span class="stat-value">{{formatDate lastUpdated}}</span>
+    </div>
+  </div>
+
+  {{#if showTaskDetails}}
+  <div class="storage-tasks">
+    <h3>Task Details</h3>
+    {{#each tasks}}
+    <div class="stored-task {{#unless enabled}}disabled{{/unless}}">
+      <div class="task-summary">
+        <strong>{{name}}</strong>
+        <span class="task-badges">
+          {{#if recurring}}<span class="badge recurring">Recurring</span>{{/if}}
+          {{#if useGameTime}}<span class="badge game-time">Game Time</span>{{/if}}
+          {{#if uiConfigured}}<span class="badge ui-configured">UI</span>{{/if}}
+          {{#unless enabled}}<span class="badge disabled">Disabled</span>{{/unless}}
+        </span>
+      </div>
+      {{#if description}}
+      <div class="task-description">{{description}}</div>
+      {{/if}}
+      <div class="task-metadata">
+        <div class="metadata-row">
+          <span class="metadata-label">ID:</span>
+          <span class="metadata-value">{{id}}</span>
+        </div>
+        <div class="metadata-row">
+          <span class="metadata-label">Created:</span>
+          <span class="metadata-value">{{formatDate created}}</span>
+        </div>
+        {{#if lastRun}}
+        <div class="metadata-row">
+          <span class="metadata-label">Last Run:</span>
+          <span class="metadata-value">{{formatDate lastRun}}</span>
+        </div>
+        {{/if}}
+        {{#if nextRun}}
+        <div class="metadata-row">
+          <span class="metadata-label">Next Run:</span>
+          <span class="metadata-value">{{formatDate nextRun}}</span>
+        </div>
+        {{/if}}
+        {{#if lastError}}
+        <div class="metadata-row error">
+          <span class="metadata-label">Last Error:</span>
+          <span class="metadata-value">{{lastError}}</span>
+        </div>
+        {{/if}}
+      </div>
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  <div class="storage-warning">
+    <div class="warning-content">
+      <i class="fas fa-exclamation-triangle"></i>
+      <div class="warning-text">
+        <strong>Important:</strong> Do not manually edit the task data in this journal page. 
+        Use the Task & Trigger interface or API to manage tasks. Manual edits may cause 
+        synchronization issues or data corruption.
+      </div>
+    </div>
+  </div>
+
+  <div class="storage-actions">
+    <button class="open-task-manager" onclick="game.taskTrigger?.ui?.show?.()">
+      <i class="fas fa-cog"></i>
+      Open Task Manager
+    </button>
+    {{#if (eq scope "world")}}
+    <button class="view-client-storage" onclick="game.taskTrigger?.api?.viewClientStorage?.()">
+      <i class="fas fa-user"></i>
+      View Client Storage
+    </button>
+    {{/if}}
+  </div>
+
+  <!-- Hidden data section for JSON storage -->
+  <div class="task-data-storage" style="display: none;">
+    <pre>{{json tasks}}</pre>
+  </div>
+</div>

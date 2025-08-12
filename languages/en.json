@@ -1,0 +1,85 @@
+{
+  "TASK_TRIGGER": {
+    "ModuleName": "Task & Trigger",
+    "TaskManager": "Task Manager",
+    "CreateTask": "Create Task",
+    "ScheduleTask": "Schedule Task",
+    "EditTask": "Edit Task",
+    "DeleteTask": "Delete Task",
+    "EnableTask": "Enable Task",
+    "DisableTask": "Disable Task",
+    "WorldTasks": "World Tasks",
+    "MyTasks": "My Tasks",
+    "ClientTasks": "Client Tasks",
+    
+    "TimeSpec": {
+      "RealTime": "Real Time",
+      "GameTime": "Game Time",
+      "OneTime": "One Time",
+      "Recurring": "Recurring",
+      "AbsoluteDate": "Absolute Date",
+      "RelativeTime": "Relative Time"
+    },
+    
+    "Form": {
+      "TaskName": "Task Name",
+      "TaskDescription": "Description",
+      "TimeSpecification": "Time Specification",
+      "JavaScriptCode": "JavaScript Code",
+      "ExecuteAt": "Execute At",
+      "Interval": "Interval",
+      "Scope": "Scope",
+      "UseGameTime": "Use Game Time",
+      "LogExecution": "Log Execution",
+      "Enabled": "Enabled"
+    },
+    
+    "Warnings": {
+      "JavaScriptExecution": "Warning: This will execute arbitrary JavaScript code. Only use trusted code.",
+      "SecurityRisk": "JavaScript execution has full access to Foundry APIs. Use with caution.",
+      "DataLoss": "Deleting this task cannot be undone."
+    },
+    
+    "Errors": {
+      "InvalidTimeSpec": "Invalid time specification",
+      "ExecutionFailed": "Task execution failed",
+      "SaveFailed": "Failed to save task",
+      "LoadFailed": "Failed to load tasks",
+      "PermissionDenied": "Permission denied",
+      "TaskNotFound": "Task not found"
+    },
+    
+    "Messages": {
+      "TaskCreated": "Task created successfully",
+      "TaskUpdated": "Task updated successfully", 
+      "TaskDeleted": "Task deleted successfully",
+      "TaskExecuted": "Task executed: {name}",
+      "TaskFailed": "Task failed: {name} - {error}"
+    },
+    
+    "Calendar": {
+      "ScheduleTaskForDay": "Schedule Task for {date}",
+      "TaskScheduled": "Task scheduled for {date}",
+      "ViewTasks": "View tasks for this day"
+    },
+    
+    "Settings": {
+      "EnableLogging": {
+        "name": "Enable Event Logging",
+        "hint": "Automatically log task execution to journal notes for the current game day"
+      },
+      "LogJournalName": {
+        "name": "Event Log Journal Name", 
+        "hint": "Name of the journal to use for event logging (will be created if it doesn't exist)"
+      },
+      "SecurityWarnings": {
+        "name": "Show Security Warnings",
+        "hint": "Display warning dialogs when executing JavaScript code"
+      },
+      "CalendarIntegration": {
+        "name": "Enable Calendar Integration",
+        "hint": "Show task indicators on Seasons & Stars calendar and enable calendar-based task scheduling"
+      }
+    }
+  }
+}

@@ -1,0 +1,247 @@
+<form class="task-form">
+  
+  <!-- Security Warning -->
+  <div class="warning danger">
+    <strong>Security Warning:</strong> The JavaScript code you enter will be executed with full access to the Foundry environment. Only enter trusted code.
+  </div>
+
+  <!-- Tab Navigation -->
+  <nav class="tabs" data-group="task-form">
+    <a class="item active" data-tab="when">
+      <i class="fas fa-clock"></i> When
+    </a>
+    <a class="item" data-tab="what">
+      <i class="fas fa-code"></i> What
+    </a>
+  </nav>
+
+  <!-- Tab Content -->
+  <div class="tab-content">
+    
+    <!-- When Tab -->
+    <div class="tab active" data-tab="when">
+      
+      <div class="when-tab-layout">
+        <!-- Basic Information -->
+        <div class="form-section">
+          <h3>Basic Information</h3>
+          
+          <div class="form-group">
+            <label for="task-name">Task Name: <span class="required">*</span></label>
+            <input type="text" id="task-name" name="name" value="{{task.name}}" required placeholder="Enter a descriptive name for this task">
+          </div>
+
+          <div class="form-group">
+            <label for="task-description">Description:</label>
+            <textarea id="task-description" name="description" placeholder="Optional description of what this task does">{{task.description}}</textarea>
+          </div>
+        </div>
+
+        <!-- Timing Configuration -->
+      <div class="form-section">
+        <h3>Timing Configuration</h3>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" name="recurring" class="recurring" {{#if task.recurring}}checked{{/if}}>
+            Recurring Task
+          </label>
+          <p class="form-help">Check this box to make the task repeat at the specified interval.</p>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" name="useGameTime" class="use-game-time" {{#if task.useGameTime}}checked{{/if}}>
+            Use Game Time
+          </label>
+          <p class="form-help time-input-help">
+            {{#if task.useGameTime}}Game time - relative to world time progression{{else}}Real time - relative to actual clock time{{/if}}
+          </p>
+        </div>
+
+        {{#if useAbsoluteTime}}
+        <!-- Calendar Date Display (when prefilled from calendar) -->
+        <div class="form-group">
+          <label>Scheduled Date:</label>
+          <div class="prefilled-date-display">
+            <i class="fas fa-calendar-alt"></i>
+            <span class="date-text">{{formatDateTime defaultDateTime}}</span>
+            <input type="hidden" name="timeType" value="absolute">
+            <input type="hidden" name="datetime" value="{{defaultDateTime}}">
+          </div>
+          <p class="form-help">This task will execute at the selected calendar date.</p>
+        </div>
+        <style>
+          .prefilled-date-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #f0f8ff;
+            border: 2px solid #4a90e2;
+            border-radius: 6px;
+            margin-top: 4px;
+            font-weight: 500;
+          }
+          .prefilled-date-display i {
+            color: #4a90e2;
+            font-size: 1.1em;
+          }
+          .prefilled-date-display .date-text {
+            color: #2c5aa0;
+            font-size: 1.05em;
+          }
+        </style>
+        {{else}}
+        <!-- Full Timing Controls (when creating manually) -->
+        <div class="form-group">
+          <label class="time-input-label">
+            {{#if task.recurring}}Interval:{{else}}Delay:{{/if}} <span class="required">*</span>
+          </label>
+          
+          <!-- Time Type Selection -->
+          <div class="time-type-selection">
+            <label>
+              <input type="radio" name="timeType" value="relative" checked> Relative Time
+            </label>
+            <label>
+              <input type="radio" name="timeType" value="absolute"> Absolute Time
+            </label>
+          </div>
+
+          <!-- Relative Time Input -->
+          <div class="time-input-group relative-time">
+            <div class="time-components">
+              <div class="time-component">
+                <label for="days">Days:</label>
+                <input type="number" id="days" name="days" min="0" max="365" value="0">
+              </div>
+              <div class="time-component">
+                <label for="hours">Hours:</label>
+                <input type="number" id="hours" name="hours" min="0" max="23" value="0">
+              </div>
+              <div class="time-component">
+                <label for="minutes">Minutes:</label>
+                <input type="number" id="minutes" name="minutes" min="0" max="59" value="5">
+              </div>
+              <div class="time-component">
+                <label for="seconds">Seconds:</label>
+                <input type="number" id="seconds" name="seconds" min="0" max="59" value="0">
+              </div>
+            </div>
+
+            <!-- Time Presets -->
+            <div class="time-presets">
+              <label>Quick Presets:</label>
+              <div class="preset-buttons">
+                {{#each timeOptions.presets}}
+                <button type="button" class="preset-button" data-preset='{{taskTriggerJson value}}'>{{label}}</button>
+                {{/each}}
+              </div>
+            </div>
+          </div>
+
+          <!-- Absolute Time Input -->
+          <div class="time-input-group absolute-time" style="display: none;">
+            <input type="datetime-local" name="datetime" id="datetime">
+            <p class="form-help">Specify an exact date and time for task execution.</p>
+          </div>
+        </div>
+        {{/if}}
+      </div>
+      
+    </div>
+    </div>
+    <!-- End When Tab -->
+    
+    <!-- What Tab -->
+    <div class="tab" data-tab="what">
+      
+      <div class="what-tab-layout">
+        <!-- JavaScript Code -->
+        <div class="form-section">
+          <h3>JavaScript Code</h3>
+          
+          <div class="form-group">
+            <label for="task-callback">JavaScript Function: <span class="required">*</span></label>
+            <textarea id="task-callback" name="callback" required placeholder="Enter JavaScript code to execute...">{{task.callback}}</textarea>
+            <p class="form-help">
+              Enter JavaScript code that will be executed when the task runs. Available globals include: 
+              <code>game</code>, <code>canvas</code>, <code>ui</code>, <code>foundry</code>, <code>Hooks</code>
+            </p>
+          </div>
+
+          <!-- Code Examples -->
+          <div class="code-examples">
+            <label>Common Examples:</label>
+            <div class="example-buttons">
+              <button type="button" class="example-button" data-example="notification">Show Notification</button>
+              <button type="button" class="example-button" data-example="chat">Send Chat Message</button>
+              <button type="button" class="example-button" data-example="macro">Call Macro</button>
+              <button type="button" class="example-button" data-example="scene">Change Scene</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Task Options -->
+        <div class="form-section">
+          <h3>Task Options</h3>
+
+          <div class="form-group">
+            <label for="task-scope">Scope:</label>
+            <select id="task-scope" name="scope">
+              {{#each scopeOptions}}
+              <option value="{{value}}" {{#if (eq ../task.scope value)}}selected{{/if}}>{{label}}</option>
+              {{/each}}
+            </select>
+            <p class="form-help">
+              Client tasks run only for you. World tasks run for all users (GM only).
+            </p>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" name="logExecution" {{#if task.logExecution}}checked{{/if}}>
+              Log Execution
+            </label>
+            <p class="form-help">Create journal entries when this task executes.</p>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" name="enabled" {{#unless (eq task.enabled false)}}checked{{/unless}}>
+              Enabled
+            </label>
+            <p class="form-help">Uncheck to create the task in a disabled state.</p>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+    <!-- End What Tab -->
+    
+  </div>
+  <!-- End Tab Content -->
+
+  <!-- Form Actions -->
+  <div class="form-actions">
+    <button type="submit" class="primary">
+      <i class="fas {{#if isEdit}}fa-save{{else}}fa-plus{{/if}}"></i>
+      {{#if isEdit}}Update Task{{else}}Create Task{{/if}}
+    </button>
+    <button type="button" class="secondary test-code">
+      <i class="fas fa-play"></i>
+      Test Code
+    </button>
+  </div>
+
+</form>
+
+<script type="text/template" id="code-examples">
+{
+  "notification": "ui.notifications.info('Task executed successfully!');",
+  "chat": "ChatMessage.create({\n  content: 'Scheduled task executed',\n  speaker: { alias: 'Task & Trigger' }\n});",
+  "macro": "// Replace 'MacroName' with your actual macro name\nconst macro = game.macros.getName('MacroName');\nif (macro) {\n  macro.execute();\n} else {\n  ui.notifications.warn('Macro not found');\n}",
+  "scene": "// Replace 'Scene Name' with your target scene\nconst scene = game.scenes.getName('Scene Name');\nif (scene && game.user.isGM) {\n  scene.activate();\n} else {\n  ui.notifications.warn('Scene not found or no GM permission');\n}"
+}
+</script>

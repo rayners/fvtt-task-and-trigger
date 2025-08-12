@@ -1,0 +1,274 @@
+<div class="task-manager-app">
+  <!-- Tab Navigation -->
+  <nav class="tabs">
+    <a class="item {{#if (eq activeTab 'tasks')}}active{{/if}}" data-action="changeTab" data-tab="tasks">
+      <i class="fas fa-clock"></i> Tasks
+    </a>
+    <a class="item {{#if (eq activeTab 'statistics')}}active{{/if}}" data-action="changeTab" data-tab="statistics">
+      <i class="fas fa-chart-bar"></i> Statistics
+    </a>
+    <a class="item {{#if (eq activeTab 'settings')}}active{{/if}}" data-action="changeTab" data-tab="settings">
+      <i class="fas fa-cog"></i> Settings
+    </a>
+  </nav>
+
+  <!-- Tab Content -->
+  <div class="tab-content">
+    
+    <!-- Tasks Tab -->
+    <div class="tab {{#if (eq activeTab 'tasks')}}active{{/if}}" data-tab="tasks">
+      
+      <!-- Task Management Header -->
+      <div class="task-controls">
+        <div class="control-row">
+          <div class="left-controls">
+            <button class="create-task" data-action="createTask" title="Create New Task">
+              <i class="fas fa-plus"></i> Create Task
+            </button>
+            <button class="refresh-tasks" data-action="refresh" title="Refresh Task List">
+              <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <button class="cleanup-tasks" data-action="cleanup" title="Clean Up Old Tasks">
+              <i class="fas fa-broom"></i> Cleanup
+            </button>
+          </div>
+          <div class="right-controls">
+            <button class="import-tasks" data-action="import" title="Import Tasks">
+              <i class="fas fa-file-import"></i> Import
+            </button>
+            <button class="export-tasks" data-action="export" title="Export Tasks">
+              <i class="fas fa-file-export"></i> Export
+            </button>
+          </div>
+        </div>
+
+        <!-- Filters and Sorting -->
+        <div class="filter-row">
+          <div class="filter-group">
+            <label for="filter-scope">Scope:</label>
+            <select id="filter-scope" class="filter-scope" data-action="filterChange">
+              <option value="">All</option>
+              <option value="client">Client</option>
+              <option value="world">World</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="filter-status">Status:</label>
+            <select id="filter-status" class="filter-status" data-action="filterChange">
+              <option value="">All</option>
+              <option value="enabled">Enabled</option>
+              <option value="disabled">Disabled</option>
+              <option value="failed">Failed</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="hide-completed-toggle">
+              <input type="checkbox" id="hide-completed" data-action="filterChange" {{#if hideCompleted}}checked{{/if}}>
+              Hide Completed
+            </label>
+          </div>
+          <div class="filter-group">
+            <label for="sort-tasks">Sort by:</label>
+            <select id="sort-tasks" class="sort-tasks" data-action="sortChange">
+              <option value="name">Name</option>
+              <option value="nextRun">Next Run</option>
+              <option value="created">Created</option>
+              <option value="scope">Scope</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="bulk-actions">
+          <label class="bulk-select">
+            <input type="checkbox" class="select-all" data-action="selectAll"> Select All
+          </label>
+          <button class="bulk-enable" data-action="bulkEnable" title="Enable Selected">
+            <i class="fas fa-play"></i> Enable
+          </button>
+          <button class="bulk-disable" data-action="bulkDisable" title="Disable Selected">
+            <i class="fas fa-pause"></i> Disable
+          </button>
+          <button class="bulk-delete" data-action="bulkDelete" title="Delete Selected">
+            <i class="fas fa-trash"></i> Delete
+          </button>
+        </div>
+      </div>
+
+      <!-- Task List -->
+      <div class="task-list">
+        {{#if tasks}}
+          {{#each tasks}}
+          <div class="task-item {{#unless enabled}}disabled{{/unless}} {{#if lastError}}failed{{/if}}" data-task-id="{{id}}">
+            <div class="task-header">
+              <div class="task-info">
+                <input type="checkbox" class="task-checkbox">
+                <span class="task-name" title="{{description}}">{{name}}</span>
+                <span class="task-type">
+                  {{#if recurring}}<i class="fas fa-redo" title="Recurring"></i>{{else}}<i class="fas fa-clock" title="One-time"></i>{{/if}}
+                  {{#if useGameTime}}<i class="fas fa-gamepad" title="Game Time"></i>{{else}}<i class="fas fa-stopwatch" title="Real Time"></i>{{/if}}
+                  {{#if uiConfigured}}<i class="fas fa-save" title="UI Configured"></i>{{else}}<i class="fas fa-code" title="API/Console"></i>{{/if}}
+                </span>
+              </div>
+              <div class="task-actions">
+                <button class="edit-task" data-action="editTask" title="Edit Task">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="execute-task" data-action="executeTask" title="Execute Now">
+                  <i class="fas fa-play"></i>
+                </button>
+                <button class="toggle-task {{#unless enabled}}disabled{{/unless}}" data-action="toggleTask" title="{{#if enabled}}Disable{{else}}Enable{{/if}} Task">
+                  <i class="fas {{#if enabled}}fa-pause{{else}}fa-play{{/if}}"></i>
+                </button>
+                <button class="delete-task" data-action="deleteTask" title="Delete Task">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="task-details">
+              <div class="task-schedule">
+                <strong>Schedule:</strong> 
+                {{#if nextRun}}
+                  Next: {{formatDate nextRun}}
+                {{else}}
+                  {{#if lastRun}}Last: {{formatDate lastRun}}{{else}}Not scheduled{{/if}}
+                {{/if}}
+              </div>
+              <div class="task-scope">
+                <strong>Scope:</strong> {{scope}}
+                {{#if logExecution}}<span class="log-indicator" title="Execution Logging Enabled"><i class="fas fa-file-alt"></i></span>{{/if}}
+              </div>
+              {{#unless enabled}}
+              <div class="task-status">
+                <strong>Status:</strong> 
+                {{#if lastError}}
+                  {{#if (eq lastError "Task expired during downtime")}}
+                    <span class="status-expired">Expired (completed or missed)</span>
+                  {{else}}
+                    <span class="status-failed">Failed - {{lastError}}</span>
+                  {{/if}}
+                {{else}}
+                  <span class="status-disabled">Manually disabled</span>
+                {{/if}}
+              </div>
+              {{/unless}}
+              {{#if lastError}}
+              {{#unless (eq lastError "Task expired during downtime")}}
+              <div class="task-error">
+                <strong>Error Details:</strong> {{lastError}}
+              </div>
+              {{/unless}}
+              {{/if}}
+              {{#if description}}
+              <div class="task-description">
+                {{description}}
+              </div>
+              {{/if}}
+            </div>
+          </div>
+          {{/each}}
+        {{else}}
+          <div class="no-tasks">
+            <p>No tasks found. Create your first task to get started!</p>
+            <button class="create-task primary" data-action="createTask">
+              <i class="fas fa-plus"></i> Create Your First Task
+            </button>
+          </div>
+        {{/if}}
+      </div>
+    </div>
+
+    <!-- Statistics Tab -->
+    <div class="tab {{#if (eq activeTab 'statistics')}}active{{/if}}" data-tab="statistics">
+      <div class="statistics-grid">
+        <div class="stat-card">
+          <div class="stat-value">{{statistics.totalTasks}}</div>
+          <div class="stat-label">Total Tasks</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{statistics.activeTasks}}</div>
+          <div class="stat-label">Active Tasks</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{statistics.completedTasks}}</div>
+          <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{statistics.failedTasks}}</div>
+          <div class="stat-label">Failed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{statistics.uiTasks}}</div>
+          <div class="stat-label">UI Tasks</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">{{statistics.apiTasks}}</div>
+          <div class="stat-label">API Tasks</div>
+        </div>
+      </div>
+
+      <div class="statistics-details">
+        <h3>Task Breakdown</h3>
+        <div class="breakdown-list">
+          <div class="breakdown-item">
+            <span class="breakdown-label">Real-time tasks:</span>
+            <span class="breakdown-value">{{statistics.realTimeTasks}}</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-label">Game-time tasks:</span>
+            <span class="breakdown-value">{{statistics.gameTimeTasks}}</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-label">Recurring tasks:</span>
+            <span class="breakdown-value">{{statistics.recurringTasks}}</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-label">One-time tasks:</span>
+            <span class="breakdown-value">{{statistics.oneTimeTasks}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div class="tab {{#if (eq activeTab 'settings')}}active{{/if}}" data-tab="settings">
+      <div class="settings-form">
+        <div class="form-group">
+          <label>Default Task Scope:</label>
+          <select class="setting-default-scope" value="{{settings.defaultScope}}">
+            <option value="client" {{#if (eq settings.defaultScope 'client')}}selected{{/if}}>Client (Personal)</option>
+            {{#if canCreateWorldTasks}}
+            <option value="world" {{#if (eq settings.defaultScope 'world')}}selected{{/if}}>World (Shared)</option>
+            {{/if}}
+          </select>
+          <p class="form-help">Default scope for new tasks created through the UI.</p>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" class="setting-auto-cleanup" {{#if settings.autoCleanup}}checked{{/if}}> Auto-cleanup old tasks
+          </label>
+          <p class="form-help">Automatically remove old, disabled ephemeral tasks after 7 days.</p>
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" class="setting-execution-logging" {{#if settings.executionLogging}}checked{{/if}}> Enable execution logging by default
+          </label>
+          <p class="form-help">New tasks will log their execution to journal notes by default.</p>
+        </div>
+
+        <div class="settings-actions">
+          <button class="save-settings" data-action="saveSettings">
+            <i class="fas fa-save"></i> Save Settings
+          </button>
+          <button class="reset-settings" data-action="resetSettings">
+            <i class="fas fa-undo"></i> Reset to Defaults
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

@@ -20,6 +20,7 @@
     "test:watch": "vitest --watch",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
+    "test:coverage:junit": "vitest run --coverage --reporter=junit --outputFile=coverage/junit.xml",
     "validate": "npm run lint && npm run format:check && npm run typecheck && npm run test:run && npm run build",
     "link-module": "node ../foundry-dev-tools/scripts/link-module.js",
     "prepare": "npm run build"
@@ -27,6 +28,8 @@
   "author": "David Raynes",
   "license": "MIT",
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@ethaks/fvtt-quench": "^0.10.0",
     "@rayners/foundry-dev-tools": "^1.2.0",
     "@types/jquery": "^3.5.30",

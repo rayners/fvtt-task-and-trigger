@@ -1,0 +1,93 @@
+name: 🐛 Bug Report
+description: Report a bug or unexpected behavior
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out this form to help us understand and reproduce the issue.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Describe the bug...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: A clear and concise description of what actually happened.
+    validations:
+      required: true
+
+  - type: input
+    id: foundry-version
+    attributes:
+      label: Foundry Version
+      description: What version of FoundryVTT are you using?
+      placeholder: "v12.331"
+    validations:
+      required: true
+
+  - type: input
+    id: module-version
+    attributes:
+      label: Task & Trigger Version
+      description: What version of Task & Trigger are you using?
+      placeholder: "v0.1.0"
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      description: What browser are you using?
+      placeholder: "Chrome 120.0, Firefox 121.0, etc."
+
+  - type: textarea
+    id: modules
+    attributes:
+      label: Other Active Modules
+      description: List other modules that are active (especially any that might conflict)
+      placeholder: "Seasons & Stars v0.2.0, PF2e System, etc."
+
+  - type: textarea
+    id: console-errors
+    attributes:
+      label: Console Errors
+      description: Any error messages from the browser console (F12)
+      render: text
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here, including screenshots if applicable.

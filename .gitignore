@@ -10,6 +10,7 @@ dist/
 
 # Coverage reports
 coverage/
+*.lcov
 
 # Environment variables
 .env

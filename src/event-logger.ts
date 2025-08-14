@@ -352,7 +352,7 @@ export class EventLogger {
         type: Object,
         default: this.getDefaultSettings()
       });
-    } catch (error) {
+    } catch {
       console.warn('Task & Trigger | Settings may already be registered');
     }
   }
@@ -368,7 +368,7 @@ export class EventLogger {
     try {
       const savedSettings = await game.settings.get('task-and-trigger', 'eventLogger') as LoggerSettings;
       this.settings = { ...this.getDefaultSettings(), ...savedSettings };
-    } catch (error) {
+    } catch {
       console.log('Task & Trigger | Using default logger settings');
       this.settings = this.getDefaultSettings();
     }

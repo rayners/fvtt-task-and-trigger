@@ -19,7 +19,7 @@ describe('TaskPersistence', () => {
     (TaskPersistence as any).instance = undefined;
     (TaskManager as any).instance = undefined;
     (JournalStorage as any).instance = undefined;
-    
+
     persistence = TaskPersistence.getInstance();
     mockTaskManager = TaskManager.getInstance();
     mockStorage = JournalStorage.getInstance();
@@ -44,7 +44,7 @@ describe('TaskPersistence', () => {
     it('should initialize without UI tasks', async () => {
       vi.spyOn(mockStorage, 'getAllTasks').mockResolvedValue({
         world: [],
-        client: []
+        client: [],
       });
 
       await persistence.initialize();
@@ -67,12 +67,12 @@ describe('TaskPersistence', () => {
         created: Math.floor(Date.now() / 1000),
         runCount: 0,
         logExecution: false,
-        uiConfigured: true
+        uiConfigured: true,
       };
 
       vi.spyOn(mockStorage, 'getAllTasks').mockResolvedValue({
         world: [],
-        client: [uiTask]
+        client: [uiTask],
       });
 
       await persistence.initialize();
@@ -94,12 +94,12 @@ describe('TaskPersistence', () => {
         created: Math.floor(Date.now() / 1000),
         runCount: 0,
         logExecution: false,
-        uiConfigured: false // Not UI configured
+        uiConfigured: false, // Not UI configured
       };
 
       vi.spyOn(mockStorage, 'getAllTasks').mockResolvedValue({
         world: [],
-        client: [apiTask]
+        client: [apiTask],
       });
 
       await persistence.initialize();
@@ -121,12 +121,12 @@ describe('TaskPersistence', () => {
         created: Math.floor(Date.now() / 1000),
         runCount: 0,
         logExecution: false,
-        uiConfigured: true
+        uiConfigured: true,
       };
 
       vi.spyOn(mockStorage, 'getAllTasks').mockResolvedValue({
         world: [],
-        client: [expiredTask]
+        client: [expiredTask],
       });
 
       await persistence.initialize();
@@ -134,7 +134,7 @@ describe('TaskPersistence', () => {
       expect(mockTaskManager.updateTask).toHaveBeenCalledWith({
         ...expiredTask,
         enabled: false,
-        lastError: 'Task expired during downtime'
+        lastError: 'Task expired during downtime',
       });
     });
 
@@ -152,12 +152,12 @@ describe('TaskPersistence', () => {
         created: Math.floor(Date.now() / 1000),
         runCount: 0,
         logExecution: false,
-        uiConfigured: true
+        uiConfigured: true,
       };
 
       vi.spyOn(mockStorage, 'getAllTasks').mockResolvedValue({
         world: [gameTimeTask],
-        client: []
+        client: [],
       });
 
       await persistence.initialize();
@@ -181,7 +181,7 @@ describe('TaskPersistence', () => {
         created: Math.floor(Date.now() / 1000),
         runCount: 0,
         logExecution: false,
-        uiConfigured: false
+        uiConfigured: false,
       };
 
       vi.spyOn(mockTaskManager, 'getTask').mockResolvedValue(mockTask);
@@ -190,7 +190,7 @@ describe('TaskPersistence', () => {
 
       expect(mockTaskManager.updateTask).toHaveBeenCalledWith({
         ...mockTask,
-        uiConfigured: true
+        uiConfigured: true,
       });
     });
 
@@ -208,7 +208,7 @@ describe('TaskPersistence', () => {
         created: Math.floor(Date.now() / 1000),
         runCount: 0,
         logExecution: false,
-        uiConfigured: true
+        uiConfigured: true,
       };
 
       vi.spyOn(mockTaskManager, 'getTask').mockResolvedValue(mockTask);
@@ -217,7 +217,7 @@ describe('TaskPersistence', () => {
 
       expect(mockTaskManager.updateTask).toHaveBeenCalledWith({
         ...mockTask,
-        uiConfigured: false
+        uiConfigured: false,
       });
     });
 
@@ -235,23 +235,53 @@ describe('TaskPersistence', () => {
       const mockTasks = {
         world: [
           {
-            id: 'world-1', enabled: true, uiConfigured: true,
-            name: '', timeSpec: {}, targetTime: 0, callback: '', useGameTime: false,
-            recurring: false, scope: 'world' as const, created: 0, runCount: 0, logExecution: false
+            id: 'world-1',
+            enabled: true,
+            uiConfigured: true,
+            name: '',
+            timeSpec: {},
+            targetTime: 0,
+            callback: '',
+            useGameTime: false,
+            recurring: false,
+            scope: 'world' as const,
+            created: 0,
+            runCount: 0,
+            logExecution: false,
           },
           {
-            id: 'world-2', enabled: false, uiConfigured: false,
-            name: '', timeSpec: {}, targetTime: 0, callback: '', useGameTime: false,
-            recurring: false, scope: 'world' as const, created: 0, runCount: 0, logExecution: false
-          }
+            id: 'world-2',
+            enabled: false,
+            uiConfigured: false,
+            name: '',
+            timeSpec: {},
+            targetTime: 0,
+            callback: '',
+            useGameTime: false,
+            recurring: false,
+            scope: 'world' as const,
+            created: 0,
+            runCount: 0,
+            logExecution: false,
+          },
         ],
         client: [
           {
-            id: 'client-1', enabled: true, uiConfigured: false,
-            name: '', timeSpec: {}, targetTime: 0, callback: '', useGameTime: false,
-            recurring: false, scope: 'client' as const, created: 0, runCount: 0, logExecution: false
-          }
-        ]
+            id: 'client-1',
+            enabled: true,
+            uiConfigured: false,
+            name: '',
+            timeSpec: {},
+            targetTime: 0,
+            callback: '',
+            useGameTime: false,
+            recurring: false,
+            scope: 'client' as const,
+            created: 0,
+            runCount: 0,
+            logExecution: false,
+          },
+        ],
       };
 
       vi.spyOn(mockTaskManager, 'getAllTasks').mockResolvedValue(mockTasks);
@@ -263,15 +293,15 @@ describe('TaskPersistence', () => {
         uiConfigured: 1,
         ephemeral: 2,
         enabled: 2,
-        disabled: 1
+        disabled: 1,
       });
     });
   });
 
   describe('cleanup', () => {
     it('should clean up old disabled ephemeral tasks', async () => {
-      const oldTime = Math.floor(Date.now() / 1000) - (10 * 86400); // 10 days ago
-      
+      const oldTime = Math.floor(Date.now() / 1000) - 10 * 86400; // 10 days ago
+
       const oldDisabledTask: Task = {
         id: 'old-task',
         name: 'Old Task',
@@ -285,7 +315,7 @@ describe('TaskPersistence', () => {
         created: oldTime, // Old
         runCount: 0,
         logExecution: false,
-        uiConfigured: false // Ephemeral
+        uiConfigured: false, // Ephemeral
       };
 
       const recentTask: Task = {
@@ -301,12 +331,12 @@ describe('TaskPersistence', () => {
         created: Math.floor(Date.now() / 1000) - 3600, // 1 hour ago
         runCount: 0,
         logExecution: false,
-        uiConfigured: false
+        uiConfigured: false,
       };
 
       vi.spyOn(mockTaskManager, 'getAllTasks').mockResolvedValue({
         world: [],
-        client: [oldDisabledTask, recentTask]
+        client: [oldDisabledTask, recentTask],
       });
 
       const cleanedCount = await persistence.cleanupOldTasks(7);
@@ -317,8 +347,8 @@ describe('TaskPersistence', () => {
     });
 
     it('should not clean up UI-configured tasks', async () => {
-      const oldTime = Math.floor(Date.now() / 1000) - (10 * 86400); // 10 days ago
-      
+      const oldTime = Math.floor(Date.now() / 1000) - 10 * 86400; // 10 days ago
+
       const oldUITask: Task = {
         id: 'old-ui-task',
         name: 'Old UI Task',
@@ -332,12 +362,12 @@ describe('TaskPersistence', () => {
         created: oldTime, // Old
         runCount: 0,
         logExecution: false,
-        uiConfigured: true // UI configured - should not be cleaned up
+        uiConfigured: true, // UI configured - should not be cleaned up
       };
 
       vi.spyOn(mockTaskManager, 'getAllTasks').mockResolvedValue({
         world: [],
-        client: [oldUITask]
+        client: [oldUITask],
       });
 
       const cleanedCount = await persistence.cleanupOldTasks(7);

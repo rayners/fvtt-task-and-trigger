@@ -24,7 +24,10 @@ export class CalendarIntegration {
 
   private constructor() {
     this.scheduler = TaskScheduler.getInstance();
-    this.debounceRefreshDecorations = (foundry.utils as any).debounce(this.refreshCalendarDecorations.bind(this), 500);
+    this.debounceRefreshDecorations = (foundry.utils as any).debounce(
+      this.refreshCalendarDecorations.bind(this),
+      500
+    );
   }
 
   static getInstance(): CalendarIntegration {
@@ -52,16 +55,15 @@ export class CalendarIntegration {
     try {
       // Register for Seasons & Stars calendar events
       this.registerCalendarHooks();
-      
+
       // Set up DOM observer for calendar updates
       this.setupCalendarObserver();
-      
+
       // Initial calendar decoration
       this.decorateCalendar();
 
       this.isInitialized = true;
       console.log('Task & Trigger | Calendar integration initialized');
-
     } catch (error) {
       console.error('Task & Trigger | Failed to initialize calendar integration:', error);
     }
@@ -100,7 +102,7 @@ export class CalendarIntegration {
   async getTaskIndicatorsForDate(calendarDate: CalendarDate): Promise<CalendarTaskIndicator> {
     const worldTime = TimeConverter.calendarDateToWorldTime(calendarDate);
     const dayStart = worldTime;
-    const dayEnd = worldTime + (24 * 60 * 60); // Add 24 hours
+    const dayEnd = worldTime + 24 * 60 * 60; // Add 24 hours
 
     // Get all tasks for this day
     const allTasks = await this.scheduler.listTasks();
@@ -117,8 +119,13 @@ export class CalendarIntegration {
       worldTasks,
       clientTasks,
       totalTasks: dayTasks.length,
-      hasUpcomingTasks: dayTasks.some(task => task.enabled && task.nextExecution && task.nextExecution >= TimeConverter.getCurrentGameTime()),
-      taskDetails: dayTasks
+      hasUpcomingTasks: dayTasks.some(
+        task =>
+          task.enabled &&
+          task.nextExecution &&
+          task.nextExecution >= TimeConverter.getCurrentGameTime()
+      ),
+      taskDetails: dayTasks,
     };
   }
 
@@ -134,7 +141,7 @@ export class CalendarIntegration {
       await this.onSeasonsStarsCalendarRender(data);
     });
 
-    // Hook into S&S calendar widget render events  
+    // Hook into S&S calendar widget render events
     Hooks.on('seasons-stars:calendarWidgetRendered', async (data: any) => {
       console.log('Task & Trigger | S&S calendar widget rendered', data);
       await this.onSeasonsStarsCalendarRender(data);
@@ -172,7 +179,7 @@ export class CalendarIntegration {
    */
   private async onSeasonsStarsCalendarRender(data: any): Promise<void> {
     console.log('Task & Trigger | S&S calendar rendered, adding task indicators');
-    
+
     try {
       const htmlElement = data.element;
       if (!htmlElement) {
@@ -186,22 +193,21 @@ export class CalendarIntegration {
         // Remove existing listeners to prevent duplicates
         day.removeEventListener('contextmenu', this.handleRightClick);
         day.removeEventListener('click', this.handleCalendarClick);
-        
+
         // Add right-click handler for task creation/viewing
-        day.addEventListener('contextmenu', (event) => {
+        day.addEventListener('contextmenu', event => {
           event.preventDefault();
           this.handleRightClick(event as MouseEvent);
         });
 
         // Add click handler for modifier keys (Ctrl+click, Shift+click)
-        day.addEventListener('click', (event) => {
+        day.addEventListener('click', event => {
           this.handleCalendarClick(event as MouseEvent);
         });
       });
 
       // Add task indicators to calendar days
       await this.decorateCalendarDays($(htmlElement));
-
     } catch (error) {
       console.error('Task & Trigger | Error handling S&S calendar render:', error);
     }
@@ -222,7 +228,7 @@ export class CalendarIntegration {
   private handleRightClick = async (event: MouseEvent): Promise<void> => {
     const dayElement = event.currentTarget as HTMLElement;
     const dateStr = dayElement.dataset.date;
-    
+
     if (!dateStr) {
       console.warn('Task & Trigger | No date data on calendar day element');
       return;
@@ -251,7 +257,7 @@ export class CalendarIntegration {
 
     const dayElement = event.currentTarget as HTMLElement;
     const dateStr = dayElement.dataset.date;
-    
+
     if (!dateStr) {
       console.warn('Task & Trigger | No date data on calendar day element');
       return;
@@ -259,7 +265,7 @@ export class CalendarIntegration {
 
     try {
       const calendarDate = this.parseSeasonsStarsDate(dateStr);
-      
+
       if (event.ctrlKey || event.metaKey) {
         // Ctrl/Cmd+click: Quick schedule task for this day
         await this.quickScheduleForDate(calendarDate);
@@ -267,7 +273,6 @@ export class CalendarIntegration {
         // Shift+click: Open task manager with date pre-filled
         await this.openTaskManagerForDate(calendarDate);
       }
-
     } catch (error) {
       console.error('Task & Trigger | Error handling calendar modifier click:', error);
       ui.notifications?.error('Failed to handle calendar interaction');
@@ -290,9 +295,9 @@ export class CalendarIntegration {
     // Try multiple possible S&S calendar selectors
     const selectors = [
       '#seasons-and-stars-calendar-grid', // From S&S calendar grid widget
-      '#seasons-stars-calendar-grid',     // Alternative naming
+      '#seasons-stars-calendar-grid', // Alternative naming
       '.seasons-stars.calendar-grid-widget', // Class-based selector
-      '.calendar-grid'  // Fallback
+      '.calendar-grid', // Fallback
     ];
 
     for (const selector of selectors) {
@@ -312,17 +317,17 @@ export class CalendarIntegration {
    */
   private async decorateCalendarDays(html: JQuery): Promise<void> {
     const calendarDays = html.find('.calendar-day');
-    
+
     for (let i = 0; i < calendarDays.length; i++) {
       const dayElement = $(calendarDays[i]);
       const dateStr = dayElement.data('date');
-      
+
       if (!dateStr) continue;
 
       try {
         const calendarDate = this.parseSeasonsStarsDate(dateStr);
         const indicators = await this.getTaskIndicatorsForDate(calendarDate);
-        
+
         // Remove existing task indicators
         dayElement.removeClass('has-tasks has-world-tasks has-client-tasks has-both-tasks');
         dayElement.find('.task-indicator').remove();
@@ -330,7 +335,7 @@ export class CalendarIntegration {
         if (indicators.totalTasks > 0) {
           // Add appropriate CSS classes
           dayElement.addClass('has-tasks');
-          
+
           if (indicators.worldTasks > 0 && indicators.clientTasks > 0) {
             dayElement.addClass('has-both-tasks');
           } else if (indicators.worldTasks > 0) {
@@ -345,10 +350,9 @@ export class CalendarIntegration {
               <span class="task-count">${indicators.totalTasks}</span>
             </div>
           `);
-          
+
           dayElement.append(indicator);
         }
-
       } catch (error) {
         console.warn('Task & Trigger | Error decorating calendar day:', dateStr, error);
       }
@@ -364,7 +368,7 @@ export class CalendarIntegration {
       '#seasons-and-stars-calendar-grid',
       '#seasons-stars-calendar-grid',
       '.seasons-stars.calendar-grid-widget',
-      '.calendar-grid'
+      '.calendar-grid',
     ];
 
     for (const selector of selectors) {
@@ -414,7 +418,7 @@ export class CalendarIntegration {
       return {
         year: parseInt(parts[0], 10),
         month: parseInt(parts[1], 10),
-        day: parseInt(parts[2], 10)
+        day: parseInt(parts[2], 10),
       };
     }
 
@@ -426,17 +430,17 @@ export class CalendarIntegration {
    */
   private buildTaskTooltip(indicators: CalendarTaskIndicator): string {
     const parts: string[] = [];
-    
+
     if (indicators.worldTasks > 0) {
       parts.push(`${indicators.worldTasks} world task${indicators.worldTasks !== 1 ? 's' : ''}`);
     }
-    
+
     if (indicators.clientTasks > 0) {
       parts.push(`${indicators.clientTasks} client task${indicators.clientTasks !== 1 ? 's' : ''}`);
     }
 
     const tooltip = parts.join(', ');
-    
+
     if (indicators.hasUpcomingTasks) {
       return `${tooltip}\nRight-click to view tasks\nCtrl+click to quick schedule\nShift+click to open task manager`;
     } else {
@@ -450,7 +454,7 @@ export class CalendarIntegration {
   private async showTasksForDate(calendarDate: CalendarDate): Promise<void> {
     const indicators = await this.getTaskIndicatorsForDate(calendarDate);
     const formattedDate = this.formatCalendarDate(calendarDate);
-    
+
     if (indicators.totalTasks === 0) {
       // No tasks exist - show dialog offering to create one
       new Dialog({
@@ -464,24 +468,26 @@ export class CalendarIntegration {
         buttons: {
           create: {
             label: 'Create Task',
-            callback: () => this.quickScheduleForDate(calendarDate)
+            callback: () => this.quickScheduleForDate(calendarDate),
           },
           manage: {
             label: 'Open Task Manager',
-            callback: () => this.openTaskManagerForDate(calendarDate)
+            callback: () => this.openTaskManagerForDate(calendarDate),
           },
           close: {
             label: 'Cancel',
-            callback: () => {}
-          }
+            callback: () => {},
+          },
         },
-        default: 'create'
+        default: 'create',
       }).render(true);
       return;
     }
 
     // Create a dialog showing tasks for this date
-    const taskListHtml = indicators.taskDetails.map(task => `
+    const taskListHtml = indicators.taskDetails
+      .map(
+        task => `
       <div class="task-summary ${task.enabled ? '' : 'disabled'}">
         <strong>${task.name}</strong>
         <span class="task-meta">
@@ -492,7 +498,9 @@ export class CalendarIntegration {
         <div class="task-description">${task.description || 'No description'}</div>
         <div class="task-schedule">Next run: ${new Date((task.nextExecution || 0) * 1000).toLocaleString()}</div>
       </div>
-    `).join('');
+    `
+      )
+      .join('');
 
     new Dialog({
       title: `Tasks for ${formattedDate}`,
@@ -533,18 +541,18 @@ export class CalendarIntegration {
       buttons: {
         create: {
           label: 'Create New Task',
-          callback: () => this.quickScheduleForDate(calendarDate)
+          callback: () => this.quickScheduleForDate(calendarDate),
         },
         manage: {
           label: 'Open Task Manager',
-          callback: () => this.openTaskManagerForDate(calendarDate)
+          callback: () => this.openTaskManagerForDate(calendarDate),
         },
         close: {
           label: 'Close',
-          callback: () => {}
-        }
+          callback: () => {},
+        },
       },
-      default: 'create'
+      default: 'create',
     }).render(true);
   }
 
@@ -554,13 +562,15 @@ export class CalendarIntegration {
   private async quickScheduleForDate(calendarDate: CalendarDate): Promise<void> {
     // Open the task manager application with date context
     const app = TaskManagerApplication.show();
-    
+
     // Store the date context for the task manager to use
     (app as any)._contextDate = calendarDate;
-    
+
     // Note: The task manager application handles task creation through its own UI
     // We don't need to simulate button clicks - the application will handle this properly
-    ui.notifications?.info(`Task Manager opened for ${this.formatCalendarDate(calendarDate)}. Click "Create Task" to add a new task for this date.`);
+    ui.notifications?.info(
+      `Task Manager opened for ${this.formatCalendarDate(calendarDate)}. Click "Create Task" to add a new task for this date.`
+    );
   }
 
   /**
@@ -568,13 +578,14 @@ export class CalendarIntegration {
    */
   private async openTaskManagerForDate(calendarDate: CalendarDate): Promise<void> {
     const app = TaskManagerApplication.show();
-    
+
     // Store the date context for the task manager to use
     (app as any)._contextDate = calendarDate;
-    
-    ui.notifications?.info(`Task Manager opened with context for ${this.formatCalendarDate(calendarDate)}`);
-  }
 
+    ui.notifications?.info(
+      `Task Manager opened with context for ${this.formatCalendarDate(calendarDate)}`
+    );
+  }
 
   /**
    * Format calendar date for display

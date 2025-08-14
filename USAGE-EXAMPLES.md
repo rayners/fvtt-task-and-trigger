@@ -9,13 +9,13 @@ This document provides practical examples for using the Task & Trigger module, i
 ```javascript
 // Schedule a task to run in 5 minutes
 const taskId = await game.taskTrigger.api.setTimeout(
-  { minutes: 5 }, 
+  { minutes: 5 },
   'ui.notifications.info("5 minutes have passed!");'
 );
 
 // Schedule a recurring reminder every hour
 const reminderId = await game.taskTrigger.api.setInterval(
-  { hours: 1 }, 
+  { hours: 1 },
   'ui.notifications.info("Hourly reminder!");'
 );
 
@@ -28,13 +28,13 @@ await game.taskTrigger.api.cancel(taskId);
 ```javascript
 // Schedule a task to run in 8 hours of game time
 const gameTaskId = await game.taskTrigger.api.setGameTimeout(
-  { hours: 8 }, 
+  { hours: 8 },
   'ui.notifications.info("You are well rested!");'
 );
 
 // Schedule a recurring game-time reminder
 const gameReminderId = await game.taskTrigger.api.setGameInterval(
-  { hours: 4 }, 
+  { hours: 4 },
   'ui.notifications.warn("You need to eat!");'
 );
 ```
@@ -48,8 +48,8 @@ Accumulated time tasks are perfect for activities that require a specific amount
 ```javascript
 // Create a spell research task requiring 15 hours total
 const researchTaskId = await game.taskTrigger.api.createAccumulatedTimeTask({
-  name: "Fireball Spell Research",
-  description: "Research the ancient secrets of the Fireball spell",
+  name: 'Fireball Spell Research',
+  description: 'Research the ancient secrets of the Fireball spell',
   requiredTime: { hours: 15 }, // Total time needed
   callback: `
     ui.notifications.info("Spell research complete! You've learned Fireball!");
@@ -60,23 +60,24 @@ const researchTaskId = await game.taskTrigger.api.createAccumulatedTimeTask({
       console.log("Add Fireball spell to character sheet");
     }
   `,
-  scope: 'world' // Make it available to all players
+  scope: 'world', // Make it available to all players
 });
 
 // Log 3 hours of research work
 await game.taskTrigger.api.addTimeToTask(researchTaskId, {
   duration: { hours: 3 },
-  description: "Studied ancient texts in the library"
+  description: 'Studied ancient texts in the library',
 });
 
 // Log another 6 hours later
 await game.taskTrigger.api.addTimeToTask(researchTaskId, {
   duration: { hours: 6 },
-  description: "Experimented with fire magic components"
+  description: 'Experimented with fire magic components',
 });
 
 // Check progress
-const progress = await game.taskTrigger.api.getAccumulatedTimeProgress(researchTaskId);
+const progress =
+  await game.taskTrigger.api.getAccumulatedTimeProgress(researchTaskId);
 console.log(`Progress: ${Math.round(progress.progress * 100)}% complete`);
 console.log(`Remaining: ${progress.remaining / 3600} hours`);
 ```
@@ -86,8 +87,8 @@ console.log(`Remaining: ${progress.remaining / 3600} hours`);
 ```javascript
 // Create a crafting task for a magic sword (requires 2 days, 4 hours)
 const craftingTaskId = await game.taskTrigger.api.createAccumulatedTimeTask({
-  name: "Forge Flame Tongue Sword",
-  description: "Craft a magical sword imbued with fire",
+  name: 'Forge Flame Tongue Sword',
+  description: 'Craft a magical sword imbued with fire',
   requiredTime: { days: 2, hours: 4 }, // 52 hours total
   callback: `
     ui.notifications.info("Your Flame Tongue sword is complete!");
@@ -99,22 +100,25 @@ const craftingTaskId = await game.taskTrigger.api.createAccumulatedTimeTask({
     };
     // Add to character inventory (system-specific)
   `,
-  scope: 'client'
+  scope: 'client',
 });
 
 // Log daily progress
 await game.taskTrigger.api.addTimeToTask(craftingTaskId, {
   duration: { hours: 8 },
-  description: "Forged the basic blade shape"
+  description: 'Forged the basic blade shape',
 });
 
 await game.taskTrigger.api.addTimeToTask(craftingTaskId, {
   duration: { hours: 6 },
-  description: "Heat treated and tempered the steel"
+  description: 'Heat treated and tempered the steel',
 });
 
 // Export progress for record keeping
-const exportData = await game.taskTrigger.api.exportTaskTimeLog(craftingTaskId, 'csv');
+const exportData = await game.taskTrigger.api.exportTaskTimeLog(
+  craftingTaskId,
+  'csv'
+);
 console.log(exportData); // CSV data for external tracking
 ```
 
@@ -123,8 +127,8 @@ console.log(exportData); // CSV data for external tracking
 ```javascript
 // Character training in swordplay
 const trainingTaskId = await game.taskTrigger.api.createAccumulatedTimeTask({
-  name: "Advanced Swordplay Training",
-  description: "Train to master advanced sword techniques",
+  name: 'Advanced Swordplay Training',
+  description: 'Train to master advanced sword techniques',
   requiredTime: { days: 7 }, // One week of training
   callback: `
     ui.notifications.info("Training complete! Your sword skills have improved!");
@@ -135,14 +139,14 @@ const trainingTaskId = await game.taskTrigger.api.createAccumulatedTimeTask({
       console.log("Increase sword proficiency");
     }
   `,
-  logExecution: true // Log completion to journal
+  logExecution: true, // Log completion to journal
 });
 
 // Track daily training sessions
 for (let day = 1; day <= 7; day++) {
   await game.taskTrigger.api.addTimeToTask(trainingTaskId, {
     duration: { hours: 1 },
-    description: `Training session ${day}: practiced forms and techniques`
+    description: `Training session ${day}: practiced forms and techniques`,
   });
 }
 ```
@@ -163,10 +167,10 @@ const progress = await game.taskTrigger.api.getAccumulatedTimeProgress(taskId);
 const firstEntryId = progress.timeEntries[0].id;
 
 await game.taskTrigger.api.editTimeEntry(
-  taskId, 
-  firstEntryId, 
+  taskId,
+  firstEntryId,
   { hours: 4 }, // New duration
-  "Updated: Actually worked 4 hours, not 3" // New description
+  'Updated: Actually worked 4 hours, not 3' // New description
 );
 
 // Remove a time entry
@@ -177,7 +181,8 @@ await game.taskTrigger.api.removeTimeEntry(taskId, firstEntryId);
 
 ```javascript
 // List all accumulated time tasks
-const allAccumulatedTasks = await game.taskTrigger.api.listAccumulatedTimeTasks();
+const allAccumulatedTasks =
+  await game.taskTrigger.api.listAccumulatedTimeTasks();
 console.log(`Found ${allAccumulatedTasks.length} accumulated time tasks`);
 
 // List only world-scoped tasks
@@ -200,7 +205,11 @@ const festivalTaskId = await game.taskTrigger.api.scheduleForDate(
 );
 
 // List tasks for a specific date
-const tasksForDate = await game.taskTrigger.api.listTasksForDate({ year: 1421, month: 6, day: 21 });
+const tasksForDate = await game.taskTrigger.api.listTasksForDate({
+  year: 1421,
+  month: 6,
+  day: 21,
+});
 ```
 
 ## Task Management
@@ -208,7 +217,9 @@ const tasksForDate = await game.taskTrigger.api.listTasksForDate({ year: 1421, m
 ```javascript
 // Get task information
 const taskInfo = await game.taskTrigger.api.getTaskInfo(taskId);
-console.log(`Task: ${taskInfo.name}, Next execution: ${taskInfo.nextExecution}`);
+console.log(
+  `Task: ${taskInfo.name}, Next execution: ${taskInfo.nextExecution}`
+);
 
 // Enable/disable tasks
 await game.taskTrigger.api.disable(taskId);

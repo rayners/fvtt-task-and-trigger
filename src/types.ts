@@ -5,6 +5,9 @@
 // Time specification types
 export type TimeSpec = Date | number | RelativeTimeSpec | AbsoluteTimeSpec;
 
+// Common callback type for task execution
+export type TaskCallback = string | (() => void);
+
 export interface RelativeTimeSpec {
   days?: number;
   hours?: number;
@@ -42,7 +45,7 @@ export interface Task {
   calendarIntegrated?: boolean; // Whether integrated with calendar UI
   calendarDate?: CalendarDate; // Calendar date if calendar integrated
   uiConfigured?: boolean; // Whether task was created through UI (should persist across restarts)
-  
+
   // Accumulated time task properties
   isAccumulatedTime?: boolean; // Whether this is an accumulated time task
   requiredTime?: number; // Total seconds required for completion
@@ -100,10 +103,14 @@ export interface TaskTriggerSettings {
 
 // API types
 export interface TaskTriggerAPI {
-  scheduleTask(time: TimeSpec, callback: Function | string, useGameTime?: boolean): string;
-  scheduleInterval(interval: TimeSpec, callback: Function | string, useGameTime?: boolean): string;
+  scheduleTask(time: TimeSpec, callback: TaskCallback, useGameTime?: boolean): string;
+  scheduleInterval(interval: TimeSpec, callback: TaskCallback, useGameTime?: boolean): string;
   cancelTask(taskId: string): boolean;
   showTaskCreator(): void;
-  scheduleCalendarTask(calendarDate: CalendarDate, callback: Function | string, scope: 'world'|'client'): string;
+  scheduleCalendarTask(
+    calendarDate: CalendarDate,
+    callback: TaskCallback,
+    scope: 'world' | 'client'
+  ): string;
   getTasksForDate(calendarDate: CalendarDate): Task[];
 }

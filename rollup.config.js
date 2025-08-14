@@ -4,10 +4,10 @@ export default createFoundryConfigWithDir({
   cssFileName: 'styles/task-and-trigger.css',
   additionalCopyTargets: [
     { src: 'templates/**/*.hbs', dest: 'dist/templates/' },
-    { src: 'assets/**/*', dest: 'dist/' }
+    { src: 'assets/**/*', dest: 'dist/' },
   ],
   scssOptions: {
-    includePaths: ['styles']
+    includePaths: ['styles'],
   },
-  devServerPort: 29998
+  devServerPort: 29998,
 });

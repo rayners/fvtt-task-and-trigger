@@ -6,7 +6,11 @@
 import { TimeSpec, CalendarDate, Task } from './types';
 import { TaskManager } from './task-manager';
 import { TimeConverter } from './time-converter';
-import { AccumulatedTimeManager, AccumulatedTimeTaskOptions, TimeLogEntry } from './accumulated-time-manager';
+import {
+  AccumulatedTimeManager,
+  AccumulatedTimeTaskOptions,
+  TimeLogEntry,
+} from './accumulated-time-manager';
 
 export interface ScheduleOptions {
   /** Storage scope for the task */
@@ -235,7 +239,7 @@ export class TaskScheduler {
       lastExecution: task.lastExecution,
       lastError: task.lastError,
       useGameTime: task.useGameTime,
-      scope: task.scope
+      scope: task.scope,
     };
   }
 
@@ -259,7 +263,7 @@ export class TaskScheduler {
       lastExecution: task.lastExecution,
       lastError: task.lastError,
       useGameTime: task.useGameTime,
-      scope: task.scope
+      scope: task.scope,
     }));
   }
 
@@ -270,7 +274,7 @@ export class TaskScheduler {
    */
   async listTasksForDate(calendarDate: CalendarDate): Promise<TaskInfo[]> {
     const tasks = await this.taskManager.getTasksForDate(calendarDate);
-    
+
     return tasks.map(task => ({
       id: task.id,
       name: task.name,
@@ -282,7 +286,7 @@ export class TaskScheduler {
       lastExecution: task.lastExecution,
       lastError: task.lastError,
       useGameTime: task.useGameTime,
-      scope: task.scope
+      scope: task.scope,
     }));
   }
 
@@ -313,7 +317,7 @@ export class TaskScheduler {
       recurring: allTasksList.filter(t => t.recurring).length,
       oneTime: allTasksList.filter(t => !t.recurring).length,
       worldTasks: allTasks.world.length,
-      clientTasks: allTasks.client.length
+      clientTasks: allTasks.client.length,
     };
   }
 
@@ -333,7 +337,7 @@ export class TaskScheduler {
     return this.setTimeout(delay, callback, {
       ...options,
       name: options.name || `Reminder: ${message}`,
-      description: options.description || `Reminder notification: ${message}`
+      description: options.description || `Reminder notification: ${message}`,
     });
   }
 
@@ -353,7 +357,7 @@ export class TaskScheduler {
     return this.setInterval(interval, callback, {
       ...options,
       name: options.name || `Recurring Reminder: ${message}`,
-      description: options.description || `Recurring reminder: ${message}`
+      description: options.description || `Recurring reminder: ${message}`,
     });
   }
 
@@ -373,7 +377,7 @@ export class TaskScheduler {
     return this.setGameTimeout(delay, callback, {
       ...options,
       name: options.name || `Game Reminder: ${message}`,
-      description: options.description || `Game time reminder: ${message}`
+      description: options.description || `Game time reminder: ${message}`,
     });
   }
 
@@ -386,9 +390,7 @@ export class TaskScheduler {
   formatTimeSpec(timeSpec: TimeSpec, useGameTime: boolean = false): string {
     if (typeof timeSpec === 'number') {
       const date = new Date(timeSpec * 1000);
-      return useGameTime ? 
-        `World Time ${timeSpec}` : 
-        date.toLocaleString();
+      return useGameTime ? `World Time ${timeSpec}` : date.toLocaleString();
     }
 
     if (TimeConverter.isAbsoluteTimeSpec(timeSpec)) {
@@ -399,9 +401,11 @@ export class TaskScheduler {
       const parts = [];
       if (timeSpec.days) parts.push(`${timeSpec.days} day${timeSpec.days !== 1 ? 's' : ''}`);
       if (timeSpec.hours) parts.push(`${timeSpec.hours} hour${timeSpec.hours !== 1 ? 's' : ''}`);
-      if (timeSpec.minutes) parts.push(`${timeSpec.minutes} minute${timeSpec.minutes !== 1 ? 's' : ''}`);
-      if (timeSpec.seconds) parts.push(`${timeSpec.seconds} second${timeSpec.seconds !== 1 ? 's' : ''}`);
-      
+      if (timeSpec.minutes)
+        parts.push(`${timeSpec.minutes} minute${timeSpec.minutes !== 1 ? 's' : ''}`);
+      if (timeSpec.seconds)
+        parts.push(`${timeSpec.seconds} second${timeSpec.seconds !== 1 ? 's' : ''}`);
+
       return parts.length > 0 ? parts.join(', ') : 'immediately';
     }
 
@@ -426,13 +430,13 @@ export class TaskScheduler {
       const currentGameTime = TimeConverter.getCurrentGameTime();
       const timeLeft = task.targetTime - currentGameTime;
       if (timeLeft <= 0) return 'Ready to execute';
-      
+
       return `In ${timeLeft} game time seconds`;
     } else {
       const currentTime = Math.floor(Date.now() / 1000);
       const timeLeft = task.targetTime - currentTime;
       if (timeLeft <= 0) return 'Ready to execute';
-      
+
       const date = new Date(task.targetTime * 1000);
       return date.toLocaleString();
     }
@@ -501,7 +505,12 @@ export class TaskScheduler {
    * @param newDescription New description
    * @returns True if edited
    */
-  async editTimeEntry(taskId: string, entryId: string, newDuration: TimeSpec, newDescription?: string): Promise<boolean> {
+  async editTimeEntry(
+    taskId: string,
+    entryId: string,
+    newDuration: TimeSpec,
+    newDescription?: string
+  ): Promise<boolean> {
     return this.accumulatedTimeManager.editTimeEntry(taskId, entryId, newDuration, newDescription);
   }
 

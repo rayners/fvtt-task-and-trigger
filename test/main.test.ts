@@ -19,7 +19,7 @@ describe('Module Integration', () => {
   beforeEach(() => {
     // Clear singleton instances and mocks
     (TaskManager as any).instance = undefined;
-    (TaskScheduler as any).instance = undefined;  
+    (TaskScheduler as any).instance = undefined;
     (TaskPersistence as any).instance = undefined;
 
     mockTaskManager = TaskManager.getInstance();
@@ -88,9 +88,9 @@ describe('Module Integration', () => {
     it('should simulate full initialization sequence', async () => {
       // Simulate the initialization sequence from main.ts
       TaskPersistence.registerSettings();
-      
+
       await mockTaskManager.initialize();
-      await mockScheduler.initialize(); 
+      await mockScheduler.initialize();
       await mockPersistence.initialize();
 
       // Verify all components were initialized
@@ -114,9 +114,9 @@ describe('Module Integration', () => {
     it('should create API that integrates with scheduler and persistence', async () => {
       // Import the API creation function
       const { createAPI } = await import('../src/api');
-      
+
       const api = createAPI();
-      
+
       // API should have all expected methods
       expect(typeof api.setTimeout).toBe('function');
       expect(typeof api.setInterval).toBe('function');
@@ -147,10 +147,10 @@ describe('Module Integration', () => {
         Hooks.callAll('test-hook', 'test-data');
         Hooks.off('test-hook', () => {});
       }).not.toThrow();
-      
+
       // The actual hook functionality is tested in FoundryVTT itself
       expect(typeof Hooks.on).toBe('function');
-      expect(typeof Hooks.callAll).toBe('function'); 
+      expect(typeof Hooks.callAll).toBe('function');
       expect(typeof Hooks.off).toBe('function');
     });
   });
@@ -159,7 +159,7 @@ describe('Module Integration', () => {
     it('should handle component initialization failures gracefully', async () => {
       // Mock a component to fail during initialization
       mockTaskManager.initialize.mockRejectedValue(new Error('Test initialization failure'));
-      
+
       // The main initialization would catch this error
       try {
         await mockTaskManager.initialize();
@@ -173,7 +173,7 @@ describe('Module Integration', () => {
     it('should handle shutdown failures gracefully', async () => {
       // Mock a component to fail during shutdown
       mockTaskManager.shutdown.mockRejectedValue(new Error('Test shutdown failure'));
-      
+
       // The main shutdown would catch this error
       try {
         await mockTaskManager.shutdown();

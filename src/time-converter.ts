@@ -50,7 +50,7 @@ export class TimeConverter {
     if (useGameTime && this.isSeasonsAndStarsAvailable()) {
       return this.formatGameTime(timestamp);
     }
-    
+
     const date = new Date(timestamp * 1000);
     return date.toLocaleString();
   }
@@ -93,7 +93,7 @@ export class TimeConverter {
       (calendarDate.month || 1) - 1, // JavaScript months are 0-based
       calendarDate.day || 1
     );
-    
+
     return Math.floor(date.getTime() / 1000);
   }
 
@@ -119,7 +119,7 @@ export class TimeConverter {
     return {
       year: date.getFullYear(),
       month: date.getMonth() + 1, // Convert from 0-based to 1-based
-      day: date.getDate()
+      day: date.getDate(),
     };
   }
 
@@ -127,20 +127,32 @@ export class TimeConverter {
    * Check if a given time specification is relative
    */
   static isRelativeTimeSpec(timeSpec: any): timeSpec is RelativeTimeSpec {
-    return timeSpec && typeof timeSpec === 'object' && 
-           (timeSpec.days !== undefined || timeSpec.hours !== undefined ||
-            timeSpec.minutes !== undefined || timeSpec.seconds !== undefined) &&
-           timeSpec.year === undefined && timeSpec.month === undefined && timeSpec.day === undefined;
+    return (
+      timeSpec &&
+      typeof timeSpec === 'object' &&
+      (timeSpec.days !== undefined ||
+        timeSpec.hours !== undefined ||
+        timeSpec.minutes !== undefined ||
+        timeSpec.seconds !== undefined) &&
+      timeSpec.year === undefined &&
+      timeSpec.month === undefined &&
+      timeSpec.day === undefined
+    );
   }
 
   /**
    * Check if a given time specification is absolute
    */
   static isAbsoluteTimeSpec(timeSpec: any): timeSpec is AbsoluteTimeSpec {
-    return timeSpec && typeof timeSpec === 'object' &&
-           (timeSpec.year !== undefined || timeSpec.month !== undefined || timeSpec.day !== undefined) &&
-           timeSpec.days === undefined && timeSpec.hours === undefined && 
-           timeSpec.minutes === undefined && timeSpec.seconds === undefined;
+    return (
+      timeSpec &&
+      typeof timeSpec === 'object' &&
+      (timeSpec.year !== undefined || timeSpec.month !== undefined || timeSpec.day !== undefined) &&
+      timeSpec.days === undefined &&
+      timeSpec.hours === undefined &&
+      timeSpec.minutes === undefined &&
+      timeSpec.seconds === undefined
+    );
   }
 
   /**
@@ -148,7 +160,7 @@ export class TimeConverter {
    */
   private static convertRelativeTime(timeSpec: RelativeTimeSpec, baseTime: number): number {
     let offset = 0;
-    
+
     if (timeSpec.days) offset += timeSpec.days * this.SECONDS_PER_DAY;
     if (timeSpec.hours) offset += timeSpec.hours * this.SECONDS_PER_HOUR;
     if (timeSpec.minutes) offset += timeSpec.minutes * this.SECONDS_PER_MINUTE;
@@ -166,11 +178,11 @@ export class TimeConverter {
       const calendarDate: CalendarDate = {
         year: timeSpec.year ?? new Date().getFullYear(),
         month: timeSpec.month ?? 1,
-        day: timeSpec.day ?? 1
+        day: timeSpec.day ?? 1,
       };
-      
+
       let timestamp = this.calendarDateToWorldTime(calendarDate);
-      
+
       // Add time of day if specified
       if (timeSpec.hour !== undefined) {
         timestamp += timeSpec.hour * this.SECONDS_PER_HOUR;
@@ -181,7 +193,7 @@ export class TimeConverter {
       if (timeSpec.second !== undefined) {
         timestamp += timeSpec.second;
       }
-      
+
       return timestamp;
     }
 
@@ -189,7 +201,7 @@ export class TimeConverter {
     const now = new Date();
     const date = new Date(
       timeSpec.year ?? now.getFullYear(),
-      (timeSpec.month ?? (now.getMonth() + 1)) - 1, // Convert to 0-based
+      (timeSpec.month ?? now.getMonth() + 1) - 1, // Convert to 0-based
       timeSpec.day ?? now.getDate(),
       timeSpec.hour ?? 0,
       timeSpec.minute ?? 0,
@@ -229,7 +241,7 @@ export class TimeConverter {
       // If it's already a number, assume it's duration in seconds
       return timeSpec;
     }
-    
+
     if (timeSpec instanceof Date) {
       // Date objects don't make sense as durations
       throw new Error('Date objects cannot be converted to durations');
@@ -237,7 +249,7 @@ export class TimeConverter {
 
     if (this.isRelativeTimeSpec(timeSpec)) {
       let duration = 0;
-      
+
       if (timeSpec.days) duration += timeSpec.days * this.SECONDS_PER_DAY;
       if (timeSpec.hours) duration += timeSpec.hours * this.SECONDS_PER_HOUR;
       if (timeSpec.minutes) duration += timeSpec.minutes * this.SECONDS_PER_MINUTE;
@@ -313,14 +325,16 @@ export class TimeConverter {
    */
   private static validateRelativeTime(timeSpec: RelativeTimeSpec): boolean {
     const { days, hours, minutes, seconds } = timeSpec;
-    
+
     if (days !== undefined && (!Number.isInteger(days) || days < 0)) return false;
     if (hours !== undefined && (!Number.isInteger(hours) || hours < 0)) return false;
     if (minutes !== undefined && (!Number.isInteger(minutes) || minutes < 0)) return false;
     if (seconds !== undefined && (!Number.isInteger(seconds) || seconds < 0)) return false;
 
     // At least one value must be specified
-    return days !== undefined || hours !== undefined || minutes !== undefined || seconds !== undefined;
+    return (
+      days !== undefined || hours !== undefined || minutes !== undefined || seconds !== undefined
+    );
   }
 
   /**
@@ -328,13 +342,15 @@ export class TimeConverter {
    */
   private static validateAbsoluteTime(timeSpec: AbsoluteTimeSpec): boolean {
     const { year, month, day, hour, minute, second } = timeSpec;
-    
+
     if (year !== undefined && (!Number.isInteger(year) || year < 0)) return false;
     if (month !== undefined && (!Number.isInteger(month) || month < 1 || month > 12)) return false;
     if (day !== undefined && (!Number.isInteger(day) || day < 1 || day > 31)) return false;
     if (hour !== undefined && (!Number.isInteger(hour) || hour < 0 || hour > 23)) return false;
-    if (minute !== undefined && (!Number.isInteger(minute) || minute < 0 || minute > 59)) return false;
-    if (second !== undefined && (!Number.isInteger(second) || second < 0 || second > 59)) return false;
+    if (minute !== undefined && (!Number.isInteger(minute) || minute < 0 || minute > 59))
+      return false;
+    if (second !== undefined && (!Number.isInteger(second) || second < 0 || second > 59))
+      return false;
 
     return true; // Absolute time specs can be completely unspecified (defaults will be used)
   }

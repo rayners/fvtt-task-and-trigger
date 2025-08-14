@@ -1,0 +1,80 @@
+name: Build and Upload Release Assets
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run tests
+        run: npm run test:coverage
+        
+      - name: Build module
+        run: npm run build
+        
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          VERSION_NUM="${VERSION#v}"  # Remove 'v' prefix if present
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "VERSION_NUM=$VERSION_NUM" >> $GITHUB_OUTPUT
+          
+      - name: Update module.json with release info
+        run: |
+          # Update module.json with version and download URL
+          DOWNLOAD_URL="https://github.com/rayners/fvtt-task-and-trigger/releases/download/${{ steps.version.outputs.VERSION }}/task-and-trigger-${{ steps.version.outputs.VERSION }}.zip"
+          
+          jq --arg version "${{ steps.version.outputs.VERSION_NUM }}" '.version = $version' module.json > module.json.tmp
+          jq --arg url "$DOWNLOAD_URL" '.download = $url' module.json.tmp > module.json
+          rm module.json.tmp
+          
+      - name: Create module archive
+        run: |
+          # Create release directory
+          mkdir -p release/task-and-trigger
+          
+          # Copy built files
+          cp -r dist/* release/task-and-trigger/
+          
+          # Copy module metadata and content
+          cp module.json release/task-and-trigger/
+          cp -r languages release/task-and-trigger/
+          cp -r styles release/task-and-trigger/
+          cp -r templates release/task-and-trigger/
+          
+          # Copy documentation
+          cp README.md release/task-and-trigger/
+          cp API.md release/task-and-trigger/
+          cp USAGE-EXAMPLES.md release/task-and-trigger/
+          
+          # Create zip archive
+          cd release
+          zip -r "../task-and-trigger-${{ steps.version.outputs.VERSION }}.zip" task-and-trigger/
+          cd ..
+          
+      - name: Upload release assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ steps.version.outputs.VERSION }} \
+            "task-and-trigger-${{ steps.version.outputs.VERSION }}.zip" \
+            "module.json" \
+            --clobber

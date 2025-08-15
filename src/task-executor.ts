@@ -244,10 +244,4 @@ export class TaskExecutor {
   }
 }
 
-// Dialog class mock for testing environments
-declare global {
-  class Dialog {
-    constructor(options: any);
-    render(force?: boolean): void;
-  }
-}
+// Dialog class is provided by foundry-dev-tools types

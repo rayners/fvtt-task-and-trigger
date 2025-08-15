@@ -3,9 +3,17 @@
  * Provides tabbed interface with task creation, editing, and monitoring
  */
 
+/// <reference types="@rayners/foundry-dev-tools/types/foundry-v13-essentials" />
+
 import { TaskScheduler, TaskInfo } from './task-scheduler';
 import { TaskPersistence } from './task-persistence';
-import { TimeSpec } from './types';
+import { TimeSpec, CalendarDate } from './types';
+
+// Declare types to work around namespace resolution issues
+declare const ApplicationV2: any;
+declare const HandlebarsApplicationMixin: any;
+declare const DialogV2: any;
+declare const Tabs: any;
 
 export interface TaskFormData {
   name: string;
@@ -19,9 +27,7 @@ export interface TaskFormData {
   enabled: boolean;
 }
 
-export class TaskManagerApplication extends foundry.applications.api.HandlebarsApplicationMixin(
-  foundry.applications.api.ApplicationV2
-) {
+export class TaskManagerApplication extends HandlebarsApplicationMixin(ApplicationV2) {
   private scheduler: TaskScheduler;
   private persistence: TaskPersistence;
   private activeTab: string = 'tasks';
@@ -37,7 +43,7 @@ export class TaskManagerApplication extends foundry.applications.api.HandlebarsA
     executionLogging: false,
   };
 
-  constructor(options: Partial<foundry.applications.api.ApplicationV2.Configuration> = {}) {
+  constructor(options: any = {}) {
     super(options);
     this.scheduler = TaskScheduler.getInstance();
     this.persistence = TaskPersistence.getInstance();
@@ -45,7 +51,7 @@ export class TaskManagerApplication extends foundry.applications.api.HandlebarsA
   }
 
   /** @override */
-  static DEFAULT_OPTIONS: Partial<foundry.applications.api.ApplicationV2.Configuration> = {
+  static DEFAULT_OPTIONS: any = {
     id: 'task-manager',
     tag: 'div',
     window: {
@@ -88,9 +94,7 @@ export class TaskManagerApplication extends foundry.applications.api.HandlebarsA
   };
 
   /** @override */
-  async _prepareContext(
-    _options: Partial<foundry.applications.api.ApplicationV2.RenderOptions>
-  ): Promise<any> {
+  async _prepareContext(_options: any): Promise<any> {
     // Refresh task data
     await this.refreshData();
 
@@ -114,10 +118,7 @@ export class TaskManagerApplication extends foundry.applications.api.HandlebarsA
   }
 
   /** @override */
-  _onRender(
-    context: any,
-    options: Partial<foundry.applications.api.ApplicationV2.RenderOptions>
-  ): void {
+  _onRender(context: any, options: any): void {
     super._onRender(context, options);
 
     // Start real-time updates after render
@@ -172,7 +173,7 @@ export class TaskManagerApplication extends foundry.applications.api.HandlebarsA
 
     if (!task || !taskId) return;
 
-    const confirmed = await foundry.applications.api.DialogV2.confirm({
+    const confirmed = await DialogV2.confirm({
       window: { title: 'Delete Task' },
       content: `<p>Are you sure you want to delete the task "<strong>${task.name}</strong>"?</p>
                 <p>This action cannot be undone.</p>`,
@@ -238,7 +239,7 @@ export class TaskManagerApplication extends foundry.applications.api.HandlebarsA
 
     if (!task) return;
 
-    const confirmed = await foundry.applications.api.DialogV2.confirm({
+    const confirmed = await DialogV2.confirm({
       window: { title: 'Execute Task Now' },
       content: `<p>Execute the task "<strong>${task.name}</strong>" immediately?</p>
                 <p>This will run the task's JavaScript code right now.</p>`,
@@ -319,7 +320,7 @@ export class TaskManagerApplication extends foundry.applications.api.HandlebarsA
       return;
     }
 
-    const confirmed = await foundry.applications.api.DialogV2.confirm({
+    const confirmed = await DialogV2.confirm({
       window: { title: 'Delete Multiple Tasks' },
       content: `<p>Are you sure you want to delete ${selectedIds.length} selected tasks?</p>
                 <p>This action cannot be undone.</p>`,
@@ -350,7 +351,7 @@ export class TaskManagerApplication extends foundry.applications.api.HandlebarsA
   async onCleanup(event: Event, _target: HTMLElement): Promise<void> {
     event.preventDefault();
 
-    const confirmed = await foundry.applications.api.DialogV2.confirm({
+    const confirmed = await DialogV2.confirm({
       window: { title: 'Clean Up Old Tasks' },
       content: `<p>This will remove old, disabled, ephemeral tasks (older than 7 days).</p>
                 <p>UI-configured tasks will not be affected.</p>`,
@@ -423,7 +424,7 @@ export class TaskManagerApplication extends foundry.applications.api.HandlebarsA
 
     // Find the dialog element to close it later
     const dialogElement = (event.target as HTMLElement).closest('.dialog');
-    let dialogInstance = null;
+    let dialogInstance: any = null;
     if (dialogElement) {
       // Try to find the DialogV2 instance
       dialogInstance = (dialogElement as any).application;
@@ -532,7 +533,7 @@ export class TaskManagerApplication extends foundry.applications.api.HandlebarsA
     const contextDate = (this as any)._contextDate;
     let defaultDateTime = '';
     let useAbsoluteTime = false;
-    let contextCalendarDate = null;
+    let contextCalendarDate: CalendarDate | null = null;
 
     if (contextDate && !task) {
       // Convert calendar date to datetime-local format (YYYY-MM-DDTHH:MM)
@@ -623,7 +624,7 @@ export class TaskManagerApplication extends foundry.applications.api.HandlebarsA
       },
     };
 
-    const html = await foundry.applications.handlebars.renderTemplate(template, data);
+    const html = await renderTemplate(template, data);
 
     // Use legacy Dialog - works better with our CSS
     new Dialog({
@@ -664,7 +665,7 @@ export class TaskManagerApplication extends foundry.applications.api.HandlebarsA
         }
 
         // Initialize Foundry's tabs system
-        const tabs = new foundry.applications.ux.Tabs({
+        const tabs = new Tabs({
           navSelector: '.tabs',
           contentSelector: '.tab-content',
           initial: 'when',
@@ -680,7 +681,7 @@ export class TaskManagerApplication extends foundry.applications.api.HandlebarsA
           testButton.addEventListener('click', this.onTestCode.bind(this, html));
         }
       },
-    }).render(true, { width: 800, height: 'auto', classes: ['task-form-dialog'] });
+    }).render(true);
   }
 
   /**
@@ -935,7 +936,7 @@ export class TaskManagerApplication extends foundry.applications.api.HandlebarsA
   async onResetSettings(event: Event, _target: HTMLElement): Promise<void> {
     event.preventDefault();
 
-    const confirmed = await foundry.applications.api.DialogV2.confirm({
+    const confirmed = await DialogV2.confirm({
       window: { title: 'Reset Settings' },
       content: `<p>Reset all Task Manager settings to their default values?</p>`,
     });

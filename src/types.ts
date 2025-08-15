@@ -66,6 +66,7 @@ export interface TaskExecutionResult {
   success: boolean;
   result?: any;
   error?: string;
+  timeout?: boolean; // Whether the task timed out
   executionTime: number; // Duration in milliseconds
   timestamp: number; // Unix timestamp when executed
 }

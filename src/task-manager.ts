@@ -595,7 +595,7 @@ export class TaskManager {
     }
 
     if (TimeConverter.isRelativeTimeSpec(timeSpec)) {
-      const parts = [];
+      const parts: string[] = [];
       if (timeSpec.days) parts.push(`${timeSpec.days}d`);
       if (timeSpec.hours) parts.push(`${timeSpec.hours}h`);
       if (timeSpec.minutes) parts.push(`${timeSpec.minutes}m`);
@@ -616,7 +616,7 @@ export class TaskManager {
     const timeType = useGameTime ? 'Game Time' : 'Real Time';
 
     if (TimeConverter.isRelativeTimeSpec(interval)) {
-      const parts = [];
+      const parts: string[] = [];
       if (interval.days) parts.push(`${interval.days}d`);
       if (interval.hours) parts.push(`${interval.hours}h`);
       if (interval.minutes) parts.push(`${interval.minutes}m`);

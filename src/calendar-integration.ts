@@ -191,8 +191,8 @@ export class CalendarIntegration {
       const calendarDays = htmlElement.querySelectorAll('.calendar-day');
       calendarDays.forEach((day: Element) => {
         // Remove existing listeners to prevent duplicates
-        day.removeEventListener('contextmenu', this.handleRightClick);
-        day.removeEventListener('click', this.handleCalendarClick);
+        day.removeEventListener('contextmenu', this.handleRightClick as unknown as EventListener);
+        day.removeEventListener('click', this.handleCalendarClick as unknown as EventListener);
 
         // Add right-click handler for task creation/viewing
         day.addEventListener('contextmenu', event => {

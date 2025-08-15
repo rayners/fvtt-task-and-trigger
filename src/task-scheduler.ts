@@ -398,7 +398,7 @@ export class TaskScheduler {
     }
 
     if (TimeConverter.isRelativeTimeSpec(timeSpec)) {
-      const parts = [];
+      const parts: string[] = [];
       if (timeSpec.days) parts.push(`${timeSpec.days} day${timeSpec.days !== 1 ? 's' : ''}`);
       if (timeSpec.hours) parts.push(`${timeSpec.hours} hour${timeSpec.hours !== 1 ? 's' : ''}`);
       if (timeSpec.minutes)

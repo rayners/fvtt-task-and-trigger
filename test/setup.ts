@@ -4,6 +4,70 @@
 
 import { beforeEach, vi } from 'vitest';
 
+// Set up additional global mocks needed for task-manager-application.ts at module level
+(globalThis as any).HandlebarsApplicationMixin = (base: any) => {
+  return class extends base {
+    static PARTS = {
+      content: {
+        template: 'test-template.hbs',
+      },
+    };
+  };
+};
+
+(globalThis as any).DialogV2 = {
+  confirm: vi.fn().mockResolvedValue(true),
+};
+
+(globalThis as any).Tabs = class MockTabs {
+  constructor(options: any) {
+    // Mock constructor
+  }
+  bind(element: any) {
+    // Mock bind method
+  }
+};
+
+(globalThis as any).renderTemplate = vi.fn().mockResolvedValue('<div>Mock Template</div>');
+
+// Set up ApplicationV2 class globally at module level
+(globalThis as any).ApplicationV2 = class MockApplicationV2 {
+  static DEFAULT_OPTIONS = {
+    id: 'mock-app',
+    window: { title: 'Mock Application' },
+    position: { width: 400, height: 300 },
+  };
+
+  get element() {
+    return {
+      querySelector: vi.fn().mockReturnValue({
+        value: 'test',
+        checked: false,
+      }),
+      querySelectorAll: vi.fn().mockReturnValue([]),
+    };
+  }
+
+  render() {
+    return Promise.resolve(this);
+  }
+  close() {
+    return Promise.resolve();
+  }
+
+  constructor(options = {}) {
+    // Mock constructor
+  }
+
+  async _prepareContext() {
+    return {};
+  }
+
+  _onRender(context: any, options: any) {
+    // Mock implementation
+  }
+};
+
 // Set up foundry globals at module level so they're available during imports
 (global as any).foundry = {
   utils: {

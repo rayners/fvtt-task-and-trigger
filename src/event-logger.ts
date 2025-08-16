@@ -66,13 +66,12 @@ export class EventLogger {
     try {
       // Load settings from Foundry game settings
       await this.loadSettings();
-      
+
       // Register settings if they don't exist
       this.registerSettings();
 
       this.isInitialized = true;
       console.log('Task & Trigger | Event logger initialized', { settings: this.settings });
-
     } catch (error) {
       console.error('Task & Trigger | Failed to initialize event logger:', error);
     }
@@ -91,8 +90,7 @@ export class EventLogger {
       return;
     }
 
-    const executionType = result.success ? 'success' : 
-                         result.timeout ? 'timeout' : 'error';
+    const executionType = result.success ? 'success' : result.timeout ? 'timeout' : 'error';
 
     // Check if we should log this type of execution
     if (executionType === 'success' && !this.settings.logSuccesses) {
@@ -118,15 +116,14 @@ export class EventLogger {
       error: result.error || undefined,
       scope: task.scope,
       worldTime: task.useGameTime ? game.time?.worldTime : undefined,
-      userTriggered
+      userTriggered,
     };
 
     try {
       await this.writeLogEntry(logEntry);
-      
+
       // Emit hook for other modules to listen to
       Hooks.callAll('taskTriggerEventLogged', logEntry);
-
     } catch (error) {
       console.error('Task & Trigger | Failed to log task execution:', error);
     }
@@ -138,9 +135,7 @@ export class EventLogger {
   async getRecentLogs(limit: number = 50): Promise<LogEntry[]> {
     try {
       const logs = await this.readLogEntries();
-      return logs
-        .sort((a, b) => b.timestamp - a.timestamp)
-        .slice(0, limit);
+      return logs.sort((a, b) => b.timestamp - a.timestamp).slice(0, limit);
     } catch (error) {
       console.error('Task & Trigger | Failed to get recent logs:', error);
       return [];
@@ -172,40 +167,44 @@ export class EventLogger {
     failedExecutions: number;
     timeoutExecutions: number;
     averageDuration: number;
-    executionsPerDay: { date: string; count: number; }[];
-    topFailingTasks: { taskId: string; taskName: string; failures: number; }[];
+    executionsPerDay: { date: string; count: number }[];
+    topFailingTasks: { taskId: string; taskName: string; failures: number }[];
   }> {
     try {
       const logs = await this.readLogEntries();
-      const cutoffTime = Math.floor(Date.now() / 1000) - (days * 24 * 60 * 60);
+      const cutoffTime = Math.floor(Date.now() / 1000) - days * 24 * 60 * 60;
       const recentLogs = logs.filter(log => log.timestamp >= cutoffTime);
 
       const totalExecutions = recentLogs.length;
       const successfulExecutions = recentLogs.filter(log => log.executionType === 'success').length;
       const failedExecutions = recentLogs.filter(log => log.executionType === 'error').length;
       const timeoutExecutions = recentLogs.filter(log => log.executionType === 'timeout').length;
-      
-      const averageDuration = totalExecutions > 0 ? 
-        recentLogs.reduce((sum, log) => sum + log.duration, 0) / totalExecutions : 0;
+
+      const averageDuration =
+        totalExecutions > 0
+          ? recentLogs.reduce((sum, log) => sum + log.duration, 0) / totalExecutions
+          : 0;
 
       // Group by day
-      const executionsPerDay: { date: string; count: number; }[] = [];
+      const executionsPerDay: { date: string; count: number }[] = [];
       const dayGroups = new Map<string, number>();
-      
+
       for (const log of recentLogs) {
         const date = new Date(log.timestamp * 1000).toISOString().split('T')[0];
         dayGroups.set(date, (dayGroups.get(date) || 0) + 1);
       }
-      
+
       for (const [date, count] of dayGroups) {
         executionsPerDay.push({ date, count });
       }
       executionsPerDay.sort((a, b) => a.date.localeCompare(b.date));
 
       // Top failing tasks
-      const failureGroups = new Map<string, { taskName: string; failures: number; }>();
-      const failedLogs = recentLogs.filter(log => log.executionType === 'error' || log.executionType === 'timeout');
-      
+      const failureGroups = new Map<string, { taskName: string; failures: number }>();
+      const failedLogs = recentLogs.filter(
+        log => log.executionType === 'error' || log.executionType === 'timeout'
+      );
+
       for (const log of failedLogs) {
         const existing = failureGroups.get(log.taskId);
         if (existing) {
@@ -214,7 +213,7 @@ export class EventLogger {
           failureGroups.set(log.taskId, { taskName: log.taskName, failures: 1 });
         }
       }
-      
+
       const topFailingTasks = Array.from(failureGroups.entries())
         .map(([taskId, data]) => ({ taskId, taskName: data.taskName, failures: data.failures }))
         .sort((a, b) => b.failures - a.failures)
@@ -227,9 +226,8 @@ export class EventLogger {
         timeoutExecutions,
         averageDuration,
         executionsPerDay,
-        topFailingTasks
+        topFailingTasks,
       };
-
     } catch (error) {
       console.error('Task & Trigger | Failed to get execution stats:', error);
       return {
@@ -239,7 +237,7 @@ export class EventLogger {
         timeoutExecutions: 0,
         averageDuration: 0,
         executionsPerDay: [],
-        topFailingTasks: []
+        topFailingTasks: [],
       };
     }
   }
@@ -261,12 +259,11 @@ export class EventLogger {
       // Keep only the most recent entries
       const sortedLogs = logs.sort((a, b) => b.timestamp - a.timestamp);
       const logsToKeep = sortedLogs.slice(0, this.settings.maxEntries);
-      
+
       await this.writeAllLogEntries(logsToKeep);
-      
+
       const removedCount = logs.length - logsToKeep.length;
       console.log(`Task & Trigger | Cleaned up ${removedCount} old log entries`);
-
     } catch (error) {
       console.error('Task & Trigger | Failed to cleanup logs:', error);
     }
@@ -277,7 +274,7 @@ export class EventLogger {
    */
   async updateSettings(newSettings: Partial<LoggerSettings>): Promise<void> {
     this.settings = { ...this.settings, ...newSettings };
-    
+
     try {
       await game.settings?.set('task-and-trigger', 'eventLogger', this.settings);
       console.log('Task & Trigger | Updated event logger settings', this.settings);
@@ -306,11 +303,19 @@ export class EventLogger {
   async exportLogs(format: 'json' | 'csv' = 'json'): Promise<string> {
     try {
       const logs = await this.readLogEntries();
-      
+
       if (format === 'csv') {
-        const headers = ['timestamp', 'taskId', 'taskName', 'executionType', 'duration', 'scope', 'error'];
+        const headers = [
+          'timestamp',
+          'taskId',
+          'taskName',
+          'executionType',
+          'duration',
+          'scope',
+          'error',
+        ];
         const csvRows = [headers.join(',')];
-        
+
         for (const log of logs) {
           const row = [
             new Date(log.timestamp * 1000).toISOString(),
@@ -319,16 +324,15 @@ export class EventLogger {
             log.executionType,
             log.duration.toString(),
             log.scope,
-            log.error ? `"${log.error.replace(/"/g, '""')}"` : ''
+            log.error ? `"${log.error.replace(/"/g, '""')}"` : '',
           ];
           csvRows.push(row.join(','));
         }
-        
+
         return csvRows.join('\n');
       } else {
         return JSON.stringify(logs, null, 2);
       }
-
     } catch (error) {
       console.error('Task & Trigger | Failed to export logs:', error);
       throw error;
@@ -350,7 +354,7 @@ export class EventLogger {
         scope: 'world',
         config: false,
         type: Object,
-        default: this.getDefaultSettings()
+        default: this.getDefaultSettings(),
       });
     } catch {
       console.warn('Task & Trigger | Settings may already be registered');
@@ -366,7 +370,10 @@ export class EventLogger {
     }
 
     try {
-      const savedSettings = await game.settings.get('task-and-trigger', 'eventLogger') as LoggerSettings;
+      const savedSettings = (await game.settings.get(
+        'task-and-trigger',
+        'eventLogger'
+      )) as LoggerSettings;
       this.settings = { ...this.getDefaultSettings(), ...savedSettings };
     } catch {
       console.log('Task & Trigger | Using default logger settings');
@@ -384,7 +391,7 @@ export class EventLogger {
       logSuccesses: true,
       logErrors: true,
       detailedLogging: false,
-      minDurationThreshold: 0
+      minDurationThreshold: 0,
     };
   }
 
@@ -394,7 +401,7 @@ export class EventLogger {
   private async writeLogEntry(entry: LogEntry): Promise<void> {
     const logs = await this.readLogEntries();
     logs.push(entry);
-    
+
     // Auto-cleanup if we exceed max entries
     if (logs.length > this.settings.maxEntries * 1.1) {
       const sortedLogs = logs.sort((a, b) => b.timestamp - a.timestamp);
@@ -425,7 +432,7 @@ export class EventLogger {
     await this.storage.writeData('event-logs', 'world', {
       logs,
       lastUpdated: Math.floor(Date.now() / 1000),
-      version: 1
+      version: 1,
     });
   }
 
@@ -438,10 +445,10 @@ export class EventLogger {
     }
 
     console.log('Task & Trigger | Shutting down event logger');
-    
+
     // Final cleanup
     await this.cleanupLogs();
-    
+
     this.isInitialized = false;
   }
 }

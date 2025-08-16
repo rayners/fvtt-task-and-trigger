@@ -37,12 +37,12 @@ declare global {
           };
           actions?: Record<string, (...args: any[]) => any>;
         }
-        
+
         interface ApplicationV2RenderOptions {
           force?: boolean;
           focus?: boolean;
         }
-        
+
         class ApplicationV2 {
           static DEFAULT_OPTIONS: any;
           static PARTS: any;
@@ -53,16 +53,18 @@ declare global {
           _prepareContext(options: Partial<ApplicationV2RenderOptions>): Promise<any>;
           _onRender(context: any, options: Partial<ApplicationV2RenderOptions>): void;
         }
-        
+
         namespace ApplicationV2 {
           type Configuration = ApplicationV2Configuration;
           type RenderOptions = ApplicationV2RenderOptions;
         }
-        
-        function HandlebarsApplicationMixin<T extends new (...args: any[]) => any>(base: T): T & {
+
+        function HandlebarsApplicationMixin<T extends new (...args: any[]) => any>(
+          base: T
+        ): T & {
           prototype: any;
         };
-        
+
         class DialogV2 {
           static confirm(options: {
             window?: { title: string };
@@ -72,7 +74,7 @@ declare global {
               callback?: (...args: any[]) => any;
             };
             no?: {
-              label?: string; 
+              label?: string;
               callback?: (...args: any[]) => any;
             };
             defaultYes?: boolean;
@@ -97,12 +99,12 @@ declare global {
 declare global {
   type FormApplicationOptions = any;
   type RenderOptions = any;
-  
+
   class ChatMessage {
     static create(data: any): Promise<any>;
     static getSpeaker(): any;
   }
-  
+
   class Dialog {
     constructor(data: {
       title: string;
@@ -113,7 +115,7 @@ declare global {
     });
     render(force?: boolean, options?: any): Dialog;
   }
-  
+
   class FormApplication {
     static get defaultOptions(): FormApplicationOptions;
     _updateObject(): Promise<void>;

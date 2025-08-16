@@ -3,7 +3,11 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { AccumulatedTimeManager, AccumulatedTimeTaskOptions, TimeLogEntry } from '../src/accumulated-time-manager';
+import {
+  AccumulatedTimeManager,
+  AccumulatedTimeTaskOptions,
+  TimeLogEntry,
+} from '../src/accumulated-time-manager';
 import { TaskManager } from '../src/task-manager';
 import { JournalStorage } from '../src/journal-storage';
 import { Task, TimeEntry } from '../src/types';
@@ -11,7 +15,7 @@ import './setup';
 
 describe('AccumulatedTimeManager', () => {
   let accumulatedTimeManager: AccumulatedTimeManager;
-  let mockTaskStorage: { world: Map<string, Task>, client: Map<string, Task> };
+  let mockTaskStorage: { world: Map<string, Task>; client: Map<string, Task> };
 
   beforeEach(() => {
     // Clear singleton instances
@@ -24,7 +28,7 @@ describe('AccumulatedTimeManager', () => {
     // Create task storage for mock persistence
     mockTaskStorage = {
       world: new Map<string, Task>(),
-      client: new Map<string, Task>()
+      client: new Map<string, Task>(),
     };
 
     // Mock storage operations
@@ -33,7 +37,7 @@ describe('AccumulatedTimeManager', () => {
       mockTaskStorage[task.scope].set(task.id, task);
       return Promise.resolve();
     });
-    
+
     vi.spyOn(storage, 'updateTask').mockImplementation(async (task: Task) => {
       if (!mockTaskStorage[task.scope].has(task.id)) {
         throw new Error(`Task not found: ${task.id}`);
@@ -41,10 +45,12 @@ describe('AccumulatedTimeManager', () => {
       mockTaskStorage[task.scope].set(task.id, task);
       return Promise.resolve();
     });
-    
-    vi.spyOn(storage, 'getTask').mockImplementation(async (taskId: string, scope: 'world' | 'client') => {
-      return mockTaskStorage[scope].get(taskId) || null;
-    });
+
+    vi.spyOn(storage, 'getTask').mockImplementation(
+      async (taskId: string, scope: 'world' | 'client') => {
+        return mockTaskStorage[scope].get(taskId) || null;
+      }
+    );
 
     vi.spyOn(storage, 'loadTasks').mockImplementation(async (scope: 'world' | 'client') => {
       return Array.from(mockTaskStorage[scope].values());
@@ -53,7 +59,7 @@ describe('AccumulatedTimeManager', () => {
     vi.spyOn(storage, 'getAllTasks').mockImplementation(async () => {
       return {
         world: Array.from(mockTaskStorage.world.values()),
-        client: Array.from(mockTaskStorage.client.values())
+        client: Array.from(mockTaskStorage.client.values()),
       };
     });
 
@@ -63,7 +69,7 @@ describe('AccumulatedTimeManager', () => {
       mockTaskStorage[task.scope].set(task.id, task);
       return Promise.resolve();
     });
-    
+
     vi.spyOn(taskManager, 'updateTask').mockImplementation(async (task: Task) => {
       if (!mockTaskStorage[task.scope].has(task.id)) {
         throw new Error(`Task not found: ${task.id}`);
@@ -71,7 +77,7 @@ describe('AccumulatedTimeManager', () => {
       mockTaskStorage[task.scope].set(task.id, task);
       return Promise.resolve();
     });
-    
+
     vi.spyOn(taskManager, 'getTask').mockImplementation(async (taskId: string) => {
       // Try both scopes
       return mockTaskStorage.client.get(taskId) || mockTaskStorage.world.get(taskId) || null;
@@ -80,7 +86,7 @@ describe('AccumulatedTimeManager', () => {
     vi.spyOn(taskManager, 'getAllTasks').mockImplementation(async () => {
       return {
         world: Array.from(mockTaskStorage.world.values()),
-        client: Array.from(mockTaskStorage.client.values())
+        client: Array.from(mockTaskStorage.client.values()),
       };
     });
   });
@@ -100,11 +106,11 @@ describe('AccumulatedTimeManager', () => {
         description: 'Research a new spell',
         requiredTime: { hours: 15 },
         callback: 'console.log("Spell research complete!");',
-        scope: 'client'
+        scope: 'client',
       };
 
       const taskId = await accumulatedTimeManager.createAccumulatedTimeTask(options);
-      
+
       expect(taskId).toBeTruthy();
       expect(typeof taskId).toBe('string');
 
@@ -121,13 +127,13 @@ describe('AccumulatedTimeManager', () => {
       const options: AccumulatedTimeTaskOptions = {
         name: 'Crafting Project',
         requiredTime: { days: 2, hours: 4, minutes: 30 },
-        callback: 'console.log("Crafting complete!");'
+        callback: 'console.log("Crafting complete!");',
       };
 
       const taskId = await accumulatedTimeManager.createAccumulatedTimeTask(options);
       const task = mockTaskStorage.client.get(taskId);
-      
-      const expectedSeconds = (2 * 24 * 3600) + (4 * 3600) + (30 * 60);
+
+      const expectedSeconds = 2 * 24 * 3600 + 4 * 3600 + 30 * 60;
       expect(task?.requiredTime).toBe(expectedSeconds);
     });
   });
@@ -139,7 +145,7 @@ describe('AccumulatedTimeManager', () => {
       const options: AccumulatedTimeTaskOptions = {
         name: 'Test Task',
         requiredTime: { hours: 10 },
-        callback: 'console.log("Complete!");'
+        callback: 'console.log("Complete!");',
       };
       taskId = await accumulatedTimeManager.createAccumulatedTimeTask(options);
     });
@@ -147,13 +153,13 @@ describe('AccumulatedTimeManager', () => {
     it('should add time to a task', async () => {
       const entry: TimeLogEntry = {
         duration: { hours: 3 },
-        description: 'First work session'
+        description: 'First work session',
       };
 
       const isComplete = await accumulatedTimeManager.addTime(taskId, entry);
-      
+
       expect(isComplete).toBe(false);
-      
+
       const task = mockTaskStorage.client.get(taskId);
       expect(task?.accumulatedTime).toBe(3 * 3600);
       expect(task?.timeEntries).toHaveLength(1);
@@ -165,13 +171,13 @@ describe('AccumulatedTimeManager', () => {
       // Add enough time to complete the task
       const entry: TimeLogEntry = {
         duration: { hours: 10 },
-        description: 'Marathon session'
+        description: 'Marathon session',
       };
 
       const isComplete = await accumulatedTimeManager.addTime(taskId, entry);
-      
+
       expect(isComplete).toBe(true);
-      
+
       const task = mockTaskStorage.client.get(taskId);
       expect(task?.accumulatedTime).toBe(10 * 3600);
       expect(task?.targetTime).toBeGreaterThan(0); // Should be set for execution
@@ -183,7 +189,7 @@ describe('AccumulatedTimeManager', () => {
       const isComplete = await accumulatedTimeManager.addTime(taskId, { duration: { hours: 3 } });
 
       expect(isComplete).toBe(true);
-      
+
       const task = mockTaskStorage.client.get(taskId);
       expect(task?.accumulatedTime).toBe(10 * 3600);
       expect(task?.timeEntries).toHaveLength(3);
@@ -191,18 +197,22 @@ describe('AccumulatedTimeManager', () => {
 
     it('should reject negative durations', async () => {
       const entry: TimeLogEntry = {
-        duration: { hours: -1 }
+        duration: { hours: -1 },
       };
 
-      await expect(accumulatedTimeManager.addTime(taskId, entry)).rejects.toThrow('Duration must be positive');
+      await expect(accumulatedTimeManager.addTime(taskId, entry)).rejects.toThrow(
+        'Duration must be positive'
+      );
     });
 
     it('should reject invalid task IDs', async () => {
       const entry: TimeLogEntry = {
-        duration: { hours: 1 }
+        duration: { hours: 1 },
       };
 
-      await expect(accumulatedTimeManager.addTime('invalid-id', entry)).rejects.toThrow('Task not found');
+      await expect(accumulatedTimeManager.addTime('invalid-id', entry)).rejects.toThrow(
+        'Task not found'
+      );
     });
   });
 
@@ -213,16 +223,16 @@ describe('AccumulatedTimeManager', () => {
       const options: AccumulatedTimeTaskOptions = {
         name: 'Progress Test',
         requiredTime: { hours: 20 },
-        callback: 'console.log("Done!");'
+        callback: 'console.log("Done!");',
       };
       taskId = await accumulatedTimeManager.createAccumulatedTimeTask(options);
     });
 
     it('should return progress information', async () => {
       await accumulatedTimeManager.addTime(taskId, { duration: { hours: 8 } });
-      
+
       const progress = await accumulatedTimeManager.getTaskProgress(taskId);
-      
+
       expect(progress).toBeTruthy();
       expect(progress?.progress).toBe(0.4); // 8/20 = 0.4
       expect(progress?.remaining).toBe(12 * 3600); // 12 hours remaining
@@ -232,9 +242,9 @@ describe('AccumulatedTimeManager', () => {
 
     it('should handle completed tasks', async () => {
       await accumulatedTimeManager.addTime(taskId, { duration: { hours: 25 } });
-      
+
       const progress = await accumulatedTimeManager.getTaskProgress(taskId);
-      
+
       expect(progress?.progress).toBe(1.0);
       expect(progress?.remaining).toBe(0);
       expect(progress?.isComplete).toBe(true);
@@ -262,7 +272,7 @@ describe('AccumulatedTimeManager', () => {
         enabled: true,
         created: Date.now(),
         runCount: 0,
-        logExecution: false
+        logExecution: false,
       };
       mockTaskStorage.client.set('regular-1', regularTask);
 
@@ -270,11 +280,11 @@ describe('AccumulatedTimeManager', () => {
       await accumulatedTimeManager.createAccumulatedTimeTask({
         name: 'Accumulated Task',
         requiredTime: { hours: 5 },
-        callback: 'console.log("accumulated");'
+        callback: 'console.log("accumulated");',
       });
 
       const accumulatedTasks = await accumulatedTimeManager.listAccumulatedTimeTasks();
-      
+
       expect(accumulatedTasks).toHaveLength(1);
       expect(accumulatedTasks[0].isAccumulatedTime).toBe(true);
     });
@@ -284,14 +294,14 @@ describe('AccumulatedTimeManager', () => {
         name: 'Client Task',
         requiredTime: { hours: 5 },
         callback: 'console.log("client");',
-        scope: 'client'
+        scope: 'client',
       });
 
       await accumulatedTimeManager.createAccumulatedTimeTask({
         name: 'World Task',
         requiredTime: { hours: 3 },
         callback: 'console.log("world");',
-        scope: 'world'
+        scope: 'world',
       });
 
       const clientTasks = await accumulatedTimeManager.listAccumulatedTimeTasks('client');
@@ -311,30 +321,30 @@ describe('AccumulatedTimeManager', () => {
       taskId = await accumulatedTimeManager.createAccumulatedTimeTask({
         name: 'Entry Management Test',
         requiredTime: { hours: 10 },
-        callback: 'console.log("test");'
+        callback: 'console.log("test");',
       });
 
       // Add some time entries
-      await accumulatedTimeManager.addTime(taskId, { 
-        duration: { hours: 2 }, 
-        description: 'First session' 
+      await accumulatedTimeManager.addTime(taskId, {
+        duration: { hours: 2 },
+        description: 'First session',
       });
-      await accumulatedTimeManager.addTime(taskId, { 
-        duration: { hours: 3 }, 
-        description: 'Second session' 
+      await accumulatedTimeManager.addTime(taskId, {
+        duration: { hours: 3 },
+        description: 'Second session',
       });
     });
 
     it('should remove time entries', async () => {
       const task = mockTaskStorage.client.get(taskId);
       const entryId = task?.timeEntries?.[0]?.id;
-      
+
       expect(entryId).toBeTruthy();
-      
+
       const removed = await accumulatedTimeManager.removeTimeEntry(taskId, entryId!);
-      
+
       expect(removed).toBe(true);
-      
+
       const updatedTask = mockTaskStorage.client.get(taskId);
       expect(updatedTask?.timeEntries).toHaveLength(1);
       expect(updatedTask?.accumulatedTime).toBe(3 * 3600); // Only second session remains
@@ -343,19 +353,19 @@ describe('AccumulatedTimeManager', () => {
     it('should edit time entries', async () => {
       const task = mockTaskStorage.client.get(taskId);
       const entryId = task?.timeEntries?.[0]?.id;
-      
+
       const edited = await accumulatedTimeManager.editTimeEntry(
-        taskId, 
-        entryId!, 
-        { hours: 4 }, 
+        taskId,
+        entryId!,
+        { hours: 4 },
         'Updated first session'
       );
-      
+
       expect(edited).toBe(true);
-      
+
       const updatedTask = mockTaskStorage.client.get(taskId);
       const updatedEntry = updatedTask?.timeEntries?.find(e => e.id === entryId);
-      
+
       expect(updatedEntry?.duration).toBe(4 * 3600);
       expect(updatedEntry?.description).toBe('Updated first session');
       expect(updatedTask?.accumulatedTime).toBe(7 * 3600); // 4 + 3 hours
@@ -369,22 +379,22 @@ describe('AccumulatedTimeManager', () => {
       taskId = await accumulatedTimeManager.createAccumulatedTimeTask({
         name: 'Export Test',
         requiredTime: { hours: 10 },
-        callback: 'console.log("export test");'
+        callback: 'console.log("export test");',
       });
 
-      await accumulatedTimeManager.addTime(taskId, { 
-        duration: { hours: 3 }, 
-        description: 'Session 1' 
+      await accumulatedTimeManager.addTime(taskId, {
+        duration: { hours: 3 },
+        description: 'Session 1',
       });
-      await accumulatedTimeManager.addTime(taskId, { 
-        duration: { hours: 2, minutes: 30 }, 
-        description: 'Session 2' 
+      await accumulatedTimeManager.addTime(taskId, {
+        duration: { hours: 2, minutes: 30 },
+        description: 'Session 2',
       });
     });
 
     it('should export as CSV', async () => {
       const csvData = await accumulatedTimeManager.exportTaskTimeLog(taskId, 'csv');
-      
+
       expect(csvData).toContain('Date,Duration (Hours),Description,Logged By');
       expect(csvData).toContain('3.00,"Session 1"');
       expect(csvData).toContain('2.50,"Session 2"');
@@ -393,7 +403,7 @@ describe('AccumulatedTimeManager', () => {
     it('should export as JSON', async () => {
       const jsonData = await accumulatedTimeManager.exportTaskTimeLog(taskId, 'json');
       const parsed = JSON.parse(jsonData);
-      
+
       expect(parsed.taskName).toBe('Export Test');
       expect(parsed.entries).toHaveLength(2);
       expect(parsed.entries[0].description).toBe('Session 1');
@@ -408,7 +418,7 @@ describe('AccumulatedTimeManager', () => {
       taskId = await accumulatedTimeManager.createAccumulatedTimeTask({
         name: 'Stats Test',
         requiredTime: { hours: 20 },
-        callback: 'console.log("stats");'
+        callback: 'console.log("stats");',
       });
 
       // Mock time entries with different durations
@@ -417,14 +427,14 @@ describe('AccumulatedTimeManager', () => {
       task.timeEntries = [
         { id: '1', timestamp: now - 86400, duration: 7200, description: 'Session 1' }, // 2 hours, 1 day ago
         { id: '2', timestamp: now - 3600, duration: 10800, description: 'Session 2' }, // 3 hours, 1 hour ago
-        { id: '3', timestamp: now - 1800, duration: 3600, description: 'Session 3' } // 1 hour, 30 min ago
+        { id: '3', timestamp: now - 1800, duration: 3600, description: 'Session 3' }, // 1 hour, 30 min ago
       ];
       task.accumulatedTime = 21600; // 6 total hours
     });
 
     it('should calculate statistics', async () => {
       const stats = await accumulatedTimeManager.getTaskStatistics(taskId);
-      
+
       expect(stats?.totalEntries).toBe(3);
       expect(stats?.averageSessionDuration).toBe(7200); // (2 + 3 + 1) * 3600 / 3
       expect(stats?.longestSession).toBe(10800); // 3 hours

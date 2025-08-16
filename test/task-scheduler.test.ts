@@ -16,7 +16,7 @@ describe('TaskScheduler', () => {
     // Clear singleton instances
     (TaskScheduler as any).instance = undefined;
     (TaskManager as any).instance = undefined;
-    
+
     scheduler = TaskScheduler.getInstance();
     mockTaskManager = TaskManager.getInstance();
 
@@ -221,7 +221,7 @@ describe('TaskScheduler', () => {
         created: Math.floor(Date.now() / 1000),
         runCount: 5,
         lastExecution: Math.floor(Date.now() / 1000) - 60,
-        logExecution: false
+        logExecution: false,
       };
 
       vi.spyOn(mockTaskManager, 'getTask').mockResolvedValue(mockTask);
@@ -239,7 +239,7 @@ describe('TaskScheduler', () => {
         lastExecution: mockTask.lastExecution,
         lastError: undefined,
         useGameTime: false,
-        scope: 'client'
+        scope: 'client',
       });
     });
 
@@ -255,35 +255,39 @@ describe('TaskScheduler', () => {
   describe('task listing', () => {
     it('should list all tasks', async () => {
       const mockTasks = {
-        world: [{
-          id: 'world-task',
-          name: 'World Task',
-          timeSpec: { hours: 1 },
-          targetTime: Math.floor(Date.now() / 1000) + 3600,
-          callback: 'console.log("world");',
-          useGameTime: true,
-          recurring: false,
-          scope: 'world' as const,
-          enabled: true,
-          created: Math.floor(Date.now() / 1000),
-          runCount: 0,
-          logExecution: false
-        }],
-        client: [{
-          id: 'client-task',
-          name: 'Client Task',
-          timeSpec: { minutes: 30 },
-          targetTime: Math.floor(Date.now() / 1000) + 1800,
-          callback: 'console.log("client");',
-          useGameTime: false,
-          recurring: true,
-          interval: { minutes: 30 },
-          scope: 'client' as const,
-          enabled: true,
-          created: Math.floor(Date.now() / 1000),
-          runCount: 3,
-          logExecution: false
-        }]
+        world: [
+          {
+            id: 'world-task',
+            name: 'World Task',
+            timeSpec: { hours: 1 },
+            targetTime: Math.floor(Date.now() / 1000) + 3600,
+            callback: 'console.log("world");',
+            useGameTime: true,
+            recurring: false,
+            scope: 'world' as const,
+            enabled: true,
+            created: Math.floor(Date.now() / 1000),
+            runCount: 0,
+            logExecution: false,
+          },
+        ],
+        client: [
+          {
+            id: 'client-task',
+            name: 'Client Task',
+            timeSpec: { minutes: 30 },
+            targetTime: Math.floor(Date.now() / 1000) + 1800,
+            callback: 'console.log("client");',
+            useGameTime: false,
+            recurring: true,
+            interval: { minutes: 30 },
+            scope: 'client' as const,
+            enabled: true,
+            created: Math.floor(Date.now() / 1000),
+            runCount: 3,
+            logExecution: false,
+          },
+        ],
       };
 
       vi.spyOn(mockTaskManager, 'getAllTasks').mockResolvedValue(mockTasks);
@@ -299,21 +303,23 @@ describe('TaskScheduler', () => {
 
     it('should list tasks for specific scope', async () => {
       const mockTasks = {
-        world: [{
-          id: 'world-task',
-          name: 'World Task',
-          timeSpec: { hours: 1 },
-          targetTime: Math.floor(Date.now() / 1000) + 3600,
-          callback: 'console.log("world");',
-          useGameTime: true,
-          recurring: false,
-          scope: 'world' as const,
-          enabled: true,
-          created: Math.floor(Date.now() / 1000),
-          runCount: 0,
-          logExecution: false
-        }],
-        client: []
+        world: [
+          {
+            id: 'world-task',
+            name: 'World Task',
+            timeSpec: { hours: 1 },
+            targetTime: Math.floor(Date.now() / 1000) + 3600,
+            callback: 'console.log("world");',
+            useGameTime: true,
+            recurring: false,
+            scope: 'world' as const,
+            enabled: true,
+            created: Math.floor(Date.now() / 1000),
+            runCount: 0,
+            logExecution: false,
+          },
+        ],
+        client: [],
       };
 
       vi.spyOn(mockTaskManager, 'getAllTasks').mockResolvedValue(mockTasks);
@@ -330,22 +336,24 @@ describe('TaskScheduler', () => {
   describe('calendar date tasks', () => {
     it('should list tasks for specific date', async () => {
       const testDate: CalendarDate = { year: 2025, month: 6, day: 15 };
-      const mockDateTasks: Task[] = [{
-        id: 'date-task',
-        name: 'Date Task',
-        timeSpec: testDate,
-        targetTime: Math.floor(Date.now() / 1000) + 86400,
-        callback: 'console.log("date event");',
-        useGameTime: true,
-        recurring: false,
-        scope: 'world',
-        enabled: true,
-        created: Math.floor(Date.now() / 1000),
-        runCount: 0,
-        logExecution: true,
-        calendarIntegrated: true,
-        calendarDate: testDate
-      }];
+      const mockDateTasks: Task[] = [
+        {
+          id: 'date-task',
+          name: 'Date Task',
+          timeSpec: testDate,
+          targetTime: Math.floor(Date.now() / 1000) + 86400,
+          callback: 'console.log("date event");',
+          useGameTime: true,
+          recurring: false,
+          scope: 'world',
+          enabled: true,
+          created: Math.floor(Date.now() / 1000),
+          runCount: 0,
+          logExecution: true,
+          calendarIntegrated: true,
+          calendarDate: testDate,
+        },
+      ];
 
       vi.spyOn(mockTaskManager, 'getTasksForDate').mockResolvedValue(mockDateTasks);
 
@@ -362,23 +370,52 @@ describe('TaskScheduler', () => {
       const mockTasks = {
         world: [
           {
-            id: 'world-1', name: 'World 1', enabled: true, useGameTime: true, recurring: false,
-            timeSpec: {}, targetTime: 0, callback: '', scope: 'world' as const,
-            created: 0, runCount: 0, logExecution: false
+            id: 'world-1',
+            name: 'World 1',
+            enabled: true,
+            useGameTime: true,
+            recurring: false,
+            timeSpec: {},
+            targetTime: 0,
+            callback: '',
+            scope: 'world' as const,
+            created: 0,
+            runCount: 0,
+            logExecution: false,
           },
           {
-            id: 'world-2', name: 'World 2', enabled: false, useGameTime: true, recurring: true,
-            timeSpec: {}, targetTime: 0, callback: '', scope: 'world' as const,
-            created: 0, runCount: 0, logExecution: false, interval: {}
-          }
+            id: 'world-2',
+            name: 'World 2',
+            enabled: false,
+            useGameTime: true,
+            recurring: true,
+            timeSpec: {},
+            targetTime: 0,
+            callback: '',
+            scope: 'world' as const,
+            created: 0,
+            runCount: 0,
+            logExecution: false,
+            interval: {},
+          },
         ],
         client: [
           {
-            id: 'client-1', name: 'Client 1', enabled: true, useGameTime: false, recurring: true,
-            timeSpec: {}, targetTime: 0, callback: '', scope: 'client' as const,
-            created: 0, runCount: 0, logExecution: false, interval: {}
-          }
-        ]
+            id: 'client-1',
+            name: 'Client 1',
+            enabled: true,
+            useGameTime: false,
+            recurring: true,
+            timeSpec: {},
+            targetTime: 0,
+            callback: '',
+            scope: 'client' as const,
+            created: 0,
+            runCount: 0,
+            logExecution: false,
+            interval: {},
+          },
+        ],
       };
 
       vi.spyOn(mockTaskManager, 'getAllTasks').mockResolvedValue(mockTasks);
@@ -394,7 +431,7 @@ describe('TaskScheduler', () => {
         recurring: 2,
         oneTime: 1,
         worldTasks: 2,
-        clientTasks: 1
+        clientTasks: 1,
       });
     });
   });
@@ -461,35 +498,32 @@ describe('TaskScheduler', () => {
 
   describe('utility methods', () => {
     it('should format relative time specs', () => {
-      expect(scheduler.formatTimeSpec({ days: 2, hours: 3, minutes: 30 }))
-        .toBe('2 days, 3 hours, 30 minutes');
-      
-      expect(scheduler.formatTimeSpec({ seconds: 1 }))
-        .toBe('1 second');
+      expect(scheduler.formatTimeSpec({ days: 2, hours: 3, minutes: 30 })).toBe(
+        '2 days, 3 hours, 30 minutes'
+      );
 
-      expect(scheduler.formatTimeSpec({ hours: 2 }))
-        .toBe('2 hours');
+      expect(scheduler.formatTimeSpec({ seconds: 1 })).toBe('1 second');
 
-      expect(scheduler.formatTimeSpec({}))
-        .toBe('immediately');
+      expect(scheduler.formatTimeSpec({ hours: 2 })).toBe('2 hours');
+
+      expect(scheduler.formatTimeSpec({})).toBe('immediately');
     });
 
     it('should format absolute time specs', () => {
-      expect(scheduler.formatTimeSpec({ year: 2025, month: 6, day: 15 }))
-        .toBe('2025/6/15');
+      expect(scheduler.formatTimeSpec({ year: 2025, month: 6, day: 15 })).toBe('2025/6/15');
     });
 
     it('should format timestamp specs', () => {
       const timestamp = Math.floor(Date.now() / 1000);
       const formatted = scheduler.formatTimeSpec(timestamp);
-      
+
       expect(formatted).toContain('2025'); // Should be a readable date
     });
 
     it('should format game time timestamps', () => {
       const timestamp = 12345;
       const formatted = scheduler.formatTimeSpec(timestamp, true);
-      
+
       expect(formatted).toBe('World Time 12345');
     });
   });
@@ -509,7 +543,7 @@ describe('TaskScheduler', () => {
         enabled: true,
         created: Math.floor(Date.now() / 1000),
         runCount: 0,
-        logExecution: false
+        logExecution: false,
       };
 
       vi.spyOn(mockTaskManager, 'getTask').mockResolvedValue(mockTask);
@@ -533,7 +567,7 @@ describe('TaskScheduler', () => {
         enabled: true,
         created: Math.floor(Date.now() / 1000),
         runCount: 0,
-        logExecution: false
+        logExecution: false,
       };
 
       vi.spyOn(mockTaskManager, 'getTask').mockResolvedValue(mockTask);

@@ -4,6 +4,70 @@
 
 import { beforeEach, vi } from 'vitest';
 
+// Set up additional global mocks needed for task-manager-application.ts at module level
+(globalThis as any).HandlebarsApplicationMixin = (base: any) => {
+  return class extends base {
+    static PARTS = {
+      content: {
+        template: 'test-template.hbs',
+      },
+    };
+  };
+};
+
+(globalThis as any).DialogV2 = {
+  confirm: vi.fn().mockResolvedValue(true),
+};
+
+(globalThis as any).Tabs = class MockTabs {
+  constructor(options: any) {
+    // Mock constructor
+  }
+  bind(element: any) {
+    // Mock bind method
+  }
+};
+
+(globalThis as any).renderTemplate = vi.fn().mockResolvedValue('<div>Mock Template</div>');
+
+// Set up ApplicationV2 class globally at module level
+(globalThis as any).ApplicationV2 = class MockApplicationV2 {
+  static DEFAULT_OPTIONS = {
+    id: 'mock-app',
+    window: { title: 'Mock Application' },
+    position: { width: 400, height: 300 },
+  };
+
+  get element() {
+    return {
+      querySelector: vi.fn().mockReturnValue({
+        value: 'test',
+        checked: false,
+      }),
+      querySelectorAll: vi.fn().mockReturnValue([]),
+    };
+  }
+
+  render() {
+    return Promise.resolve(this);
+  }
+  close() {
+    return Promise.resolve();
+  }
+
+  constructor(options = {}) {
+    // Mock constructor
+  }
+
+  async _prepareContext() {
+    return {};
+  }
+
+  _onRender(context: any, options: any) {
+    // Mock implementation
+  }
+};
+
 // Set up foundry globals at module level so they're available during imports
 (global as any).foundry = {
   utils: {
@@ -12,13 +76,13 @@ import { beforeEach, vi } from 'vitest';
     debounce: vi.fn().mockImplementation((fn: Function, delay?: number) => {
       // Return the function immediately for tests
       return fn;
-    })
+    }),
   },
   CONST: {
     DOCUMENT_OWNERSHIP_LEVELS: {
       OBSERVER: 1,
-      OWNER: 3
-    }
+      OWNER: 3,
+    },
   },
   applications: {
     api: {
@@ -26,30 +90,34 @@ import { beforeEach, vi } from 'vitest';
         static DEFAULT_OPTIONS = {
           id: 'mock-app',
           window: { title: 'Mock Application' },
-          position: { width: 400, height: 300 }
+          position: { width: 400, height: 300 },
         };
-        
-        get element() { 
+
+        get element() {
           return {
             querySelector: vi.fn().mockReturnValue({
               value: 'test',
-              checked: false
+              checked: false,
             }),
-            querySelectorAll: vi.fn().mockReturnValue([])
+            querySelectorAll: vi.fn().mockReturnValue([]),
           };
         }
-        
-        render() { return Promise.resolve(this); }
-        close() { return Promise.resolve(); }
-        
+
+        render() {
+          return Promise.resolve(this);
+        }
+        close() {
+          return Promise.resolve();
+        }
+
         constructor(options = {}) {
           // Mock constructor
         }
-        
+
         async _prepareContext() {
           return {};
         }
-        
+
         _onRender(context: any, options: any) {
           // Mock implementation
         }
@@ -58,19 +126,19 @@ import { beforeEach, vi } from 'vitest';
         return class extends base {
           static PARTS = {
             content: {
-              template: 'test-template.hbs'
-            }
+              template: 'test-template.hbs',
+            },
           };
         };
       },
       DialogV2: {
-        confirm: vi.fn().mockResolvedValue(true)
-      }
+        confirm: vi.fn().mockResolvedValue(true),
+      },
     },
     handlebars: {
-      renderTemplate: vi.fn().mockResolvedValue('<div>Mock Template</div>')
-    }
-  }
+      renderTemplate: vi.fn().mockResolvedValue('<div>Mock Template</div>'),
+    },
+  },
 };
 
 // Set up ApplicationV2 class globally before any imports
@@ -78,10 +146,10 @@ import { beforeEach, vi } from 'vitest';
   static DEFAULT_OPTIONS = {
     id: 'mock-app',
     window: { title: 'Mock Application' },
-    position: { width: 400, height: 300 }
+    position: { width: 400, height: 300 },
   };
-  
-  get element() { 
+
+  get element() {
     return {
       find: vi.fn().mockReturnValue({
         trigger: vi.fn(),
@@ -89,25 +157,33 @@ import { beforeEach, vi } from 'vitest';
         on: vi.fn(),
         prop: vi.fn(),
         each: vi.fn(),
-        hide: vi.fn()
-      })
+        hide: vi.fn(),
+      }),
     };
   }
-  
-  get template() { return ''; }
-  render() { return this; }
-  close() { return Promise.resolve(); }
+
+  get template() {
+    return '';
+  }
+  render() {
+    return this;
+  }
+  close() {
+    return Promise.resolve();
+  }
   bringToTop() {}
-  get rendered() { return true; }
-  
+  get rendered() {
+    return true;
+  }
+
   constructor(options = {}) {
     // Mock constructor
   }
-  
+
   async _prepareContext() {
     return {};
   }
-  
+
   _onRender(context: any, options: any) {
     // Mock implementation
   }
@@ -118,31 +194,29 @@ beforeEach(() => {
   // Mock game object
   (global as any).game = {
     time: {
-      worldTime: Math.floor(Date.now() / 1000)
+      worldTime: Math.floor(Date.now() / 1000),
     },
-    modules: new Map([
-      ['seasons-and-stars', { active: false }]
-    ]),
+    modules: new Map([['seasons-and-stars', { active: false }]]),
     settings: {
       get: vi.fn(),
       set: vi.fn(),
-      register: vi.fn()
+      register: vi.fn(),
     },
     journal: {
       getName: vi.fn(),
-      create: vi.fn()
+      create: vi.fn(),
     },
     user: {
       name: 'TestUser',
-      isGM: true
+      isGM: true,
     },
     users: {
-      filter: vi.fn(() => [])
+      filter: vi.fn(() => []),
     },
     i18n: {
       localize: vi.fn((key: string) => key),
-      format: vi.fn((key: string, data: any) => `${key}: ${JSON.stringify(data)}`)
-    }
+      format: vi.fn((key: string, data: any) => `${key}: ${JSON.stringify(data)}`),
+    },
   };
 
   // Mock ui object
@@ -150,13 +224,13 @@ beforeEach(() => {
     notifications: {
       error: vi.fn(),
       info: vi.fn(),
-      warn: vi.fn()
-    }
+      warn: vi.fn(),
+    },
   };
 
   // Mock canvas
   (global as any).canvas = {
-    ready: true
+    ready: true,
   };
 
   // Mock CONFIG
@@ -166,8 +240,8 @@ beforeEach(() => {
   (global as any).CONST = {
     DOCUMENT_OWNERSHIP_LEVELS: {
       OBSERVER: 1,
-      OWNER: 3
-    }
+      OWNER: 3,
+    },
   };
 
   // foundry is already set up at module level
@@ -178,12 +252,12 @@ beforeEach(() => {
     once: vi.fn(),
     off: vi.fn(),
     call: vi.fn(),
-    callAll: vi.fn()
+    callAll: vi.fn(),
   };
 
   // Mock JournalEntry and JournalEntryPage
   (global as any).JournalEntry = {
-    create: vi.fn()
+    create: vi.fn(),
   };
 
   (global as any).JournalEntryPage = class {
@@ -197,10 +271,10 @@ beforeEach(() => {
     static DEFAULT_OPTIONS = {
       id: 'mock-app',
       window: { title: 'Mock Application' },
-      position: { width: 400, height: 300 }
+      position: { width: 400, height: 300 },
     };
-    
-    get element() { 
+
+    get element() {
       return {
         find: vi.fn().mockReturnValue({
           trigger: vi.fn(),
@@ -208,25 +282,33 @@ beforeEach(() => {
           on: vi.fn(),
           prop: vi.fn(),
           each: vi.fn(),
-          hide: vi.fn()
-        })
+          hide: vi.fn(),
+        }),
       };
     }
-    
-    get template() { return ''; }
-    render() { return this; }
-    close() { return Promise.resolve(); }
+
+    get template() {
+      return '';
+    }
+    render() {
+      return this;
+    }
+    close() {
+      return Promise.resolve();
+    }
     bringToTop() {}
-    get rendered() { return true; }
-    
+    get rendered() {
+      return true;
+    }
+
     constructor(options = {}) {
       // Mock constructor
     }
-    
+
     async _prepareContext() {
       return {};
     }
-    
+
     _onRender(context: any, options: any) {
       // Mock implementation
     }
@@ -235,7 +317,7 @@ beforeEach(() => {
   // Mock Dialog class
   (global as any).Dialog = vi.fn().mockImplementation((config: any) => ({
     render: vi.fn(),
-    close: vi.fn()
+    close: vi.fn(),
   }));
 
   // Mock FormApplication class
@@ -247,7 +329,7 @@ beforeEach(() => {
         template: 'mock-template.hbs',
         width: 400,
         height: 300,
-        resizable: true
+        resizable: true,
       };
     }
 

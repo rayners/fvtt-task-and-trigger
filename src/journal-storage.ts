@@ -2,7 +2,7 @@
  * JournalStorage - Handles persistent storage of tasks using Foundry journal system
  */
 
-import { Task, TaskStorageData } from './types';
+import { Task } from './types';
 
 export class JournalStorage {
   private static instance: JournalStorage;
@@ -26,7 +26,7 @@ export class JournalStorage {
   async loadTasks(scope: 'world' | 'client'): Promise<Task[]> {
     try {
       const journal = game.journal?.getName(JournalStorage.JOURNAL_NAME);
-      
+
       if (!journal) {
         return [];
       }
@@ -40,7 +40,7 @@ export class JournalStorage {
 
       // Validate the loaded data
       const tasks = page.system.tasks.filter((task: any) => this.validateTask(task));
-      
+
       return tasks;
     } catch (error) {
       console.error('Task & Trigger | Failed to load tasks:', error);
@@ -57,28 +57,30 @@ export class JournalStorage {
     try {
       const journal = await this.getOrCreateConfigJournal();
       const pageName = this.getPageName(scope);
-      let page = journal.pages?.getName(pageName);
+      const page = journal.pages?.getName(pageName);
 
       const storageData = {
         tasks,
         scope,
         version: JournalStorage.CURRENT_VERSION,
-        lastUpdated: Math.floor(Date.now() / 1000)
+        lastUpdated: Math.floor(Date.now() / 1000),
       };
 
       if (page) {
         // Update existing page
         await page.update({
           'system.tasks': tasks,
-          'system.lastUpdated': storageData.lastUpdated
+          'system.lastUpdated': storageData.lastUpdated,
         });
       } else {
         // Create new page
-        await journal.createEmbeddedDocuments('JournalEntryPage', [{
-          name: pageName,
-          type: 'text', // Use text type since custom types require registration
-          system: storageData
-        }]);
+        await journal.createEmbeddedDocuments('JournalEntryPage', [
+          {
+            name: pageName,
+            type: 'text', // Use text type since custom types require registration
+            system: storageData,
+          },
+        ]);
       }
 
       console.log(`Task & Trigger | Saved ${tasks.length} ${scope} tasks`);
@@ -105,7 +107,7 @@ export class JournalStorage {
   async updateTask(task: Task): Promise<void> {
     const existingTasks = await this.loadTasks(task.scope);
     const taskIndex = existingTasks.findIndex(t => t.id === task.id);
-    
+
     if (taskIndex >= 0) {
       existingTasks[taskIndex] = task;
       await this.saveTasks(existingTasks, task.scope);
@@ -143,7 +145,7 @@ export class JournalStorage {
   async getAllTasks(): Promise<{ world: Task[]; client: Task[] }> {
     const [worldTasks, clientTasks] = await Promise.all([
       this.loadTasks('world'),
-      this.loadTasks('client')
+      this.loadTasks('client'),
     ]);
 
     return { world: worldTasks, client: clientTasks };
@@ -155,19 +157,19 @@ export class JournalStorage {
    */
   async getOrCreateConfigJournal(): Promise<any> {
     let journal = game.journal?.getName(JournalStorage.JOURNAL_NAME);
-    
+
     if (!journal) {
       // Create new journal entry
       journal = await JournalEntry.create({
         name: JournalStorage.JOURNAL_NAME,
-        ownership: { 
-          default: (foundry as any)?.CONST?.DOCUMENT_OWNERSHIP_LEVELS?.OBSERVER ?? 1 
-        }
+        ownership: {
+          default: (foundry as any)?.CONST?.DOCUMENT_OWNERSHIP_LEVELS?.OBSERVER ?? 1,
+        },
       });
-      
+
       console.log('Task & Trigger | Created configuration journal');
     }
-    
+
     return journal;
   }
 
@@ -195,11 +197,20 @@ export class JournalStorage {
     }
 
     const requiredFields = [
-      'id', 'name', 'timeSpec', 'targetTime', 'callback', 
-      'useGameTime', 'recurring', 'scope', 'enabled', 'created', 'runCount'
+      'id',
+      'name',
+      'timeSpec',
+      'targetTime',
+      'callback',
+      'useGameTime',
+      'recurring',
+      'scope',
+      'enabled',
+      'created',
+      'runCount',
     ];
 
-    return requiredFields.every(field => task.hasOwnProperty(field));
+    return requiredFields.every(field => Object.prototype.hasOwnProperty.call(task, field));
   }
 
   /**
@@ -222,13 +233,13 @@ export class JournalStorage {
     version: string;
   }> {
     const { world, client } = await this.getAllTasks();
-    
+
     return {
       worldTasks: world.length,
       clientTasks: client.length,
       totalTasks: world.length + client.length,
       lastUpdated: Math.floor(Date.now() / 1000),
-      version: JournalStorage.CURRENT_VERSION
+      version: JournalStorage.CURRENT_VERSION,
     };
   }
 
@@ -257,23 +268,25 @@ export class JournalStorage {
     try {
       const journal = await this.getOrCreateConfigJournal();
       const pageTitle = `${scope}-${dataType}-data`;
-      
+
       // Find or create the page for this data type
-      let page = journal.pages.find((p: any) => p.name === pageTitle);
-      
+      const page = journal.pages.find((p: any) => p.name === pageTitle);
+
       if (!page) {
         // Create new page
-        await journal.createEmbeddedDocuments('JournalEntryPage', [{
-          name: pageTitle,
-          type: 'text',
-          text: {
-            content: JSON.stringify(data, null, 2)
-          }
-        }]);
+        await journal.createEmbeddedDocuments('JournalEntryPage', [
+          {
+            name: pageTitle,
+            type: 'text',
+            text: {
+              content: JSON.stringify(data, null, 2),
+            },
+          },
+        ]);
       } else {
         // Update existing page
         await page.update({
-          'text.content': JSON.stringify(data, null, 2)
+          'text.content': JSON.stringify(data, null, 2),
         });
       }
     } catch (error) {
@@ -292,7 +305,7 @@ export class JournalStorage {
     try {
       const journal = await this.getOrCreateConfigJournal();
       const pageTitle = `${scope}-${dataType}-data`;
-      
+
       const page = journal.pages.find((p: any) => p.name === pageTitle);
       if (!page) {
         return null;
@@ -317,8 +330,8 @@ export class JournalStorage {
    * @param merge Whether to merge with existing tasks or replace
    */
   async importTasks(
-    jsonData: string, 
-    scope: 'world' | 'client', 
+    jsonData: string,
+    scope: 'world' | 'client',
     merge: boolean = false
   ): Promise<void> {
     try {
@@ -336,7 +349,7 @@ export class JournalStorage {
 
       // Validate all tasks
       const validTasks = tasksToImport.filter(task => this.validateTask(task));
-      
+
       if (validTasks.length === 0) {
         throw new Error('No valid tasks found in import data');
       }
@@ -345,7 +358,7 @@ export class JournalStorage {
       if (merge) {
         const existingTasks = await this.loadTasks(scope);
         const mergedTasks = [...existingTasks];
-        
+
         // Add or update tasks (by ID)
         for (const importTask of validTasks) {
           const existingIndex = mergedTasks.findIndex(t => t.id === importTask.id);
@@ -355,7 +368,7 @@ export class JournalStorage {
             mergedTasks.push(importTask);
           }
         }
-        
+
         await this.saveTasks(mergedTasks, scope);
       } else {
         await this.saveTasks(validTasks, scope);

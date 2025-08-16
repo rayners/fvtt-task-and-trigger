@@ -19,7 +19,7 @@ describe('TaskTriggerAPI', () => {
     // Clear singleton instances
     (TaskScheduler as any).instance = undefined;
     (TaskPersistence as any).instance = undefined;
-    
+
     api = new TaskTriggerAPIImpl();
     mockScheduler = TaskScheduler.getInstance();
     mockPersistence = TaskPersistence.getInstance();
@@ -32,7 +32,9 @@ describe('TaskTriggerAPI', () => {
     vi.spyOn(mockScheduler, 'scheduleAt').mockResolvedValue('test-schedule-at-id');
     vi.spyOn(mockScheduler, 'scheduleForDate').mockResolvedValue('test-schedule-date-id');
     vi.spyOn(mockScheduler, 'scheduleReminder').mockResolvedValue('test-reminder-id');
-    vi.spyOn(mockScheduler, 'scheduleRecurringReminder').mockResolvedValue('test-recurring-reminder-id');
+    vi.spyOn(mockScheduler, 'scheduleRecurringReminder').mockResolvedValue(
+      'test-recurring-reminder-id'
+    );
     vi.spyOn(mockScheduler, 'scheduleGameReminder').mockResolvedValue('test-game-reminder-id');
     vi.spyOn(mockScheduler, 'clearTimeout').mockResolvedValue(true);
     vi.spyOn(mockScheduler, 'clearInterval').mockResolvedValue(true);
@@ -74,7 +76,9 @@ describe('TaskTriggerAPI', () => {
 
     it('should schedule timeout with function callback', async () => {
       const delay: TimeSpec = { seconds: 30 };
-      const callback = function() { console.log('test'); };
+      const callback = function () {
+        console.log('test');
+      };
 
       const taskId = await api.setTimeout(delay, callback);
 
@@ -327,14 +331,14 @@ describe('TaskTriggerAPI', () => {
       expect(taskId).toBe('test-timeout-id');
       // Should extract the function body
       expect(mockScheduler.setTimeout).toHaveBeenCalledWith(
-        { seconds: 1 }, 
+        { seconds: 1 },
         'return `${param1}-${param2}`;',
         {}
       );
     });
 
     it('should handle async function callback', async () => {
-      const asyncFunc = async function() {
+      const asyncFunc = async function () {
         await new Promise(resolve => setTimeout(resolve, 100));
         console.log('async done');
       };

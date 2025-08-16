@@ -31,7 +31,7 @@ describe('JournalStorage', () => {
       enabled: true,
       created: Date.now() / 1000,
       runCount: 0,
-      logExecution: false
+      logExecution: false,
     };
 
     // Mock journal page
@@ -42,9 +42,9 @@ describe('JournalStorage', () => {
         tasks: [mockTask],
         scope: 'world',
         version: '0.1.0',
-        lastUpdated: Date.now() / 1000
+        lastUpdated: Date.now() / 1000,
       },
-      update: vi.fn().mockResolvedValue(true)
+      update: vi.fn().mockResolvedValue(true),
     };
 
     // Mock journal entry
@@ -54,29 +54,29 @@ describe('JournalStorage', () => {
       pages: {
         getName: vi.fn().mockReturnValue(mockJournalPage),
         find: vi.fn().mockReturnValue(mockJournalPage),
-        contents: [mockJournalPage]
+        contents: [mockJournalPage],
       },
       createEmbeddedDocuments: vi.fn().mockResolvedValue([mockJournalPage]),
-      ownership: { default: 0 }
+      ownership: { default: 0 },
     };
 
     // Mock game.journal
     (global as any).game.journal = {
       getName: vi.fn().mockReturnValue(mockJournalEntry),
-      find: vi.fn().mockReturnValue(mockJournalEntry)
+      find: vi.fn().mockReturnValue(mockJournalEntry),
     };
 
     // Mock JournalEntry
     (global as any).JournalEntry = {
-      create: vi.fn().mockResolvedValue(mockJournalEntry)
+      create: vi.fn().mockResolvedValue(mockJournalEntry),
     };
 
     // Mock foundry.CONST
     (global as any).foundry.CONST = {
       DOCUMENT_OWNERSHIP_LEVELS: {
         OBSERVER: 1,
-        OWNER: 3
-      }
+        OWNER: 3,
+      },
     };
   });
 
@@ -91,29 +91,29 @@ describe('JournalStorage', () => {
   describe('loadTasks', () => {
     it('should load world tasks from journal', async () => {
       const tasks = await storage.loadTasks('world');
-      
+
       expect(tasks).toHaveLength(1);
       expect(tasks[0]).toEqual(mockTask);
-      expect(game.journal.getName).toHaveBeenCalledWith('Task & Trigger Configuration');
+      expect(game.journal!.getName).toHaveBeenCalledWith('Task & Trigger Configuration');
     });
 
     it('should return empty array if journal does not exist', async () => {
       // Create fresh storage instance to avoid cached state
       (JournalStorage as any).instance = undefined;
       const freshStorage = JournalStorage.getInstance();
-      
+
       (global as any).game.journal.getName = vi.fn().mockReturnValue(null);
-      
+
       const tasks = await freshStorage.loadTasks('world');
-      
+
       expect(tasks).toEqual([]);
     });
 
     it('should return empty array if page does not exist', async () => {
       mockJournalEntry.pages.getName = vi.fn().mockReturnValue(null);
-      
+
       const tasks = await storage.loadTasks('world');
-      
+
       expect(tasks).toEqual([]);
     });
 
@@ -123,13 +123,13 @@ describe('JournalStorage', () => {
         name: 'Client Tasks - TestUser',
         system: {
           ...mockJournalPage.system,
-          scope: 'client'
-        }
+          scope: 'client',
+        },
       };
       mockJournalEntry.pages.getName = vi.fn().mockReturnValue(clientPage);
-      
+
       const tasks = await storage.loadTasks('client');
-      
+
       expect(tasks).toHaveLength(1);
       expect(mockJournalEntry.pages.getName).toHaveBeenCalledWith('Client Tasks - TestUser');
     });
@@ -137,12 +137,12 @@ describe('JournalStorage', () => {
     it('should handle malformed journal data', async () => {
       const malformedPage = {
         ...mockJournalPage,
-        system: null
+        system: null,
       };
       mockJournalEntry.pages.getName = vi.fn().mockReturnValue(malformedPage);
-      
+
       const tasks = await storage.loadTasks('world');
-      
+
       expect(tasks).toEqual([]);
     });
   });
@@ -150,59 +150,61 @@ describe('JournalStorage', () => {
   describe('saveTasks', () => {
     it('should save tasks to existing journal page', async () => {
       const tasks = [mockTask];
-      
+
       await storage.saveTasks(tasks, 'world');
-      
+
       expect(mockJournalPage.update).toHaveBeenCalledWith({
         'system.tasks': tasks,
-        'system.lastUpdated': expect.any(Number)
+        'system.lastUpdated': expect.any(Number),
       });
     });
 
     it('should create journal if it does not exist', async () => {
       (global as any).game.journal.getName = vi.fn().mockReturnValue(null);
-      
+
       const tasks = [mockTask];
       await storage.saveTasks(tasks, 'world');
-      
+
       expect(JournalEntry.create).toHaveBeenCalledWith({
         name: 'Task & Trigger Configuration',
-        ownership: { default: 1 }
+        ownership: { default: 1 },
       });
     });
 
     it('should create page if it does not exist', async () => {
       mockJournalEntry.pages.getName = vi.fn().mockReturnValue(null);
-      
+
       const tasks = [mockTask];
       await storage.saveTasks(tasks, 'world');
-      
-      expect(mockJournalEntry.createEmbeddedDocuments).toHaveBeenCalledWith('JournalEntryPage', [{
-        name: 'World Tasks',
-        type: 'text', // Use text type since custom types require registration
-        system: {
-          tasks,
-          scope: 'world',
-          version: expect.any(String),
-          lastUpdated: expect.any(Number)
-        }
-      }]);
+
+      expect(mockJournalEntry.createEmbeddedDocuments).toHaveBeenCalledWith('JournalEntryPage', [
+        {
+          name: 'World Tasks',
+          type: 'text', // Use text type since custom types require registration
+          system: {
+            tasks,
+            scope: 'world',
+            version: expect.any(String),
+            lastUpdated: expect.any(Number),
+          },
+        },
+      ]);
     });
 
     it('should handle client scope saves', async () => {
       const tasks = [mockTask];
-      
+
       await storage.saveTasks(tasks, 'client');
-      
+
       // Should look for client-specific page name
       expect(mockJournalEntry.pages.getName).toHaveBeenCalledWith('Client Tasks - TestUser');
     });
 
     it('should handle save errors gracefully', async () => {
       mockJournalPage.update = vi.fn().mockRejectedValue(new Error('Save failed'));
-      
+
       const tasks = [mockTask];
-      
+
       await expect(storage.saveTasks(tasks, 'world')).rejects.toThrow('Save failed');
     });
   });
@@ -210,19 +212,19 @@ describe('JournalStorage', () => {
   describe('getOrCreateConfigJournal', () => {
     it('should return existing journal', async () => {
       const journal = await storage.getOrCreateConfigJournal();
-      
+
       expect(journal).toBe(mockJournalEntry);
-      expect(game.journal.getName).toHaveBeenCalledWith('Task & Trigger Configuration');
+      expect(game.journal!.getName).toHaveBeenCalledWith('Task & Trigger Configuration');
     });
 
     it('should create journal if it does not exist', async () => {
       (global as any).game.journal.getName = vi.fn().mockReturnValue(null);
-      
+
       const journal = await storage.getOrCreateConfigJournal();
-      
+
       expect(JournalEntry.create).toHaveBeenCalledWith({
         name: 'Task & Trigger Configuration',
-        ownership: { default: 1 }
+        ownership: { default: 1 },
       });
       expect(journal).toBe(mockJournalEntry);
     });
@@ -231,44 +233,44 @@ describe('JournalStorage', () => {
   describe('task operations', () => {
     it('should add a task', async () => {
       const newTask = { ...mockTask, id: 'new-task', name: 'New Task' };
-      
+
       await storage.addTask(newTask);
-      
+
       expect(mockJournalPage.update).toHaveBeenCalledWith({
         'system.tasks': [mockTask, newTask],
-        'system.lastUpdated': expect.any(Number)
+        'system.lastUpdated': expect.any(Number),
       });
     });
 
     it('should update a task', async () => {
       const updatedTask = { ...mockTask, name: 'Updated Task' };
-      
+
       await storage.updateTask(updatedTask);
-      
+
       expect(mockJournalPage.update).toHaveBeenCalledWith({
         'system.tasks': [updatedTask],
-        'system.lastUpdated': expect.any(Number)
+        'system.lastUpdated': expect.any(Number),
       });
     });
 
     it('should remove a task', async () => {
       await storage.removeTask(mockTask.id, mockTask.scope);
-      
+
       expect(mockJournalPage.update).toHaveBeenCalledWith({
         'system.tasks': [],
-        'system.lastUpdated': expect.any(Number)
+        'system.lastUpdated': expect.any(Number),
       });
     });
 
     it('should get a specific task', async () => {
       const task = await storage.getTask(mockTask.id, mockTask.scope);
-      
+
       expect(task).toEqual(mockTask);
     });
 
     it('should return null for non-existent task', async () => {
       const task = await storage.getTask('non-existent', 'world');
-      
+
       expect(task).toBeNull();
     });
   });
@@ -277,7 +279,7 @@ describe('JournalStorage', () => {
     it('should validate task data structure', () => {
       const validTask = mockTask;
       const invalidTask = { id: 'test', name: 'test' }; // Missing required fields
-      
+
       expect(storage.validateTask(validTask)).toBe(true);
       expect(storage.validateTask(invalidTask as any)).toBe(false);
     });
@@ -287,14 +289,14 @@ describe('JournalStorage', () => {
         ...mockJournalPage,
         system: {
           tasks: [mockTask],
-          version: '0.0.1' // Old version
-        }
+          version: '0.0.1', // Old version
+        },
       };
-      
+
       mockJournalEntry.pages.getName = vi.fn().mockReturnValue(oldFormatPage);
-      
+
       const tasks = await storage.loadTasks('world');
-      
+
       // Should still load tasks despite version difference
       expect(tasks).toHaveLength(1);
     });

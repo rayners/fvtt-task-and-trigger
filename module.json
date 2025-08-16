@@ -39,7 +39,7 @@
       },
       {
         "id": "errors-and-echoes",
-        "type": "module", 
+        "type": "module",
         "reason": "Advanced error reporting and debugging capabilities"
       }
     ]

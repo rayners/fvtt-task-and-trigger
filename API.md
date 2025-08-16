@@ -22,9 +22,9 @@ Complete API documentation for the Task & Trigger FoundryVTT module. The API is 
 ```javascript
 // Check if the API is available and ready
 if (game.taskTrigger?.api?.isReady()) {
-    // API is ready to use
+  // API is ready to use
 } else {
-    console.warn('Task & Trigger API not available');
+  console.warn('Task & Trigger API not available');
 }
 ```
 
@@ -36,10 +36,10 @@ const api = game.taskTrigger.api;
 
 // Example usage pattern
 try {
-    const taskId = await api.setTimeout({ minutes: 5 }, 'console.log("Hello!");');
-    console.log('Task scheduled:', taskId);
+  const taskId = await api.setTimeout({ minutes: 5 }, 'console.log("Hello!");');
+  console.log('Task scheduled:', taskId);
 } catch (error) {
-    console.error('Scheduling failed:', error);
+  console.error('Scheduling failed:', error);
 }
 ```
 
@@ -50,6 +50,7 @@ try {
 Schedule a one-time task to execute after a delay using real time.
 
 **Parameters:**
+
 - `delay: TimeSpec` - Time to wait before execution
 - `callback: string | Function` - JavaScript code or function to execute
 - `options?: ScheduleOptions` - Additional configuration options
@@ -57,22 +58,23 @@ Schedule a one-time task to execute after a delay using real time.
 **Returns:** `Promise<string>` - Task ID
 
 **Example:**
+
 ```javascript
 // Schedule a notification in 30 minutes
 const taskId = await api.setTimeout(
-    { minutes: 30 },
-    'ui.notifications.info("Meeting in 30 minutes!");',
-    { 
-        name: "Meeting Reminder",
-        scope: "client",
-        logExecution: true
-    }
+  { minutes: 30 },
+  'ui.notifications.info("Meeting in 30 minutes!");',
+  {
+    name: 'Meeting Reminder',
+    scope: 'client',
+    logExecution: true,
+  }
 );
 
 // Using milliseconds
 const quickTask = await api.setTimeout(
-    30000, // 30 seconds
-    () => console.log("Quick task executed")
+  30000, // 30 seconds
+  () => console.log('Quick task executed')
 );
 ```
 
@@ -81,6 +83,7 @@ const quickTask = await api.setTimeout(
 Schedule a recurring task to execute at regular intervals using real time.
 
 **Parameters:**
+
 - `interval: TimeSpec` - Time between executions
 - `callback: string | Function` - JavaScript code or function to execute
 - `options?: ScheduleOptions` - Additional configuration options
@@ -88,21 +91,22 @@ Schedule a recurring task to execute at regular intervals using real time.
 **Returns:** `Promise<string>` - Task ID
 
 **Example:**
+
 ```javascript
 // Auto-save every 10 minutes
 const autoSave = await api.setInterval(
-    { minutes: 10 },
-    `
+  { minutes: 10 },
+  `
     if (game.user.isGM) {
         ui.notifications.info("Auto-saving...");
         // Perform save operations
     }
     `,
-    { 
-        name: "Auto Save",
-        scope: "world",
-        description: "Automatic world save every 10 minutes"
-    }
+  {
+    name: 'Auto Save',
+    scope: 'world',
+    description: 'Automatic world save every 10 minutes',
+  }
 );
 ```
 
@@ -111,18 +115,20 @@ const autoSave = await api.setInterval(
 Cancel a scheduled task (both methods are aliases).
 
 **Parameters:**
+
 - `taskId: string` - ID of the task to cancel
 
 **Returns:** `Promise<boolean>` - True if task was successfully cancelled
 
 **Example:**
+
 ```javascript
 const taskId = await api.setTimeout({ minutes: 5 }, 'console.log("test");');
 
 // Cancel the task
 const cancelled = await api.clearTimeout(taskId);
 if (cancelled) {
-    console.log('Task cancelled successfully');
+  console.log('Task cancelled successfully');
 }
 ```
 
@@ -133,6 +139,7 @@ if (cancelled) {
 Schedule a one-time task to execute after a delay in game time.
 
 **Parameters:**
+
 - `delay: TimeSpec` - Game time to wait before execution
 - `callback: string | Function` - JavaScript code or function to execute
 - `options?: ScheduleOptions` - Additional configuration options
@@ -140,20 +147,21 @@ Schedule a one-time task to execute after a delay in game time.
 **Returns:** `Promise<string>` - Task ID
 
 **Example:**
+
 ```javascript
 // Trigger an event after 8 hours of game time
 const eventId = await api.setGameTimeout(
-    { hours: 8 },
-    `
+  { hours: 8 },
+  `
     ChatMessage.create({
         content: "The merchant caravan arrives at the city gates.",
         type: CONST.CHAT_MESSAGE_TYPES.IC
     });
     `,
-    { 
-        name: "Caravan Arrival",
-        scope: "world"
-    }
+  {
+    name: 'Caravan Arrival',
+    scope: 'world',
+  }
 );
 ```
 
@@ -162,6 +170,7 @@ const eventId = await api.setGameTimeout(
 Schedule a recurring task to execute at game time intervals.
 
 **Parameters:**
+
 - `interval: TimeSpec` - Game time between executions
 - `callback: string | Function` - JavaScript code or function to execute
 - `options?: ScheduleOptions` - Additional configuration options
@@ -169,21 +178,22 @@ Schedule a recurring task to execute at game time intervals.
 **Returns:** `Promise<string>` - Task ID
 
 **Example:**
+
 ```javascript
 // Daily random encounter check
 const encounterCheck = await api.setGameInterval(
-    { days: 1 },
-    `
+  { days: 1 },
+  `
     const roll = new Roll("1d20").roll();
     if (roll.total >= 18) {
         ui.notifications.warn("Random encounter incoming!");
     }
     `,
-    { 
-        name: "Daily Encounter Check",
-        scope: "world",
-        description: "Roll for random encounters each game day"
-    }
+  {
+    name: 'Daily Encounter Check',
+    scope: 'world',
+    description: 'Roll for random encounters each game day',
+  }
 );
 ```
 
@@ -194,6 +204,7 @@ const encounterCheck = await api.setGameInterval(
 Schedule a task for a specific real-world date and time.
 
 **Parameters:**
+
 - `dateTime: Date` - Target date and time
 - `callback: string | Function` - JavaScript code or function to execute
 - `options?: ScheduleOptions` - Additional configuration options
@@ -201,21 +212,22 @@ Schedule a task for a specific real-world date and time.
 **Returns:** `Promise<string>` - Task ID
 
 **Example:**
+
 ```javascript
 // Schedule for New Year's Eve
 const newYear = await api.scheduleAt(
-    new Date('2024-12-31 23:59:00'),
-    `
+  new Date('2024-12-31 23:59:00'),
+  `
     ui.notifications.info("🎉 Happy New Year! 🎉");
     ChatMessage.create({
         content: "The clock strikes midnight! A new year begins!",
         type: CONST.CHAT_MESSAGE_TYPES.EMOTE
     });
     `,
-    { 
-        name: "New Year Celebration",
-        scope: "world"
-    }
+  {
+    name: 'New Year Celebration',
+    scope: 'world',
+  }
 );
 ```
 
@@ -224,6 +236,7 @@ const newYear = await api.scheduleAt(
 Schedule a task for a specific calendar date (requires calendar integration).
 
 **Parameters:**
+
 - `calendarDate: CalendarDate` - Calendar date specification
 - `callback: string | Function` - JavaScript code or function to execute
 - `options?: ScheduleOptions` - Additional configuration options
@@ -231,19 +244,20 @@ Schedule a task for a specific calendar date (requires calendar integration).
 **Returns:** `Promise<string>` - Task ID
 
 **Example:**
+
 ```javascript
 // Schedule for a specific in-game date
 const festival = await api.scheduleForDate(
-    { year: 1358, month: 6, day: 21 }, // Summer solstice
-    `
+  { year: 1358, month: 6, day: 21 }, // Summer solstice
+  `
     ui.notifications.info("🌞 Summer Solstice Festival begins! 🌞");
     // Trigger festival events
     `,
-    { 
-        name: "Summer Solstice",
-        scope: "world",
-        description: "Annual summer festival celebration"
-    }
+  {
+    name: 'Summer Solstice',
+    scope: 'world',
+    description: 'Annual summer festival celebration',
+  }
 );
 ```
 
@@ -254,6 +268,7 @@ const festival = await api.scheduleForDate(
 Schedule a simple notification reminder.
 
 **Parameters:**
+
 - `delay: TimeSpec` - Time until reminder
 - `message: string` - Reminder message to display
 - `options?: ScheduleOptions` - Additional configuration options
@@ -261,12 +276,13 @@ Schedule a simple notification reminder.
 **Returns:** `Promise<string>` - Task ID
 
 **Example:**
+
 ```javascript
 // Remind to take a break
 const breakReminder = await api.scheduleReminder(
-    { hours: 2 },
-    "Time for a break! You've been playing for 2 hours.",
-    { name: "Break Reminder", scope: "client" }
+  { hours: 2 },
+  "Time for a break! You've been playing for 2 hours.",
+  { name: 'Break Reminder', scope: 'client' }
 );
 ```
 
@@ -275,6 +291,7 @@ const breakReminder = await api.scheduleReminder(
 Schedule a recurring notification reminder.
 
 **Parameters:**
+
 - `interval: TimeSpec` - Time between reminders
 - `message: string` - Reminder message to display
 - `options?: ScheduleOptions` - Additional configuration options
@@ -282,12 +299,13 @@ Schedule a recurring notification reminder.
 **Returns:** `Promise<string>` - Task ID
 
 **Example:**
+
 ```javascript
 // Hourly save reminder
 const saveReminder = await api.scheduleRecurringReminder(
-    { hours: 1 },
-    "Remember to save your progress!",
-    { name: "Save Reminder", scope: "client" }
+  { hours: 1 },
+  'Remember to save your progress!',
+  { name: 'Save Reminder', scope: 'client' }
 );
 ```
 
@@ -296,6 +314,7 @@ const saveReminder = await api.scheduleRecurringReminder(
 Schedule a game-time notification reminder.
 
 **Parameters:**
+
 - `delay: TimeSpec` - Game time until reminder
 - `message: string` - Reminder message to display
 - `options?: ScheduleOptions` - Additional configuration options
@@ -303,12 +322,13 @@ Schedule a game-time notification reminder.
 **Returns:** `Promise<string>` - Task ID
 
 **Example:**
+
 ```javascript
 // Reminder when spell duration ends
 const spellReminder = await api.scheduleGameReminder(
-    { hours: 1 }, // 1 game hour
-    "The protection spell is about to expire!",
-    { name: "Spell Duration", scope: "world" }
+  { hours: 1 }, // 1 game hour
+  'The protection spell is about to expire!',
+  { name: 'Spell Duration', scope: 'world' }
 );
 ```
 
@@ -319,11 +339,13 @@ const spellReminder = await api.scheduleGameReminder(
 Cancel and remove a scheduled task.
 
 **Parameters:**
+
 - `taskId: string` - Task ID to cancel
 
 **Returns:** `Promise<boolean>` - True if task was cancelled
 
 **Example:**
+
 ```javascript
 const taskId = await api.setTimeout({ minutes: 5 }, 'console.log("test");');
 const success = await api.cancel(taskId);
@@ -334,11 +356,13 @@ const success = await api.cancel(taskId);
 Enable a previously disabled task.
 
 **Parameters:**
+
 - `taskId: string` - Task ID to enable
 
 **Returns:** `Promise<void>`
 
 **Example:**
+
 ```javascript
 await api.enable(taskId);
 console.log('Task enabled');
@@ -349,11 +373,13 @@ console.log('Task enabled');
 Temporarily disable a task without removing it.
 
 **Parameters:**
+
 - `taskId: string` - Task ID to disable
 
 **Returns:** `Promise<void>`
 
 **Example:**
+
 ```javascript
 await api.disable(taskId);
 console.log('Task disabled');
@@ -368,6 +394,7 @@ Open the visual task management interface.
 **Returns:** `void`
 
 **Example:**
+
 ```javascript
 api.showTaskManager(); // Opens the task manager UI
 ```
@@ -377,11 +404,13 @@ api.showTaskManager(); // Opens the task manager UI
 Control task persistence behavior.
 
 **Parameters:**
+
 - `taskId: string` - Task ID to modify
 
 **Returns:** `Promise<void>`
 
 **Example:**
+
 ```javascript
 // Mark task to persist across restarts
 await api.markAsUITask(taskId);
@@ -397,18 +426,20 @@ await api.markAsEphemeral(taskId);
 Get detailed information about a specific task.
 
 **Parameters:**
+
 - `taskId: string` - Task ID to query
 
 **Returns:** `Promise<TaskInfo | null>` - Task information or null if not found
 
 **Example:**
+
 ```javascript
 const taskInfo = await api.getTaskInfo(taskId);
 if (taskInfo) {
-    console.log(`Task: ${taskInfo.name}`);
-    console.log(`Next execution: ${new Date(taskInfo.nextExecution * 1000)}`);
-    console.log(`Run count: ${taskInfo.runCount}`);
-    console.log(`Enabled: ${taskInfo.enabled}`);
+  console.log(`Task: ${taskInfo.name}`);
+  console.log(`Next execution: ${new Date(taskInfo.nextExecution * 1000)}`);
+  console.log(`Run count: ${taskInfo.runCount}`);
+  console.log(`Enabled: ${taskInfo.enabled}`);
 }
 ```
 
@@ -417,11 +448,13 @@ if (taskInfo) {
 List all scheduled tasks, optionally filtered by scope.
 
 **Parameters:**
+
 - `scope?: 'world' | 'client'` - Optional scope filter
 
 **Returns:** `Promise<TaskInfo[]>` - Array of task information
 
 **Example:**
+
 ```javascript
 // List all tasks
 const allTasks = await api.listTasks();
@@ -433,7 +466,7 @@ console.log(`Client tasks: ${clientTasks.length}`);
 
 // Display task summary
 allTasks.forEach(task => {
-    console.log(`${task.name}: ${task.enabled ? 'enabled' : 'disabled'}`);
+  console.log(`${task.name}: ${task.enabled ? 'enabled' : 'disabled'}`);
 });
 ```
 
@@ -442,11 +475,13 @@ allTasks.forEach(task => {
 List tasks scheduled for a specific calendar date.
 
 **Parameters:**
+
 - `calendarDate: CalendarDate` - Calendar date to check
 
 **Returns:** `Promise<TaskInfo[]>` - Array of tasks for that date
 
 **Example:**
+
 ```javascript
 const tasks = await api.listTasksForDate({ year: 1358, month: 6, day: 21 });
 console.log(`Tasks for summer solstice: ${tasks.length}`);
@@ -461,6 +496,7 @@ Get comprehensive statistics about the task system.
 **Returns:** `Promise<any>` - Task system statistics
 
 **Example:**
+
 ```javascript
 const stats = await api.getStatistics();
 console.log('Task Statistics:', stats);
@@ -471,15 +507,17 @@ console.log('Task Statistics:', stats);
 Get the next execution time for a task as a formatted string.
 
 **Parameters:**
+
 - `taskId: string` - Task ID to check
 
 **Returns:** `Promise<string | null>` - Formatted execution time or null
 
 **Example:**
+
 ```javascript
 const nextTime = await api.getNextExecutionTime(taskId);
 if (nextTime) {
-    console.log(`Next execution: ${nextTime}`);
+  console.log(`Next execution: ${nextTime}`);
 }
 ```
 
@@ -490,22 +528,24 @@ if (nextTime) {
 Create a task that requires manual time logging to complete.
 
 **Parameters:**
+
 - `options: AccumulatedTimeTaskOptions` - Task configuration
 
 **Returns:** `Promise<string>` - Task ID
 
 **Example:**
+
 ```javascript
 const researchId = await api.createAccumulatedTimeTask({
-    name: "Spell Research",
-    description: "Researching new teleportation spell",
-    requiredTime: { hours: 50 },
-    callback: `
+  name: 'Spell Research',
+  description: 'Researching new teleportation spell',
+  requiredTime: { hours: 50 },
+  callback: `
         ui.notifications.info("Spell research complete!");
         // Add spell to character
     `,
-    scope: "world",
-    logExecution: true
+  scope: 'world',
+  logExecution: true,
 });
 ```
 
@@ -514,21 +554,23 @@ const researchId = await api.createAccumulatedTimeTask({
 Add logged time to an accumulated time task.
 
 **Parameters:**
+
 - `taskId: string` - Task ID
 - `entry: TimeLogEntry` - Time entry to add
 
 **Returns:** `Promise<boolean>` - True if task is now complete
 
 **Example:**
+
 ```javascript
 // Log research session
 const isComplete = await api.addTimeToTask(researchId, {
-    duration: { hours: 4, minutes: 30 },
-    description: "Studied portal magic theory and practiced incantations"
+  duration: { hours: 4, minutes: 30 },
+  description: 'Studied portal magic theory and practiced incantations',
 });
 
 if (isComplete) {
-    console.log("Task completed!");
+  console.log('Task completed!');
 }
 ```
 
@@ -537,17 +579,19 @@ if (isComplete) {
 Get progress information for an accumulated time task.
 
 **Parameters:**
+
 - `taskId: string` - Task ID
 
 **Returns:** `Promise<any>` - Progress information or null
 
 **Example:**
+
 ```javascript
 const progress = await api.getAccumulatedTimeProgress(taskId);
 if (progress) {
-    console.log(`Progress: ${(progress.progress * 100).toFixed(1)}%`);
-    console.log(`Time remaining: ${progress.remaining} seconds`);
-    console.log(`Entries: ${progress.timeEntries.length}`);
+  console.log(`Progress: ${(progress.progress * 100).toFixed(1)}%`);
+  console.log(`Time remaining: ${progress.remaining} seconds`);
+  console.log(`Entries: ${progress.timeEntries.length}`);
 }
 ```
 
@@ -556,16 +600,20 @@ if (progress) {
 List all accumulated time tasks.
 
 **Parameters:**
+
 - `scope?: 'world' | 'client'` - Optional scope filter
 
 **Returns:** `Promise<Task[]>` - Array of accumulated time tasks
 
 **Example:**
+
 ```javascript
 const timeTasks = await api.listAccumulatedTimeTasks();
 timeTasks.forEach(task => {
-    const progress = (task.accumulatedTime / task.requiredTime * 100).toFixed(1);
-    console.log(`${task.name}: ${progress}% complete`);
+  const progress = ((task.accumulatedTime / task.requiredTime) * 100).toFixed(
+    1
+  );
+  console.log(`${task.name}: ${progress}% complete`);
 });
 ```
 
@@ -574,6 +622,7 @@ timeTasks.forEach(task => {
 Remove a time entry from a task.
 
 **Parameters:**
+
 - `taskId: string` - Task ID
 - `entryId: string` - Time entry ID to remove
 
@@ -584,6 +633,7 @@ Remove a time entry from a task.
 Edit an existing time entry.
 
 **Parameters:**
+
 - `taskId: string` - Task ID
 - `entryId: string` - Time entry ID to edit
 - `newDuration: TimeSpec` - New duration
@@ -596,20 +646,22 @@ Edit an existing time entry.
 Get detailed statistics for an accumulated time task.
 
 **Parameters:**
+
 - `taskId: string` - Task ID
 
 **Returns:** `Promise<any>` - Task statistics or null
 
 **Example:**
+
 ```javascript
 const stats = await api.getAccumulatedTimeStatistics(taskId);
 if (stats) {
-    console.log(`Total entries: ${stats.totalEntries}`);
-    console.log(`Average session: ${stats.averageSessionDuration} seconds`);
-    console.log(`Sessions this week: ${stats.sessionsThisWeek}`);
-    if (stats.estimatedCompletion) {
-        console.log(`Estimated completion: ${stats.estimatedCompletion}`);
-    }
+  console.log(`Total entries: ${stats.totalEntries}`);
+  console.log(`Average session: ${stats.averageSessionDuration} seconds`);
+  console.log(`Sessions this week: ${stats.sessionsThisWeek}`);
+  if (stats.estimatedCompletion) {
+    console.log(`Estimated completion: ${stats.estimatedCompletion}`);
+  }
 }
 ```
 
@@ -618,12 +670,14 @@ if (stats) {
 Export time log data for a task.
 
 **Parameters:**
+
 - `taskId: string` - Task ID
 - `format?: 'json' | 'csv'` - Export format (default: 'csv')
 
 **Returns:** `Promise<string>` - Exported data
 
 **Example:**
+
 ```javascript
 // Export as CSV
 const csvData = await api.exportTaskTimeLog(taskId, 'csv');
@@ -642,12 +696,14 @@ console.log(data);
 Format a time specification as a human-readable string.
 
 **Parameters:**
+
 - `timeSpec: TimeSpec` - Time specification to format
 - `useGameTime?: boolean` - Whether this represents game time
 
 **Returns:** `string` - Human-readable time string
 
 **Example:**
+
 ```javascript
 console.log(api.formatTimeSpec({ hours: 2, minutes: 30 })); // "2h 30m"
 console.log(api.formatTimeSpec(3600, true)); // "1h" (game time)
@@ -662,10 +718,11 @@ Check if the task system is initialized and ready to use.
 **Returns:** `boolean` - True if ready
 
 **Example:**
+
 ```javascript
 if (!api.isReady()) {
-    ui.notifications.error("Task & Trigger is not ready yet");
-    return;
+  ui.notifications.error('Task & Trigger is not ready yet');
+  return;
 }
 ```
 
@@ -674,11 +731,13 @@ if (!api.isReady()) {
 Clean up old disabled tasks to free storage space.
 
 **Parameters:**
+
 - `olderThanDays?: number` - Remove tasks older than this many days (default: 7)
 
 **Returns:** `Promise<number>` - Number of tasks cleaned up
 
 **Example:**
+
 ```javascript
 // Clean up tasks older than 30 days
 const cleaned = await api.cleanupOldTasks(30);
@@ -695,19 +754,19 @@ Flexible time specification that accepts multiple formats:
 type TimeSpec = Date | number | RelativeTimeSpec | AbsoluteTimeSpec;
 
 interface RelativeTimeSpec {
-    days?: number;
-    hours?: number;
-    minutes?: number;
-    seconds?: number;
+  days?: number;
+  hours?: number;
+  minutes?: number;
+  seconds?: number;
 }
 
 interface AbsoluteTimeSpec {
-    year?: number;
-    month?: number; // 1-12
-    day?: number;   // 1-31
-    hour?: number;  // 0-23
-    minute?: number; // 0-59
-    second?: number; // 0-59
+  year?: number;
+  month?: number; // 1-12
+  day?: number; // 1-31
+  hour?: number; // 0-23
+  minute?: number; // 0-59
+  second?: number; // 0-59
 }
 ```
 
@@ -717,11 +776,11 @@ Options for task scheduling:
 
 ```typescript
 interface ScheduleOptions {
-    scope?: 'world' | 'client';    // Storage scope
-    name?: string;                 // Human-readable name
-    description?: string;          // Detailed description
-    logExecution?: boolean;        // Log to journal
-    enabled?: boolean;             // Initially enabled
+  scope?: 'world' | 'client'; // Storage scope
+  name?: string; // Human-readable name
+  description?: string; // Detailed description
+  logExecution?: boolean; // Log to journal
+  enabled?: boolean; // Initially enabled
 }
 ```
 
@@ -731,12 +790,12 @@ Options for accumulated time tasks:
 
 ```typescript
 interface AccumulatedTimeTaskOptions {
-    name: string;                  // Task name
-    description?: string;          // Task description
-    requiredTime: TimeSpec;        // Total time required
-    callback: string;              // Completion callback
-    scope?: 'world' | 'client';   // Storage scope
-    logExecution?: boolean;        // Log execution
+  name: string; // Task name
+  description?: string; // Task description
+  requiredTime: TimeSpec; // Total time required
+  callback: string; // Completion callback
+  scope?: 'world' | 'client'; // Storage scope
+  logExecution?: boolean; // Log execution
 }
 ```
 
@@ -746,8 +805,8 @@ Entry for adding time to accumulated tasks:
 
 ```typescript
 interface TimeLogEntry {
-    duration: TimeSpec;            // Time duration to add
-    description?: string;          // What was accomplished
+  duration: TimeSpec; // Time duration to add
+  description?: string; // What was accomplished
 }
 ```
 
@@ -757,9 +816,9 @@ Calendar date specification:
 
 ```typescript
 interface CalendarDate {
-    year: number;   // Calendar year
-    month: number;  // Month (1-12)
-    day: number;    // Day (1-31)
+  year: number; // Calendar year
+  month: number; // Month (1-12)
+  day: number; // Day (1-31)
 }
 ```
 
@@ -769,17 +828,17 @@ Information about a scheduled task:
 
 ```typescript
 interface TaskInfo {
-    id: string;               // Unique task ID
-    name: string;             // Task name
-    description?: string;     // Task description
-    nextExecution: number;    // Next execution timestamp
-    isRecurring: boolean;     // Whether task repeats
-    enabled: boolean;         // Whether task is active
-    runCount: number;         // Number of executions
-    lastExecution?: number;   // Last execution timestamp
-    lastError?: string;       // Last error message
-    useGameTime: boolean;     // Game time vs real time
-    scope: 'world' | 'client'; // Storage scope
+  id: string; // Unique task ID
+  name: string; // Task name
+  description?: string; // Task description
+  nextExecution: number; // Next execution timestamp
+  isRecurring: boolean; // Whether task repeats
+  enabled: boolean; // Whether task is active
+  runCount: number; // Number of executions
+  lastExecution?: number; // Last execution timestamp
+  lastError?: string; // Last error message
+  useGameTime: boolean; // Game time vs real time
+  scope: 'world' | 'client'; // Storage scope
 }
 ```
 
@@ -789,15 +848,16 @@ All API methods return promises and should be used with proper error handling:
 
 ```javascript
 try {
-    const taskId = await api.setTimeout({ minutes: 5 }, 'console.log("test");');
-    console.log('Task scheduled successfully:', taskId);
+  const taskId = await api.setTimeout({ minutes: 5 }, 'console.log("test");');
+  console.log('Task scheduled successfully:', taskId);
 } catch (error) {
-    console.error('Failed to schedule task:', error.message);
-    ui.notifications.error(`Task scheduling failed: ${error.message}`);
+  console.error('Failed to schedule task:', error.message);
+  ui.notifications.error(`Task scheduling failed: ${error.message}`);
 }
 ```
 
 Common error scenarios:
+
 - Module not initialized (`isReady()` returns false)
 - Invalid time specifications
 - JavaScript syntax errors in callback code
@@ -808,24 +868,28 @@ Common error scenarios:
 ## Best Practices
 
 ### Performance
+
 - Use appropriate task scopes (client vs world)
 - Clean up completed one-time tasks regularly
 - Avoid overly frequent recurring tasks
 - Monitor task execution performance
 
 ### Security
+
 - Validate callback code before scheduling
 - Use string callbacks for complex logic
 - Be cautious with world-scoped tasks
 - Implement proper error handling
 
 ### Maintenance
+
 - Document complex task logic
 - Use descriptive names and descriptions
 - Regular cleanup of old tasks
 - Monitor task execution logs
 
 ### Integration
+
 - Check for module availability before use
 - Handle graceful degradation when modules unavailable
 - Use appropriate hooks for task lifecycle events

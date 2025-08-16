@@ -45,7 +45,7 @@ export class AccumulatedTimeManager {
   async createAccumulatedTimeTask(options: AccumulatedTimeTaskOptions): Promise<string> {
     // Convert required time to seconds (time-agnostic - just a number)
     const requiredSeconds = TimeConverter.toDuration(options.requiredTime);
-    
+
     const task: Task = {
       id: (foundry.utils as any).randomID(),
       name: options.name,
@@ -65,20 +65,22 @@ export class AccumulatedTimeManager {
       logExecution: options.logExecution || false,
       calendarIntegrated: false,
       uiConfigured: true, // Persist across restarts
-      
+
       // Accumulated time specific properties
       isAccumulatedTime: true,
       requiredTime: requiredSeconds,
       accumulatedTime: 0,
-      timeEntries: []
+      timeEntries: [],
     };
 
     // Add task to storage
     await this.taskManager.addTask(task);
-    
-    console.log(`Task & Trigger | Created accumulated time task: ${task.name} (${this.formatDuration(requiredSeconds)} required)`);
+
+    console.log(
+      `Task & Trigger | Created accumulated time task: ${task.name} (${this.formatDuration(requiredSeconds)} required)`
+    );
     ui.notifications?.info(`Created accumulated time task: ${task.name}`);
-    
+
     return task.id;
   }
 
@@ -87,7 +89,7 @@ export class AccumulatedTimeManager {
    */
   async addTime(taskId: string, entry: TimeLogEntry): Promise<boolean> {
     const task = await this.taskManager.getTask(taskId);
-    
+
     if (!task) {
       throw new Error(`Task not found: ${taskId}`);
     }
@@ -98,7 +100,7 @@ export class AccumulatedTimeManager {
 
     // Convert duration to seconds (time-agnostic - just a number)
     const durationSeconds = TimeConverter.toDuration(entry.duration);
-    
+
     if (durationSeconds <= 0) {
       throw new Error('Duration must be positive');
     }
@@ -109,7 +111,7 @@ export class AccumulatedTimeManager {
       timestamp: Math.floor(Date.now() / 1000),
       duration: durationSeconds,
       description: entry.description,
-      loggedBy: game.user?.name || 'Unknown'
+      loggedBy: game.user?.name || 'Unknown',
     };
 
     // Update task
@@ -119,12 +121,14 @@ export class AccumulatedTimeManager {
 
     // Check if task is now complete
     const isComplete = task.accumulatedTime >= (task.requiredTime || 0);
-    
+
     if (isComplete && task.targetTime === 0) {
       // Set task to execute immediately (real time)
       task.targetTime = Math.floor(Date.now() / 1000);
       console.log(`Task & Trigger | Accumulated time task completed: ${task.name}`);
-      ui.notifications?.info(`Task completed! ${task.name} - ${this.formatDuration(task.accumulatedTime)} accumulated`);
+      ui.notifications?.info(
+        `Task completed! ${task.name} - ${this.formatDuration(task.accumulatedTime)} accumulated`
+      );
     }
 
     // Update task in storage
@@ -137,13 +141,15 @@ export class AccumulatedTimeManager {
       accumulatedTime: task.accumulatedTime,
       requiredTime: task.requiredTime,
       isComplete,
-      newEntry: timeEntry
+      newEntry: timeEntry,
     });
 
     const remaining = (task.requiredTime || 0) - task.accumulatedTime;
-    console.log(`Task & Trigger | Added ${this.formatDuration(durationSeconds)} to ${task.name}. ` +
-                `Total: ${this.formatDuration(task.accumulatedTime)}/${this.formatDuration(task.requiredTime || 0)} ` +
-                `(${remaining > 0 ? this.formatDuration(remaining) + ' remaining' : 'COMPLETE'})`);
+    console.log(
+      `Task & Trigger | Added ${this.formatDuration(durationSeconds)} to ${task.name}. ` +
+        `Total: ${this.formatDuration(task.accumulatedTime)}/${this.formatDuration(task.requiredTime || 0)} ` +
+        `(${remaining > 0 ? this.formatDuration(remaining) + ' remaining' : 'COMPLETE'})`
+    );
 
     return isComplete;
   }
@@ -159,7 +165,7 @@ export class AccumulatedTimeManager {
     timeEntries: TimeEntry[];
   } | null> {
     const task = await this.taskManager.getTask(taskId);
-    
+
     if (!task || !task.isAccumulatedTime) {
       return null;
     }
@@ -175,7 +181,7 @@ export class AccumulatedTimeManager {
       progress,
       remaining,
       isComplete,
-      timeEntries: task.timeEntries || []
+      timeEntries: task.timeEntries || [],
     };
   }
 
@@ -185,7 +191,7 @@ export class AccumulatedTimeManager {
   async listAccumulatedTimeTasks(scope?: 'world' | 'client'): Promise<Task[]> {
     const allTasks = await this.taskManager.getAllTasks();
     const tasks = scope ? allTasks[scope] : [...allTasks.world, ...allTasks.client];
-    
+
     return tasks.filter(task => task.isAccumulatedTime);
   }
 
@@ -194,25 +200,25 @@ export class AccumulatedTimeManager {
    */
   async removeTimeEntry(taskId: string, entryId: string): Promise<boolean> {
     const task = await this.taskManager.getTask(taskId);
-    
+
     if (!task || !task.isAccumulatedTime) {
       return false;
     }
 
     const timeEntries = task.timeEntries || [];
     const entryIndex = timeEntries.findIndex(entry => entry.id === entryId);
-    
+
     if (entryIndex === -1) {
       return false;
     }
 
     const removedEntry = timeEntries[entryIndex];
     timeEntries.splice(entryIndex, 1);
-    
+
     // Update accumulated time
     task.accumulatedTime = (task.accumulatedTime || 0) - removedEntry.duration;
     task.accumulatedTime = Math.max(task.accumulatedTime, 0);
-    
+
     // If task was previously complete but is no longer, reset target time
     if (task.accumulatedTime < (task.requiredTime || 0) && task.targetTime > 0) {
       task.targetTime = 0;
@@ -220,44 +226,51 @@ export class AccumulatedTimeManager {
     }
 
     await this.taskManager.updateTask(task);
-    
-    console.log(`Task & Trigger | Removed time entry from ${task.name}: ${this.formatDuration(removedEntry.duration)}`);
-    
+
+    console.log(
+      `Task & Trigger | Removed time entry from ${task.name}: ${this.formatDuration(removedEntry.duration)}`
+    );
+
     return true;
   }
 
   /**
    * Edit a time entry
    */
-  async editTimeEntry(taskId: string, entryId: string, newDuration: TimeSpec, newDescription?: string): Promise<boolean> {
+  async editTimeEntry(
+    taskId: string,
+    entryId: string,
+    newDuration: TimeSpec,
+    newDescription?: string
+  ): Promise<boolean> {
     const task = await this.taskManager.getTask(taskId);
-    
+
     if (!task || !task.isAccumulatedTime) {
       return false;
     }
 
     const timeEntries = task.timeEntries || [];
     const entry = timeEntries.find(e => e.id === entryId);
-    
+
     if (!entry) {
       return false;
     }
 
     const newDurationSeconds = TimeConverter.toDuration(newDuration);
     const oldDuration = entry.duration;
-    
+
     // Update entry
     entry.duration = newDurationSeconds;
     entry.description = newDescription;
-    
+
     // Update accumulated time
     task.accumulatedTime = (task.accumulatedTime || 0) - oldDuration + newDurationSeconds;
     task.accumulatedTime = Math.max(task.accumulatedTime, 0);
-    
+
     // Check completion status
     const wasComplete = task.targetTime > 0;
     const isComplete = task.accumulatedTime >= (task.requiredTime || 0);
-    
+
     if (!wasComplete && isComplete) {
       task.targetTime = Math.floor(Date.now() / 1000);
       ui.notifications?.info(`Task completed! ${task.name}`);
@@ -267,9 +280,9 @@ export class AccumulatedTimeManager {
     }
 
     await this.taskManager.updateTask(task);
-    
+
     console.log(`Task & Trigger | Edited time entry for ${task.name}`);
-    
+
     return true;
   }
 
@@ -286,7 +299,7 @@ export class AccumulatedTimeManager {
     estimatedCompletion?: Date; // Based on average session frequency and duration
   } | null> {
     const task = await this.taskManager.getTask(taskId);
-    
+
     if (!task || !task.isAccumulatedTime || !task.timeEntries?.length) {
       return null;
     }
@@ -297,20 +310,20 @@ export class AccumulatedTimeManager {
     const averageSessionDuration = durations.reduce((sum, dur) => sum + dur, 0) / totalEntries;
     const longestSession = Math.max(...durations);
     const shortestSession = Math.min(...durations);
-    
+
     // Calculate recent activity (real time)
-    const weekAgo = Math.floor(Date.now() / 1000) - (7 * 24 * 60 * 60);
+    const weekAgo = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60;
     const sessionsThisWeek = entries.filter(e => e.timestamp >= weekAgo).length;
-    
+
     // Estimate completion time based on recent activity
     let estimatedCompletion: Date | undefined;
     const remaining = (task.requiredTime || 0) - (task.accumulatedTime || 0);
-    
+
     if (remaining > 0 && sessionsThisWeek > 0) {
       const weeklyRate = entries
         .filter(e => e.timestamp >= weekAgo)
         .reduce((sum, e) => sum + e.duration, 0);
-      
+
       if (weeklyRate > 0) {
         const weeksToCompletion = remaining / weeklyRate;
         const timeToCompletion = weeksToCompletion * 7 * 24 * 60 * 60 * 1000; // in milliseconds
@@ -325,7 +338,7 @@ export class AccumulatedTimeManager {
       shortestSession,
       totalSessions: totalEntries,
       sessionsThisWeek,
-      estimatedCompletion
+      estimatedCompletion,
     };
   }
 
@@ -334,35 +347,39 @@ export class AccumulatedTimeManager {
    */
   async exportTaskTimeLog(taskId: string, format: 'json' | 'csv' = 'csv'): Promise<string> {
     const task = await this.taskManager.getTask(taskId);
-    
+
     if (!task || !task.isAccumulatedTime) {
       throw new Error('Task not found or not an accumulated time task');
     }
 
     const entries = task.timeEntries || [];
-    
+
     if (format === 'csv') {
       const headers = ['Date', 'Duration (Hours)', 'Description', 'Logged By'];
       const csvRows = [headers.join(',')];
-      
+
       for (const entry of entries) {
         const date = new Date(entry.timestamp * 1000).toISOString().split('T')[0];
         const hours = (entry.duration / 3600).toFixed(2);
         const description = entry.description ? `"${entry.description.replace(/"/g, '""')}"` : '';
         const loggedBy = entry.loggedBy || 'Unknown';
-        
+
         csvRows.push([date, hours, description, loggedBy].join(','));
       }
-      
+
       return csvRows.join('\n');
     } else {
-      return JSON.stringify({
-        taskId: task.id,
-        taskName: task.name,
-        requiredTime: task.requiredTime,
-        accumulatedTime: task.accumulatedTime,
-        entries
-      }, null, 2);
+      return JSON.stringify(
+        {
+          taskId: task.id,
+          taskName: task.name,
+          requiredTime: task.requiredTime,
+          accumulatedTime: task.accumulatedTime,
+          entries,
+        },
+        null,
+        2
+      );
     }
   }
 
@@ -373,12 +390,12 @@ export class AccumulatedTimeManager {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const remainingSeconds = seconds % 60;
-    
+
     const parts: string[] = [];
     if (hours > 0) parts.push(`${hours}h`);
     if (minutes > 0) parts.push(`${minutes}m`);
     if (remainingSeconds > 0 || parts.length === 0) parts.push(`${remainingSeconds}s`);
-    
+
     return parts.join(' ');
   }
 

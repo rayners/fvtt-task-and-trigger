@@ -29,17 +29,18 @@ export class TaskPersistence {
    */
   async initialize(): Promise<void> {
     console.log('Task & Trigger | Initializing task persistence system');
-    
+
     try {
       // Get all persisted tasks from storage
       const allTasks = await this.storage.getAllTasks();
       const allTasksList = [...allTasks.world, ...allTasks.client];
 
       // Filter for UI-configured tasks that should be recovered
-      const uiTasks = allTasksList.filter(task => 
-        task.enabled && 
-        task.uiConfigured && // Only recover tasks created through UI
-        !task.useGameTime // Only real-time tasks need recovery (game time tasks work via hooks)
+      const uiTasks = allTasksList.filter(
+        task =>
+          task.enabled &&
+          task.uiConfigured && // Only recover tasks created through UI
+          !task.useGameTime // Only real-time tasks need recovery (game time tasks work via hooks)
         // Note: We include both future and past tasks - past tasks will be disabled in recoverUITask
       );
 
@@ -66,7 +67,7 @@ export class TaskPersistence {
    */
   private async recoverUITask(task: Task): Promise<void> {
     const currentTime = Math.floor(Date.now() / 1000);
-    
+
     if (task.recurring) {
       // For recurring tasks, just update the task which will trigger rescheduling
       console.log(`Task & Trigger | Recovering recurring UI task: ${task.name}`);
@@ -128,7 +129,7 @@ export class TaskPersistence {
       uiConfigured: allTasksList.filter(t => t.uiConfigured).length,
       ephemeral: allTasksList.filter(t => !t.uiConfigured).length,
       enabled: allTasksList.filter(t => t.enabled).length,
-      disabled: allTasksList.filter(t => !t.enabled).length
+      disabled: allTasksList.filter(t => !t.enabled).length,
     };
   }
 
@@ -137,14 +138,15 @@ export class TaskPersistence {
    * @param olderThanDays Remove disabled tasks older than this many days
    */
   async cleanupOldTasks(olderThanDays: number = 7): Promise<number> {
-    const cutoffTime = Math.floor(Date.now() / 1000) - (olderThanDays * 86400);
+    const cutoffTime = Math.floor(Date.now() / 1000) - olderThanDays * 86400;
     const allTasks = await this.taskManager.getAllTasks();
     const allTasksList = [...allTasks.world, ...allTasks.client];
 
-    const tasksToRemove = allTasksList.filter(task => 
-      !task.enabled && 
-      !task.uiConfigured && // Only clean up ephemeral tasks
-      task.created < cutoffTime
+    const tasksToRemove = allTasksList.filter(
+      task =>
+        !task.enabled &&
+        !task.uiConfigured && // Only clean up ephemeral tasks
+        task.created < cutoffTime
     );
 
     for (const task of tasksToRemove) {
@@ -169,7 +171,7 @@ export class TaskPersistence {
    */
   static registerSettings(): void {
     console.log('Task & Trigger | Registering module settings');
-    
+
     // Task Manager UI settings
     game.settings?.register('task-and-trigger', 'defaultScope', {
       name: 'Default Task Scope',
@@ -178,28 +180,28 @@ export class TaskPersistence {
       config: false, // Managed through Task Manager UI
       type: String,
       choices: {
-        'client': 'Client (Personal)',
-        'world': 'World (Shared)'
+        client: 'Client (Personal)',
+        world: 'World (Shared)',
       },
-      default: 'client'
+      default: 'client',
     });
-    
+
     game.settings?.register('task-and-trigger', 'autoCleanup', {
       name: 'Auto-cleanup Old Tasks',
       hint: 'Automatically remove old, disabled ephemeral tasks after 7 days',
       scope: 'world',
       config: false, // Managed through Task Manager UI
       type: Boolean,
-      default: false
+      default: false,
     });
-    
+
     game.settings?.register('task-and-trigger', 'executionLogging', {
       name: 'Enable Execution Logging by Default',
       hint: 'New tasks will log their execution to journal notes by default',
       scope: 'client',
       config: false, // Managed through Task Manager UI
       type: Boolean,
-      default: false
+      default: false,
     });
   }
 }

@@ -19,7 +19,7 @@ export class TaskManager {
   private storage: JournalStorage;
   private executor: TaskExecutor;
   private logger: EventLogger;
-  
+
   private constructor() {
     this.storage = JournalStorage.getInstance();
     this.executor = TaskExecutor.getInstance();
@@ -53,7 +53,7 @@ export class TaskManager {
 
       // Schedule real-time tasks
       this.scheduleRealTimeTasks();
-      
+
       this.initialized = true;
       console.log('Task & Trigger | TaskManager initialized');
     } catch (error) {
@@ -78,9 +78,9 @@ export class TaskManager {
    * @returns Task ID
    */
   async scheduleTask(
-    timeSpec: TimeSpec, 
-    callback: string, 
-    useGameTime: boolean = false, 
+    timeSpec: TimeSpec,
+    callback: string,
+    useGameTime: boolean = false,
     scope: 'world' | 'client' = 'client'
   ): Promise<string> {
     // Validate inputs
@@ -107,7 +107,7 @@ export class TaskManager {
       enabled: true,
       created: Math.floor(Date.now() / 1000),
       runCount: 0,
-      logExecution: false
+      logExecution: false,
     };
 
     // Store task
@@ -128,9 +128,9 @@ export class TaskManager {
    * @returns Task ID
    */
   async scheduleInterval(
-    interval: TimeSpec, 
-    callback: string, 
-    useGameTime: boolean = false, 
+    interval: TimeSpec,
+    callback: string,
+    useGameTime: boolean = false,
     scope: 'world' | 'client' = 'client'
   ): Promise<string> {
     // Validate inputs
@@ -158,7 +158,7 @@ export class TaskManager {
       enabled: true,
       created: Math.floor(Date.now() / 1000),
       runCount: 0,
-      logExecution: false
+      logExecution: false,
     };
 
     // Store task
@@ -178,8 +178,8 @@ export class TaskManager {
    * @returns Task ID
    */
   async scheduleCalendarTask(
-    calendarDate: CalendarDate, 
-    callback: string, 
+    calendarDate: CalendarDate,
+    callback: string,
     scope: 'world' | 'client' = 'world'
   ): Promise<string> {
     const task: Task = {
@@ -197,7 +197,7 @@ export class TaskManager {
       runCount: 0,
       logExecution: true,
       calendarIntegrated: true,
-      calendarDate
+      calendarDate,
     };
 
     // Store task
@@ -332,7 +332,7 @@ export class TaskManager {
   async getAllTasks(): Promise<{ world: Task[]; client: Task[] }> {
     return {
       world: Array.from(this.worldTasks.values()),
-      client: Array.from(this.clientTasks.values())
+      client: Array.from(this.clientTasks.values()),
     };
   }
 
@@ -345,12 +345,13 @@ export class TaskManager {
     const allTasks = await this.getAllTasks();
     const allTaskList = [...allTasks.world, ...allTasks.client];
 
-    return allTaskList.filter(task => 
-      task.calendarIntegrated && 
-      task.calendarDate &&
-      task.calendarDate.year === calendarDate.year &&
-      task.calendarDate.month === calendarDate.month &&
-      task.calendarDate.day === calendarDate.day
+    return allTaskList.filter(
+      task =>
+        task.calendarIntegrated &&
+        task.calendarDate &&
+        task.calendarDate.year === calendarDate.year &&
+        task.calendarDate.month === calendarDate.month &&
+        task.calendarDate.day === calendarDate.day
     );
   }
 
@@ -363,12 +364,12 @@ export class TaskManager {
     const currentGameTime = TimeConverter.getCurrentGameTime();
 
     // Check all game time tasks
-    for (const [taskId, task] of this.gameTimeChecks) {
+    for (const [, task] of this.gameTimeChecks) {
       if (!task.enabled) continue;
 
-      const shouldExecute = task.useGameTime ? 
-        currentGameTime >= task.targetTime :
-        currentTime >= task.targetTime;
+      const shouldExecute = task.useGameTime
+        ? currentGameTime >= task.targetTime
+        : currentTime >= task.targetTime;
 
       if (shouldExecute) {
         await this.executeTask(task);
@@ -381,9 +382,9 @@ export class TaskManager {
    * @param worldTime New world time
    * @param dt Time delta
    */
-  async handleWorldTimeUpdate(worldTime: number, dt: number): Promise<void> {
+  async handleWorldTimeUpdate(worldTime: number, _dt: number): Promise<void> {
     // Check game time tasks for execution
-    for (const [taskId, task] of this.gameTimeChecks) {
+    for (const [, task] of this.gameTimeChecks) {
       if (!task.enabled || !task.useGameTime) continue;
 
       if (worldTime >= task.targetTime) {
@@ -397,7 +398,7 @@ export class TaskManager {
    */
   async shutdown(): Promise<void> {
     // Clear all real-time schedules
-    for (const [taskId, timeout] of this.realTimeSchedules) {
+    for (const [, timeout] of this.realTimeSchedules) {
       clearTimeout(timeout);
     }
     this.realTimeSchedules.clear();
@@ -434,7 +435,9 @@ export class TaskManager {
       this.clientTasks.set(task.id, task);
     }
 
-    console.log(`Task & Trigger | Loaded ${tasks.world.length} world tasks, ${tasks.client.length} client tasks`);
+    console.log(
+      `Task & Trigger | Loaded ${tasks.world.length} world tasks, ${tasks.client.length} client tasks`
+    );
     return tasks;
   }
 
@@ -455,7 +458,7 @@ export class TaskManager {
     try {
       // Add to storage first
       await this.storage.addTask(task);
-      
+
       // Add to memory after successful storage
       if (task.scope === 'world') {
         this.worldTasks.set(task.id, task);
@@ -505,7 +508,7 @@ export class TaskManager {
    */
   private scheduleRealTimeTasks(): void {
     const allTasks = [...this.worldTasks.values(), ...this.clientTasks.values()];
-    
+
     for (const task of allTasks) {
       if (task.enabled && !task.useGameTime) {
         this.scheduleTaskExecution(task);
@@ -521,17 +524,17 @@ export class TaskManager {
    */
   private async executeTask(task: Task): Promise<void> {
     const startTime = performance.now();
-    
+
     try {
       console.log(`Task & Trigger | Executing task: ${task.name} (${task.id})`);
-      
+
       const result: TaskExecutionResult = await this.executor.executeTask(task);
       const executionDuration = Math.round(performance.now() - startTime);
-      
+
       // Update run count
       task.runCount++;
       task.lastExecution = Math.floor(Date.now() / 1000);
-      
+
       if (!result.success) {
         task.lastError = result.error;
         console.error(`Task & Trigger | Task execution failed: ${task.id}`, result.error);
@@ -547,26 +550,25 @@ export class TaskManager {
       // Handle recurring tasks
       if (task.recurring && task.interval) {
         // Calculate next execution time
-        const nextTime = task.useGameTime ? 
-          TimeConverter.getCurrentGameTime() + TimeConverter.toTimestamp(task.interval, true) :
-          Math.floor(Date.now() / 1000) + TimeConverter.toTimestamp(task.interval, false);
-        
+        const nextTime = task.useGameTime
+          ? TimeConverter.getCurrentGameTime() + TimeConverter.toTimestamp(task.interval, true)
+          : Math.floor(Date.now() / 1000) + TimeConverter.toTimestamp(task.interval, false);
+
         task.targetTime = nextTime;
-        
+
         // Schedule next execution
         this.scheduleTaskExecution(task);
       } else if (!task.recurring) {
         // Remove one-time tasks after execution
         this.realTimeSchedules.delete(task.id);
         this.gameTimeChecks.delete(task.id);
-        
+
         // Optionally keep in storage for history but mark as completed
         task.enabled = false;
       }
 
       // Update in storage
       await this.updateTask(task);
-
     } catch (error) {
       console.error(`Task & Trigger | Failed to execute task: ${task.id}`, error);
       task.lastError = String(error);
@@ -582,25 +584,25 @@ export class TaskManager {
    */
   private generateTaskName(timeSpec: TimeSpec, useGameTime: boolean): string {
     const timeType = useGameTime ? 'Game Time' : 'Real Time';
-    
+
     if (typeof timeSpec === 'number') {
       const date = new Date(timeSpec * 1000);
       return `${timeType} Task - ${date.toLocaleString()}`;
     }
-    
+
     if (TimeConverter.isAbsoluteTimeSpec(timeSpec)) {
       return `${timeType} Task - ${timeSpec.year}/${timeSpec.month}/${timeSpec.day}`;
     }
-    
+
     if (TimeConverter.isRelativeTimeSpec(timeSpec)) {
-      const parts = [];
+      const parts: string[] = [];
       if (timeSpec.days) parts.push(`${timeSpec.days}d`);
       if (timeSpec.hours) parts.push(`${timeSpec.hours}h`);
       if (timeSpec.minutes) parts.push(`${timeSpec.minutes}m`);
       if (timeSpec.seconds) parts.push(`${timeSpec.seconds}s`);
       return `${timeType} Task - in ${parts.join(' ')}`;
     }
-    
+
     return `${timeType} Task`;
   }
 
@@ -612,16 +614,16 @@ export class TaskManager {
    */
   private generateIntervalName(interval: TimeSpec, useGameTime: boolean): string {
     const timeType = useGameTime ? 'Game Time' : 'Real Time';
-    
+
     if (TimeConverter.isRelativeTimeSpec(interval)) {
-      const parts = [];
+      const parts: string[] = [];
       if (interval.days) parts.push(`${interval.days}d`);
       if (interval.hours) parts.push(`${interval.hours}h`);
       if (interval.minutes) parts.push(`${interval.minutes}m`);
       if (interval.seconds) parts.push(`${interval.seconds}s`);
       return `${timeType} Interval - every ${parts.join(' ')}`;
     }
-    
+
     return `${timeType} Interval`;
   }
 }

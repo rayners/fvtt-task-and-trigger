@@ -3,56 +3,84 @@
  * Exposed as game.taskTrigger.api for other modules and macros
  */
 
-import { TimeSpec, CalendarDate, Task } from './types';
+import { TimeSpec, CalendarDate, Task, TaskCallback } from './types';
 import { TaskScheduler, ScheduleOptions, TaskInfo } from './task-scheduler';
-import { TaskManager } from './task-manager';
 import { TaskPersistence } from './task-persistence';
 import { AccumulatedTimeTaskOptions, TimeLogEntry } from './accumulated-time-manager';
 import { TaskManagerApplication } from './task-manager-application';
 
 export interface TaskTriggerAPI {
   // Basic scheduling methods (setTimeout/setInterval style)
-  setTimeout(delay: TimeSpec, callback: string | Function, options?: ScheduleOptions): Promise<string>;
-  setInterval(interval: TimeSpec, callback: string | Function, options?: ScheduleOptions): Promise<string>;
+  setTimeout(delay: TimeSpec, callback: TaskCallback, options?: ScheduleOptions): Promise<string>;
+  setInterval(
+    interval: TimeSpec,
+    callback: TaskCallback,
+    options?: ScheduleOptions
+  ): Promise<string>;
   clearTimeout(taskId: string): Promise<boolean>;
   clearInterval(taskId: string): Promise<boolean>;
-  
+
   // Game time scheduling
-  setGameTimeout(delay: TimeSpec, callback: string | Function, options?: ScheduleOptions): Promise<string>;
-  setGameInterval(interval: TimeSpec, callback: string | Function, options?: ScheduleOptions): Promise<string>;
-  
+  setGameTimeout(
+    delay: TimeSpec,
+    callback: TaskCallback,
+    options?: ScheduleOptions
+  ): Promise<string>;
+  setGameInterval(
+    interval: TimeSpec,
+    callback: TaskCallback,
+    options?: ScheduleOptions
+  ): Promise<string>;
+
   // Advanced scheduling
-  scheduleAt(dateTime: Date, callback: string | Function, options?: ScheduleOptions): Promise<string>;
-  scheduleForDate(calendarDate: CalendarDate, callback: string | Function, options?: ScheduleOptions): Promise<string>;
-  
+  scheduleAt(dateTime: Date, callback: TaskCallback, options?: ScheduleOptions): Promise<string>;
+  scheduleForDate(
+    calendarDate: CalendarDate,
+    callback: TaskCallback,
+    options?: ScheduleOptions
+  ): Promise<string>;
+
   // Reminder utilities
   scheduleReminder(delay: TimeSpec, message: string, options?: ScheduleOptions): Promise<string>;
-  scheduleRecurringReminder(interval: TimeSpec, message: string, options?: ScheduleOptions): Promise<string>;
-  scheduleGameReminder(delay: TimeSpec, message: string, options?: ScheduleOptions): Promise<string>;
-  
+  scheduleRecurringReminder(
+    interval: TimeSpec,
+    message: string,
+    options?: ScheduleOptions
+  ): Promise<string>;
+  scheduleGameReminder(
+    delay: TimeSpec,
+    message: string,
+    options?: ScheduleOptions
+  ): Promise<string>;
+
   // Task management
   cancel(taskId: string): Promise<boolean>;
   enable(taskId: string): Promise<void>;
   disable(taskId: string): Promise<void>;
-  
+
   // Information queries
   getTaskInfo(taskId: string): Promise<TaskInfo | null>;
   listTasks(scope?: 'world' | 'client'): Promise<TaskInfo[]>;
   listTasksForDate(calendarDate: CalendarDate): Promise<TaskInfo[]>;
   getStatistics(): Promise<any>;
-  
+
   // Utilities
   formatTimeSpec(timeSpec: TimeSpec, useGameTime?: boolean): string;
   getNextExecutionTime(taskId: string): Promise<string | null>;
   isReady(): boolean;
-  
+
   // Accumulated time task methods
   createAccumulatedTimeTask(options: AccumulatedTimeTaskOptions): Promise<string>;
   addTimeToTask(taskId: string, entry: TimeLogEntry): Promise<boolean>;
   getAccumulatedTimeProgress(taskId: string): Promise<any>;
   listAccumulatedTimeTasks(scope?: 'world' | 'client'): Promise<Task[]>;
   removeTimeEntry(taskId: string, entryId: string): Promise<boolean>;
-  editTimeEntry(taskId: string, entryId: string, newDuration: TimeSpec, newDescription?: string): Promise<boolean>;
+  editTimeEntry(
+    taskId: string,
+    entryId: string,
+    newDuration: TimeSpec,
+    newDescription?: string
+  ): Promise<boolean>;
   getAccumulatedTimeStatistics(taskId: string): Promise<any>;
   exportTaskTimeLog(taskId: string, format?: 'json' | 'csv'): Promise<string>;
 
@@ -81,7 +109,7 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
    */
   async setTimeout(
     delay: TimeSpec,
-    callback: string | Function,
+    callback: TaskCallback,
     options: ScheduleOptions = {}
   ): Promise<string> {
     const callbackCode = this.normalizeCallback(callback);
@@ -97,7 +125,7 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
    */
   async setInterval(
     interval: TimeSpec,
-    callback: string | Function,
+    callback: TaskCallback,
     options: ScheduleOptions = {}
   ): Promise<string> {
     const callbackCode = this.normalizeCallback(callback);
@@ -131,7 +159,7 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
    */
   async setGameTimeout(
     delay: TimeSpec,
-    callback: string | Function,
+    callback: TaskCallback,
     options: ScheduleOptions = {}
   ): Promise<string> {
     const callbackCode = this.normalizeCallback(callback);
@@ -147,7 +175,7 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
    */
   async setGameInterval(
     interval: TimeSpec,
-    callback: string | Function,
+    callback: TaskCallback,
     options: ScheduleOptions = {}
   ): Promise<string> {
     const callbackCode = this.normalizeCallback(callback);
@@ -163,7 +191,7 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
    */
   async scheduleAt(
     dateTime: Date,
-    callback: string | Function,
+    callback: TaskCallback,
     options: ScheduleOptions = {}
   ): Promise<string> {
     const callbackCode = this.normalizeCallback(callback);
@@ -179,7 +207,7 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
    */
   async scheduleForDate(
     calendarDate: CalendarDate,
-    callback: string | Function,
+    callback: TaskCallback,
     options: ScheduleOptions = {}
   ): Promise<string> {
     const callbackCode = this.normalizeCallback(callback);
@@ -350,7 +378,7 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
     const callbackCode = this.normalizeCallback(options.callback);
     return this.scheduler.createAccumulatedTimeTask({
       ...options,
-      callback: callbackCode
+      callback: callbackCode,
     });
   }
 
@@ -400,7 +428,12 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
    * @param newDescription New description
    * @returns True if edited
    */
-  async editTimeEntry(taskId: string, entryId: string, newDuration: TimeSpec, newDescription?: string): Promise<boolean> {
+  async editTimeEntry(
+    taskId: string,
+    entryId: string,
+    newDuration: TimeSpec,
+    newDescription?: string
+  ): Promise<boolean> {
     return this.scheduler.editTimeEntry(taskId, entryId, newDuration, newDescription);
   }
 
@@ -437,28 +470,30 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
    * @param callback Function or string callback
    * @returns String callback
    */
-  private normalizeCallback(callback: string | Function): string {
+  private normalizeCallback(callback: TaskCallback): string {
     if (typeof callback === 'function') {
       // Convert function to string - this will lose closure but work for simple functions
       const funcString = callback.toString();
-      
+
       // Extract function body if it's a regular function
-      const match = funcString.match(/^(?:async\s+)?(?:function\s*)?(?:\w+\s*)?\([^)]*\)\s*(?:=>\s*)?\{([\s\S]*)\}$/);
+      const match = funcString.match(
+        /^(?:async\s+)?(?:function\s*)?(?:\w+\s*)?\([^)]*\)\s*(?:=>\s*)?\{([\s\S]*)\}$/
+      );
       if (match) {
         return match[1].trim();
       }
-      
+
       // Handle arrow functions without braces
       const arrowMatch = funcString.match(/^(?:async\s+)?\([^)]*\)\s*=>\s*(.+)$/);
       if (arrowMatch) {
         return `return (${arrowMatch[1]});`;
       }
-      
+
       // Fall back to the full function string
       console.warn('Task & Trigger | Complex function callback may not work as expected');
       return `(${funcString})();`;
     }
-    
+
     return callback;
   }
 }

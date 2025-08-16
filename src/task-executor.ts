@@ -33,7 +33,7 @@ export class TaskExecutor {
         success: false,
         error: 'Task is already executing',
         executionTime: 0,
-        timestamp
+        timestamp,
       };
     }
 
@@ -48,7 +48,7 @@ export class TaskExecutor {
         success: true,
         result,
         executionTime,
-        timestamp
+        timestamp,
       };
 
       // Store execution history
@@ -56,7 +56,6 @@ export class TaskExecutor {
 
       console.log(`Task & Trigger | Task executed successfully: ${task.name}`);
       return executionResult;
-
     } catch (error) {
       const executionTime = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -65,19 +64,18 @@ export class TaskExecutor {
         success: false,
         error: errorMessage,
         executionTime,
-        timestamp
+        timestamp,
       };
 
       // Store execution history
       this.addToExecutionHistory(task.id, executionResult);
 
       console.error(`Task & Trigger | Task execution failed: ${task.name}`, error);
-      
+
       // Show user-friendly error notification
       this.showExecutionError(task, errorMessage);
 
       return executionResult;
-
     } finally {
       this.executingTasks.delete(task.id);
     }
@@ -112,16 +110,14 @@ export class TaskExecutor {
       );
 
       // Execute with the Foundry context
-      const result = await asyncFunction.call(
-        globalThis,
-        ...Object.values(executionContext)
-      );
+      const result = await asyncFunction.call(globalThis, ...Object.values(executionContext));
 
       return result;
-
     } catch (error) {
       // Re-throw with more context
-      throw new Error(`JavaScript execution error: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `JavaScript execution error: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -139,22 +135,21 @@ export class TaskExecutor {
       CONFIG: typeof CONFIG !== 'undefined' ? CONFIG : undefined,
       CONST: typeof CONST !== 'undefined' ? CONST : undefined,
       foundry: typeof foundry !== 'undefined' ? foundry : undefined,
-      
+
       // Common utilities
       console,
       setTimeout,
       setInterval,
       clearTimeout,
       clearInterval,
-      
+
       // jQuery if available
       $: typeof $ !== 'undefined' ? $ : undefined,
-      
+
       // Task & Trigger API
       taskTrigger: typeof game !== 'undefined' ? (game as any).taskTrigger : undefined,
     };
   }
-
 
   /**
    * Show execution error notification to user
@@ -163,7 +158,7 @@ export class TaskExecutor {
     ui.notifications?.error(
       game.i18n.format('TASK_TRIGGER.Messages.TaskFailed', {
         name: task.name,
-        error: error
+        error: error,
       })
     );
   }
@@ -226,14 +221,17 @@ export class TaskExecutor {
 
     // Check for potentially dangerous patterns (informational only)
     const dangerousPatterns = [
-      { pattern: /document\./, message: 'Accesses browser DOM - may not work as expected in Foundry' },
+      {
+        pattern: /document\./,
+        message: 'Accesses browser DOM - may not work as expected in Foundry',
+      },
       { pattern: /window\./, message: 'Accesses browser window object' },
       { pattern: /localStorage|sessionStorage/, message: 'Accesses browser storage' },
       { pattern: /XMLHttpRequest|fetch\(/, message: 'Makes HTTP requests' },
       { pattern: /eval\(/, message: 'Uses eval() function' },
       { pattern: /Function\(/, message: 'Uses Function constructor' },
       { pattern: /import\(/, message: 'Uses dynamic imports' },
-      { pattern: /require\(/, message: 'Uses CommonJS require' }
+      { pattern: /require\(/, message: 'Uses CommonJS require' },
     ];
 
     for (const { pattern, message } of dangerousPatterns) {
@@ -244,13 +242,6 @@ export class TaskExecutor {
 
     return { valid: true, warnings };
   }
-
 }
 
-// Dialog class mock for testing environments
-declare global {
-  class Dialog {
-    constructor(options: any);
-    render(force?: boolean): void;
-  }
-}
+// Dialog class is provided by foundry-dev-tools types

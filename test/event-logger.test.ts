@@ -32,7 +32,7 @@ describe('EventLogger', () => {
       logSuccesses: true,
       logErrors: true,
       detailedLogging: false,
-      minDurationThreshold: 0
+      minDurationThreshold: 0,
     });
     vi.spyOn(game.settings!, 'set').mockResolvedValue(undefined);
 
@@ -69,9 +69,9 @@ describe('EventLogger', () => {
 
     it('should handle initialization errors gracefully', async () => {
       vi.spyOn(game.settings!, 'get').mockRejectedValue(new Error('Settings error'));
-      
+
       await eventLogger.initialize();
-      
+
       // Should still be enabled with default settings
       expect(eventLogger.isEnabled()).toBe(true);
     });
@@ -82,15 +82,18 @@ describe('EventLogger', () => {
       id: 'test-task-1',
       name: 'Test Task',
       description: 'A test task',
+      timeSpec: { hours: 1 },
       callback: 'console.log("test")',
       targetTime: Date.now() / 1000,
       recurring: false,
-      interval: null,
+      interval: undefined,
       enabled: true,
       useGameTime: false,
       scope: 'client',
       runCount: 0,
-      uiConfigured: false
+      created: Date.now(),
+      logExecution: true,
+      uiConfigured: false,
     };
 
     beforeEach(async () => {
@@ -101,7 +104,8 @@ describe('EventLogger', () => {
       const result: TaskExecutionResult = {
         success: true,
         result: 'Task completed successfully',
-        executionTime: 150
+        executionTime: 150,
+        timestamp: Date.now(),
       };
 
       await eventLogger.logTaskExecution(mockTask, result, 150);
@@ -115,9 +119,9 @@ describe('EventLogger', () => {
               taskId: 'test-task-1',
               taskName: 'Test Task',
               executionType: 'success',
-              duration: 150
-            })
-          ])
+              duration: 150,
+            }),
+          ]),
         })
       );
     });
@@ -126,7 +130,8 @@ describe('EventLogger', () => {
       const result: TaskExecutionResult = {
         success: false,
         error: 'Task execution failed',
-        executionTime: 75
+        executionTime: 75,
+        timestamp: Date.now(),
       };
 
       await eventLogger.logTaskExecution(mockTask, result, 75);
@@ -139,9 +144,9 @@ describe('EventLogger', () => {
             expect.objectContaining({
               taskId: 'test-task-1',
               executionType: 'error',
-              error: 'Task execution failed'
-            })
-          ])
+              error: 'Task execution failed',
+            }),
+          ]),
         })
       );
     });
@@ -151,7 +156,8 @@ describe('EventLogger', () => {
         success: false,
         timeout: true,
         error: 'Task timed out',
-        executionTime: 5000
+        executionTime: 5000,
+        timestamp: Date.now(),
       };
 
       await eventLogger.logTaskExecution(mockTask, result, 5000);
@@ -163,9 +169,9 @@ describe('EventLogger', () => {
           logs: expect.arrayContaining([
             expect.objectContaining({
               taskId: 'test-task-1',
-              executionType: 'timeout'
-            })
-          ])
+              executionType: 'timeout',
+            }),
+          ]),
         })
       );
     });
@@ -176,7 +182,8 @@ describe('EventLogger', () => {
       const result: TaskExecutionResult = {
         success: true,
         result: 'Task completed',
-        executionTime: 100
+        executionTime: 100,
+        timestamp: Date.now(),
       };
 
       await eventLogger.logTaskExecution(mockTask, result, 100);
@@ -190,7 +197,8 @@ describe('EventLogger', () => {
       const result: TaskExecutionResult = {
         success: true,
         result: 'Task completed',
-        executionTime: 100
+        executionTime: 100,
+        timestamp: Date.now(),
       };
 
       await eventLogger.logTaskExecution(mockTask, result, 100);
@@ -204,7 +212,8 @@ describe('EventLogger', () => {
       const result: TaskExecutionResult = {
         success: false,
         error: 'Task failed',
-        executionTime: 100
+        executionTime: 100,
+        timestamp: Date.now(),
       };
 
       await eventLogger.logTaskExecution(mockTask, result, 100);
@@ -218,7 +227,8 @@ describe('EventLogger', () => {
       const result: TaskExecutionResult = {
         success: true,
         result: 'Task completed',
-        executionTime: 150
+        executionTime: 150,
+        timestamp: Date.now(),
       };
 
       await eventLogger.logTaskExecution(mockTask, result, 150);
@@ -230,15 +240,19 @@ describe('EventLogger', () => {
       const result: TaskExecutionResult = {
         success: true,
         result: 'Task completed',
-        executionTime: 150
+        executionTime: 150,
+        timestamp: Date.now(),
       };
 
       await eventLogger.logTaskExecution(mockTask, result, 150);
 
-      expect(Hooks.callAll).toHaveBeenCalledWith('taskTriggerEventLogged', expect.objectContaining({
-        taskId: 'test-task-1',
-        executionType: 'success'
-      }));
+      expect(Hooks.callAll).toHaveBeenCalledWith(
+        'taskTriggerEventLogged',
+        expect.objectContaining({
+          taskId: 'test-task-1',
+          executionType: 'success',
+        })
+      );
     });
   });
 
@@ -252,7 +266,7 @@ describe('EventLogger', () => {
         executionType: 'success',
         duration: 100,
         scope: 'client',
-        userTriggered: false
+        userTriggered: false,
       },
       {
         id: 'log-2',
@@ -263,7 +277,7 @@ describe('EventLogger', () => {
         duration: 200,
         error: 'Test error',
         scope: 'world',
-        userTriggered: true
+        userTriggered: true,
       },
       {
         id: 'log-3',
@@ -273,8 +287,8 @@ describe('EventLogger', () => {
         executionType: 'success',
         duration: 150,
         scope: 'client',
-        userTriggered: false
-      }
+        userTriggered: false,
+      },
     ];
 
     beforeEach(async () => {
@@ -284,7 +298,7 @@ describe('EventLogger', () => {
 
     it('should get recent logs', async () => {
       const recentLogs = await eventLogger.getRecentLogs(2);
-      
+
       expect(recentLogs).toHaveLength(2);
       expect(recentLogs[0].timestamp).toBeGreaterThan(recentLogs[1].timestamp);
       expect(recentLogs[0].id).toBe('log-3');
@@ -293,7 +307,7 @@ describe('EventLogger', () => {
 
     it('should get logs for specific task', async () => {
       const taskLogs = await eventLogger.getTaskLogs('task-1');
-      
+
       expect(taskLogs).toHaveLength(2);
       expect(taskLogs.every(log => log.taskId === 'task-1')).toBe(true);
       expect(taskLogs[0].timestamp).toBeGreaterThan(taskLogs[1].timestamp);
@@ -301,7 +315,7 @@ describe('EventLogger', () => {
 
     it('should handle empty log storage', async () => {
       vi.spyOn(mockStorage, 'readData').mockResolvedValue({ logs: [] });
-      
+
       const logs = await eventLogger.getRecentLogs();
       expect(logs).toEqual([]);
     });
@@ -311,35 +325,35 @@ describe('EventLogger', () => {
     const mockLogsForStats: LogEntry[] = [
       {
         id: 'log-1',
-        timestamp: Math.floor(Date.now() / 1000) - (2 * 24 * 60 * 60), // 2 days ago
+        timestamp: Math.floor(Date.now() / 1000) - 2 * 24 * 60 * 60, // 2 days ago
         taskId: 'task-1',
         taskName: 'Task One',
         executionType: 'success',
         duration: 100,
         scope: 'client',
-        userTriggered: false
+        userTriggered: false,
       },
       {
         id: 'log-2',
-        timestamp: Math.floor(Date.now() / 1000) - (1 * 24 * 60 * 60), // 1 day ago
+        timestamp: Math.floor(Date.now() / 1000) - 1 * 24 * 60 * 60, // 1 day ago
         taskId: 'task-2',
         taskName: 'Task Two',
         executionType: 'error',
         duration: 200,
         error: 'Test error',
         scope: 'world',
-        userTriggered: false
+        userTriggered: false,
       },
       {
         id: 'log-3',
-        timestamp: Math.floor(Date.now() / 1000) - (1 * 60 * 60), // 1 hour ago
+        timestamp: Math.floor(Date.now() / 1000) - 1 * 60 * 60, // 1 hour ago
         taskId: 'task-1',
         taskName: 'Task One',
         executionType: 'timeout',
         duration: 5000,
         scope: 'client',
-        userTriggered: false
-      }
+        userTriggered: false,
+      },
     ];
 
     beforeEach(async () => {
@@ -349,7 +363,7 @@ describe('EventLogger', () => {
 
     it('should calculate execution statistics', async () => {
       const stats = await eventLogger.getExecutionStats(7);
-      
+
       expect(stats.totalExecutions).toBe(3);
       expect(stats.successfulExecutions).toBe(1);
       expect(stats.failedExecutions).toBe(1);
@@ -357,17 +371,19 @@ describe('EventLogger', () => {
       expect(stats.averageDuration).toBe((100 + 200 + 5000) / 3);
       expect(stats.executionsPerDay.length).toBeGreaterThan(0);
       expect(stats.topFailingTasks).toHaveLength(2);
-      expect(stats.topFailingTasks).toEqual(expect.arrayContaining([
-        { taskId: 'task-1', taskName: 'Task One', failures: 1 },
-        { taskId: 'task-2', taskName: 'Task Two', failures: 1 }
-      ]));
+      expect(stats.topFailingTasks).toEqual(
+        expect.arrayContaining([
+          { taskId: 'task-1', taskName: 'Task One', failures: 1 },
+          { taskId: 'task-2', taskName: 'Task Two', failures: 1 },
+        ])
+      );
     });
 
     it('should handle empty statistics', async () => {
       vi.spyOn(mockStorage, 'readData').mockResolvedValue({ logs: [] });
-      
+
       const stats = await eventLogger.getExecutionStats(7);
-      
+
       expect(stats.totalExecutions).toBe(0);
       expect(stats.successfulExecutions).toBe(0);
       expect(stats.failedExecutions).toBe(0);
@@ -384,7 +400,7 @@ describe('EventLogger', () => {
 
     it('should cleanup old logs when exceeding max entries', async () => {
       await eventLogger.updateSettings({ maxEntries: 2 });
-      
+
       const manyLogs = Array.from({ length: 5 }, (_, i) => ({
         id: `log-${i}`,
         timestamp: 1640995200 + i * 60,
@@ -393,21 +409,21 @@ describe('EventLogger', () => {
         executionType: 'success' as const,
         duration: 100,
         scope: 'client' as const,
-        userTriggered: false
+        userTriggered: false,
       }));
 
       vi.spyOn(mockStorage, 'readData').mockResolvedValue({ logs: manyLogs });
-      
+
       await eventLogger.cleanupLogs();
-      
+
       expect(mockStorage.writeData).toHaveBeenCalledWith(
         'event-logs',
         'world',
         expect.objectContaining({
           logs: expect.arrayContaining([
             expect.objectContaining({ id: 'log-4' }),
-            expect.objectContaining({ id: 'log-3' })
-          ])
+            expect.objectContaining({ id: 'log-3' }),
+          ]),
         })
       );
     });
@@ -421,7 +437,7 @@ describe('EventLogger', () => {
     it('should update settings', async () => {
       const newSettings: Partial<LoggerSettings> = {
         enabled: false,
-        maxEntries: 500
+        maxEntries: 500,
       };
 
       await eventLogger.updateSettings(newSettings);
@@ -435,13 +451,15 @@ describe('EventLogger', () => {
 
     it('should get current settings', async () => {
       const settings = eventLogger.getSettings();
-      
-      expect(settings).toEqual(expect.objectContaining({
-        enabled: true,
-        maxEntries: 100,
-        logSuccesses: true,
-        logErrors: true
-      }));
+
+      expect(settings).toEqual(
+        expect.objectContaining({
+          enabled: true,
+          maxEntries: 100,
+          logSuccesses: true,
+          logErrors: true,
+        })
+      );
     });
   });
 
@@ -455,7 +473,7 @@ describe('EventLogger', () => {
         executionType: 'success',
         duration: 100,
         scope: 'client',
-        userTriggered: false
+        userTriggered: false,
       },
       {
         id: 'log-2',
@@ -466,8 +484,8 @@ describe('EventLogger', () => {
         duration: 200,
         error: 'Test error message',
         scope: 'world',
-        userTriggered: true
-      }
+        userTriggered: true,
+      },
     ];
 
     beforeEach(async () => {
@@ -478,19 +496,21 @@ describe('EventLogger', () => {
     it('should export logs as JSON', async () => {
       const exported = await eventLogger.exportLogs('json');
       const parsed = JSON.parse(exported);
-      
+
       expect(Array.isArray(parsed)).toBe(true);
       expect(parsed).toHaveLength(2);
-      expect(parsed[0]).toEqual(expect.objectContaining({
-        taskId: 'task-1',
-        executionType: 'success'
-      }));
+      expect(parsed[0]).toEqual(
+        expect.objectContaining({
+          taskId: 'task-1',
+          executionType: 'success',
+        })
+      );
     });
 
     it('should export logs as CSV', async () => {
       const exported = await eventLogger.exportLogs('csv');
       const lines = exported.split('\n');
-      
+
       expect(lines[0]).toContain('timestamp,taskId,taskName');
       expect(lines[1]).toContain('task-1');
       expect(lines[1]).toContain('Test Task');
@@ -506,32 +526,36 @@ describe('EventLogger', () => {
 
     it('should handle storage read errors gracefully', async () => {
       vi.spyOn(mockStorage, 'readData').mockRejectedValue(new Error('Storage error'));
-      
+
       const logs = await eventLogger.getRecentLogs();
       expect(logs).toEqual([]);
     });
 
     it('should handle storage write errors gracefully', async () => {
       vi.spyOn(mockStorage, 'writeData').mockRejectedValue(new Error('Write error'));
-      
+
       const mockTask: Task = {
         id: 'test-task',
         name: 'Test Task',
+        timeSpec: { hours: 1 },
         callback: 'console.log("test")',
         targetTime: Date.now() / 1000,
         recurring: false,
-        interval: null,
+        interval: undefined,
         enabled: true,
         useGameTime: false,
         scope: 'client',
         runCount: 0,
-        uiConfigured: false
+        created: Date.now(),
+        logExecution: true,
+        uiConfigured: false,
       };
 
       const result: TaskExecutionResult = {
         success: true,
         result: 'Success',
-        executionTime: 100
+        executionTime: 100,
+        timestamp: Date.now(),
       };
 
       // Should not throw
@@ -543,7 +567,7 @@ describe('EventLogger', () => {
     it('should shutdown cleanly', async () => {
       await eventLogger.initialize();
       expect(eventLogger.isEnabled()).toBe(true);
-      
+
       await eventLogger.shutdown();
       expect(eventLogger.isEnabled()).toBe(false);
     });

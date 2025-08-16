@@ -1,7 +1,10 @@
 {
   "extends": "@rayners/foundry-dev-tools/tsconfig",
   "compilerOptions": {
-    "types": ["@rayners/foundry-dev-tools/types/foundry-v13-essentials", "@types/jquery"],
+    "types": [
+      "@rayners/foundry-dev-tools/types/foundry-v13-essentials",
+      "@types/jquery"
+    ],
     "outDir": "./dist"
   },
   "include": ["src/**/*", "test/**/*"],

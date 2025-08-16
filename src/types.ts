@@ -31,7 +31,9 @@ export interface Task {
   description?: string;
   timeSpec: TimeSpec;
   targetTime: number; // Unix timestamp when task should execute
-  callback: string; // JavaScript code to execute
+  macroId: string; // Reference to the macro document that will be executed
+  macroSource: 'generated' | 'existing' | 'module'; // How the macro was created
+  owningModule?: string; // Module that created this task (for module-created tasks)
   useGameTime: boolean; // Whether to use game time or real time
   recurring: boolean; // Whether this is a recurring task
   interval?: TimeSpec; // For recurring tasks, the interval

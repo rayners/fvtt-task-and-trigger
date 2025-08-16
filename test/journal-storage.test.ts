@@ -94,7 +94,7 @@ describe('JournalStorage', () => {
 
       expect(tasks).toHaveLength(1);
       expect(tasks[0]).toEqual(mockTask);
-      expect(game.journal.getName).toHaveBeenCalledWith('Task & Trigger Configuration');
+      expect(game.journal!.getName).toHaveBeenCalledWith('Task & Trigger Configuration');
     });
 
     it('should return empty array if journal does not exist', async () => {
@@ -214,7 +214,7 @@ describe('JournalStorage', () => {
       const journal = await storage.getOrCreateConfigJournal();
 
       expect(journal).toBe(mockJournalEntry);
-      expect(game.journal.getName).toHaveBeenCalledWith('Task & Trigger Configuration');
+      expect(game.journal!.getName).toHaveBeenCalledWith('Task & Trigger Configuration');
     });
 
     it('should create journal if it does not exist', async () => {

@@ -6,7 +6,7 @@
 export type TimeSpec = Date | number | RelativeTimeSpec | AbsoluteTimeSpec;
 
 // Common callback type for task execution
-export type TaskCallback = string | (() => void);
+export type TaskCallback = string | Function;
 
 export interface RelativeTimeSpec {
   days?: number;

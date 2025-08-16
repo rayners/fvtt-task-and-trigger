@@ -82,14 +82,17 @@ describe('EventLogger', () => {
       id: 'test-task-1',
       name: 'Test Task',
       description: 'A test task',
+      timeSpec: { hours: 1 },
       callback: 'console.log("test")',
       targetTime: Date.now() / 1000,
       recurring: false,
-      interval: null,
+      interval: undefined,
       enabled: true,
       useGameTime: false,
       scope: 'client',
       runCount: 0,
+      created: Date.now(),
+      logExecution: true,
       uiConfigured: false,
     };
 
@@ -102,6 +105,7 @@ describe('EventLogger', () => {
         success: true,
         result: 'Task completed successfully',
         executionTime: 150,
+        timestamp: Date.now(),
       };
 
       await eventLogger.logTaskExecution(mockTask, result, 150);
@@ -127,6 +131,7 @@ describe('EventLogger', () => {
         success: false,
         error: 'Task execution failed',
         executionTime: 75,
+        timestamp: Date.now(),
       };
 
       await eventLogger.logTaskExecution(mockTask, result, 75);
@@ -152,6 +157,7 @@ describe('EventLogger', () => {
         timeout: true,
         error: 'Task timed out',
         executionTime: 5000,
+        timestamp: Date.now(),
       };
 
       await eventLogger.logTaskExecution(mockTask, result, 5000);
@@ -177,6 +183,7 @@ describe('EventLogger', () => {
         success: true,
         result: 'Task completed',
         executionTime: 100,
+        timestamp: Date.now(),
       };
 
       await eventLogger.logTaskExecution(mockTask, result, 100);
@@ -191,6 +198,7 @@ describe('EventLogger', () => {
         success: true,
         result: 'Task completed',
         executionTime: 100,
+        timestamp: Date.now(),
       };
 
       await eventLogger.logTaskExecution(mockTask, result, 100);
@@ -205,6 +213,7 @@ describe('EventLogger', () => {
         success: false,
         error: 'Task failed',
         executionTime: 100,
+        timestamp: Date.now(),
       };
 
       await eventLogger.logTaskExecution(mockTask, result, 100);
@@ -219,6 +228,7 @@ describe('EventLogger', () => {
         success: true,
         result: 'Task completed',
         executionTime: 150,
+        timestamp: Date.now(),
       };
 
       await eventLogger.logTaskExecution(mockTask, result, 150);
@@ -231,6 +241,7 @@ describe('EventLogger', () => {
         success: true,
         result: 'Task completed',
         executionTime: 150,
+        timestamp: Date.now(),
       };
 
       await eventLogger.logTaskExecution(mockTask, result, 150);
@@ -526,14 +537,17 @@ describe('EventLogger', () => {
       const mockTask: Task = {
         id: 'test-task',
         name: 'Test Task',
+        timeSpec: { hours: 1 },
         callback: 'console.log("test")',
         targetTime: Date.now() / 1000,
         recurring: false,
-        interval: null,
+        interval: undefined,
         enabled: true,
         useGameTime: false,
         scope: 'client',
         runCount: 0,
+        created: Date.now(),
+        logExecution: true,
         uiConfigured: false,
       };
 
@@ -541,6 +555,7 @@ describe('EventLogger', () => {
         success: true,
         result: 'Success',
         executionTime: 100,
+        timestamp: Date.now(),
       };
 
       // Should not throw

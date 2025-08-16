@@ -195,16 +195,16 @@ describe('Module Integration', () => {
 
     it('should be able to register settings', () => {
       expect(game.settings).toBeDefined();
-      expect(typeof game.settings.register).toBe('function');
-      expect(typeof game.settings.get).toBe('function');
-      expect(typeof game.settings.set).toBe('function');
+      expect(typeof game.settings!.register).toBe('function');
+      expect(typeof game.settings!.get).toBe('function');
+      expect(typeof game.settings!.set).toBe('function');
     });
 
     it('should be able to access notifications', () => {
       expect(ui.notifications).toBeDefined();
-      expect(typeof ui.notifications.info).toBe('function');
-      expect(typeof ui.notifications.error).toBe('function');
-      expect(typeof ui.notifications.warn).toBe('function');
+      expect(typeof ui.notifications!.info).toBe('function');
+      expect(typeof ui.notifications!.error).toBe('function');
+      expect(typeof ui.notifications!.warn).toBe('function');
     });
   });
 });

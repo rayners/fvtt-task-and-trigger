@@ -5,8 +5,26 @@
 // Time specification types
 export type TimeSpec = Date | number | RelativeTimeSpec | AbsoluteTimeSpec;
 
-// Common callback type for task execution
-export type TaskCallback = string | ((...args: any[]) => any);
+
+// Module integration types
+export interface ModuleMacroRegistration {
+  moduleId: string;
+  macroId?: string; // existing macro
+  macroCode?: string; // or code to create new macro
+  name: string;
+  description?: string;
+}
+
+export interface ModuleTaskScheduling {
+  moduleId: string;
+  macroId: string;
+  schedule: TimeSpec;
+  name: string;
+  description?: string;
+  recurring?: boolean;
+  interval?: TimeSpec;
+  scope?: 'world' | 'client';
+}
 
 export interface RelativeTimeSpec {
   days?: number;
@@ -106,13 +124,13 @@ export interface TaskTriggerSettings {
 
 // API types
 export interface TaskTriggerAPI {
-  scheduleTask(time: TimeSpec, callback: TaskCallback, useGameTime?: boolean): string;
-  scheduleInterval(interval: TimeSpec, callback: TaskCallback, useGameTime?: boolean): string;
+  scheduleTask(time: TimeSpec, macroId: string, useGameTime?: boolean): string;
+  scheduleInterval(interval: TimeSpec, macroId: string, useGameTime?: boolean): string;
   cancelTask(taskId: string): boolean;
   showTaskCreator(): void;
   scheduleCalendarTask(
     calendarDate: CalendarDate,
-    callback: TaskCallback,
+    macroId: string,
     scope: 'world' | 'client'
   ): string;
   getTasksForDate(calendarDate: CalendarDate): Task[];

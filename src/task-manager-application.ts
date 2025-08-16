@@ -247,7 +247,7 @@ export class TaskManagerApplication extends HandlebarsApplicationMixin(Applicati
 
     if (confirmed) {
       try {
-        const _immediateTaskId = await this.scheduler.setTimeout({ seconds: 0 }, task.id, {
+        await this.scheduler.setTimeout({ seconds: 0 }, task.id, {
           scope: 'client',
         });
         ui.notifications?.info(`Executing task: ${task.name}`);
@@ -379,7 +379,7 @@ export class TaskManagerApplication extends HandlebarsApplicationMixin(Applicati
       if (!file) return;
 
       try {
-        const _text = await file.text();
+        await file.text();
         // This would require extending the storage API for imports
         ui.notifications?.info('Import functionality coming soon!');
       } catch (error) {
@@ -618,7 +618,7 @@ export class TaskManagerApplication extends HandlebarsApplicationMixin(Applicati
             month: 'long',
             day: 'numeric',
           });
-        } catch (_error) {
+        } catch {
           return dateTimeString; // Fallback to raw string
         }
       },

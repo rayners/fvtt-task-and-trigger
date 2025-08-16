@@ -35,7 +35,7 @@ declare global {
             top?: number;
             left?: number;
           };
-          actions?: Record<string, Function>;
+          actions?: Record<string, (...args: any[]) => any>;
         }
         
         interface ApplicationV2RenderOptions {
@@ -69,11 +69,11 @@ declare global {
             content: string;
             yes?: {
               label?: string;
-              callback?: Function;
+              callback?: (...args: any[]) => any;
             };
             no?: {
               label?: string; 
-              callback?: Function;
+              callback?: (...args: any[]) => any;
             };
             defaultYes?: boolean;
           }): Promise<boolean>;

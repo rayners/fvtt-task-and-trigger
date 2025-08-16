@@ -364,7 +364,7 @@ export class TaskManager {
     const currentGameTime = TimeConverter.getCurrentGameTime();
 
     // Check all game time tasks
-    for (const [_taskId, task] of this.gameTimeChecks) {
+    for (const [, task] of this.gameTimeChecks) {
       if (!task.enabled) continue;
 
       const shouldExecute = task.useGameTime
@@ -384,7 +384,7 @@ export class TaskManager {
    */
   async handleWorldTimeUpdate(worldTime: number, _dt: number): Promise<void> {
     // Check game time tasks for execution
-    for (const [_taskId, task] of this.gameTimeChecks) {
+    for (const [, task] of this.gameTimeChecks) {
       if (!task.enabled || !task.useGameTime) continue;
 
       if (worldTime >= task.targetTime) {
@@ -398,7 +398,7 @@ export class TaskManager {
    */
   async shutdown(): Promise<void> {
     // Clear all real-time schedules
-    for (const [_taskId, timeout] of this.realTimeSchedules) {
+    for (const [, timeout] of this.realTimeSchedules) {
       clearTimeout(timeout);
     }
     this.realTimeSchedules.clear();

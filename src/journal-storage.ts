@@ -210,7 +210,7 @@ export class JournalStorage {
       'runCount',
     ];
 
-    return requiredFields.every(field => task.hasOwnProperty(field));
+    return requiredFields.every(field => Object.prototype.hasOwnProperty.call(task, field));
   }
 
   /**

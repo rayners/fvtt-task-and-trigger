@@ -11,7 +11,7 @@ describe('MacroManager', () => {
   let mockMacros: Map<string, any>;
   let mockFolders: Map<string, any>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Clear singleton instance
     (MacroManager as any).instance = undefined;
     macroManager = MacroManager.getInstance();
@@ -93,6 +93,16 @@ describe('MacroManager', () => {
         return (global as any).game.macros.createDocument(data);
       })
     };
+
+    // Mock global Folder class
+    (globalThis as any).Folder = {
+      create: vi.fn(async (data: any) => {
+        return (global as any).game.folders.createDocument(data);
+      })
+    };
+
+    // Initialize macro manager to set up folder structure
+    await macroManager.initialize();
   });
 
   describe('singleton pattern', () => {
@@ -373,12 +383,18 @@ describe('MacroManager', () => {
             isTaskMacro: true,
             moduleId: 'test-module'
           }
-        }
+        },
+        getFlag: vi.fn((scope: string, key: string) => {
+          if (scope === 'task-and-trigger' && key === 'isTaskMacro') return true;
+          if (scope === 'task-and-trigger' && key === 'moduleId') return 'test-module';
+          return undefined;
+        })
       };
       
       const regularMacro = {
         id: 'regular-macro',
-        name: 'Regular Macro'
+        name: 'Regular Macro',
+        getFlag: vi.fn(() => undefined)
       };
 
       mockMacros.set('task-macro', taskMacro);
@@ -418,7 +434,13 @@ describe('MacroManager', () => {
             temporary: true
           }
         },
-        delete: vi.fn().mockResolvedValue(true)
+        delete: vi.fn().mockResolvedValue(true),
+        getFlag: vi.fn((scope: string, key: string) => {
+          if (scope === 'task-and-trigger' && key === 'isTemporary') return true;
+          if (scope === 'task-and-trigger' && key === 'moduleId') return 'test-module';
+          if (scope === 'task-and-trigger' && key === 'registeredModule') return 'test-module';
+          return undefined;
+        })
       };
 
       const permanentMacro = {
@@ -430,7 +452,13 @@ describe('MacroManager', () => {
             temporary: false
           }
         },
-        delete: vi.fn().mockResolvedValue(true)
+        delete: vi.fn().mockResolvedValue(true),
+        getFlag: vi.fn((scope: string, key: string) => {
+          if (scope === 'task-and-trigger' && key === 'isTemporary') return false;
+          if (scope === 'task-and-trigger' && key === 'moduleId') return 'test-module';
+          if (scope === 'task-and-trigger' && key === 'registeredModule') return 'test-module';
+          return undefined;
+        })
       };
 
       mockMacros.set('temp-macro', tempMacro);
@@ -502,8 +530,7 @@ describe('MacroManager', () => {
             'task-and-trigger': {
               isTaskMacro: true,
               moduleId: 'test-module',
-              created: expect.any(Number),
-              version: expect.any(String)
+              createdAt: expect.any(Number)
             }
           }
         })

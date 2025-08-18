@@ -590,9 +590,9 @@ describe('ModuleIntegrationAPI', () => {
     it('should handle folder creation errors', async () => {
       mockMacroManager.createModuleFolder.mockRejectedValue(new Error('Folder creation failed'));
 
-      // Should not throw error, just log warning
+      // Should propagate the folder creation error
       await expect(moduleAPI.registerModule('error-module', 'Error Module'))
-        .resolves.not.toThrow();
+        .rejects.toThrow('Folder creation failed');
     });
   });
 });

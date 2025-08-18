@@ -6,7 +6,7 @@
 import { TimeSpec, CalendarDate } from './types';
 import { TaskScheduler, ScheduleOptions } from './task-scheduler';
 import { MacroManager } from './macro-manager';
-import { AccumulatedTimeTaskOptions, TimeLogEntry } from './accumulated-time-manager';
+import { AccumulatedTimeTaskOptions } from './accumulated-time-manager';
 
 export interface ModuleTaskOptions extends ScheduleOptions {
   /** The module ID creating this task */
@@ -296,7 +296,7 @@ export class ModuleIntegrationImpl implements ModuleIntegrationAPI {
             completedTasks++;
           }
         }
-      } catch (error) {
+      } catch {
         // Task might have been deleted
         completedTasks++;
       }

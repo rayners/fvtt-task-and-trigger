@@ -148,7 +148,7 @@ describe('TaskScheduler - Macro Integration', () => {
 
       expect(taskId).toBe('test-task-id');
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith({
-        name: 'Reminder: Take a break!',
+        name: 'Break Reminder',
         code: 'ui.notifications?.info("Reminder: Take a break!");',
         folder: 'task-and-trigger/reminders',
         moduleId: 'task-and-trigger'
@@ -170,7 +170,7 @@ describe('TaskScheduler - Macro Integration', () => {
 
       expect(taskId).toBe('test-interval-id');
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith({
-        name: 'Recurring Reminder: Hourly check-in',
+        name: 'Hourly Reminder',
         code: 'ui.notifications?.info("Reminder: Hourly check-in");',
         folder: 'task-and-trigger/reminders',
         moduleId: 'task-and-trigger'
@@ -192,7 +192,7 @@ describe('TaskScheduler - Macro Integration', () => {
 
       expect(taskId).toBe('test-task-id');
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith({
-        name: 'Game Reminder: Long rest complete',
+        name: 'Rest Reminder',
         code: 'ui.notifications?.info("Game Time Reminder: Long rest complete");',
         folder: 'task-and-trigger/reminders',
         moduleId: 'task-and-trigger'
@@ -215,7 +215,7 @@ describe('TaskScheduler - Macro Integration', () => {
       );
 
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith({
-        name: 'Reminder: This is a very long reminder message that exce...',
+        name: 'Long Reminder',
         code: `ui.notifications?.info("Reminder: ${longMessage}");`,
         folder: 'task-and-trigger/reminders',
         moduleId: 'task-and-trigger'
@@ -232,7 +232,7 @@ describe('TaskScheduler - Macro Integration', () => {
       );
 
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith({
-        name: 'Reminder: Don\'t forget "important" meeting',
+        name: 'Quote Test',
         code: 'ui.notifications?.info("Reminder: Don\'t forget \\"important\\" meeting");',
         folder: 'task-and-trigger/reminders',
         moduleId: 'task-and-trigger'

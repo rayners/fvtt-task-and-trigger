@@ -131,7 +131,7 @@ export class MacroManager {
   /**
    * Get or create appropriate folder for a task type
    */
-  private async getOrCreateTaskFolder(folderHint?: string): Promise<any | null> {
+  async getOrCreateTaskFolder(folderHint?: string): Promise<any | null> {
     if (!folderHint) {
       // Default to Real-Time Tasks/One-Time
       folderHint = 'Task & Trigger Macros/Real-Time Tasks/One-Time';

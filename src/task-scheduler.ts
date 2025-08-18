@@ -336,7 +336,7 @@ export class TaskScheduler {
     message: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
-    const macroName = `Reminder: ${message.substring(0, 50)}${
+    const macroName = options.name || `Reminder: ${message.substring(0, 50)}${
       message.length > 50 ? '...' : ''
     }`;
     const macroCode = `ui.notifications?.info("Reminder: ${message.replace(/"/g, '\\"')}");`;
@@ -368,7 +368,7 @@ export class TaskScheduler {
     message: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
-    const macroName = `Recurring Reminder: ${message.substring(0, 40)}${
+    const macroName = options.name || `Recurring Reminder: ${message.substring(0, 40)}${
       message.length > 40 ? '...' : ''
     }`;
     const macroCode = `ui.notifications?.info("Reminder: ${message.replace(/"/g, '\\"')}");`;
@@ -400,7 +400,7 @@ export class TaskScheduler {
     message: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
-    const macroName = `Game Reminder: ${message.substring(0, 45)}${
+    const macroName = options.name || `Game Reminder: ${message.substring(0, 45)}${
       message.length > 45 ? '...' : ''
     }`;
     const macroCode = `ui.notifications?.info("Game Time Reminder: ${message.replace(/"/g, '\\"')}");`;

@@ -100,18 +100,26 @@ describe('TaskExecutor', () => {
     });
 
     it('should handle empty code', async () => {
-      const task = { ...mockTask, callback: '' };
+      // Mock a macro that doesn't exist to simulate empty/invalid macro
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(false);
+      
+      const task = { ...mockTask, macroId: 'non-existent-macro' };
       const result = await executor.executeTask(task);
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('No code provided for execution');
+      expect(result.error).toContain('Macro non-existent-macro not found or inaccessible');
     });
 
     it('should prevent concurrent execution of the same task', async () => {
-      const task = {
-        ...mockTask,
-        callback: 'return new Promise(resolve => setTimeout(resolve, 100));',
-      };
+      // Mock a slow executing macro
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
+      vi.spyOn(macroManager, 'executeMacro').mockImplementation(() => 
+        new Promise(resolve => setTimeout(() => resolve('slow result'), 100))
+      );
+
+      const task = { ...mockTask };
 
       const promise1 = executor.executeTask(task);
       const promise2 = executor.executeTask(task);
@@ -127,10 +135,12 @@ describe('TaskExecutor', () => {
     });
 
     it('should have access to Foundry globals', async () => {
-      const task = {
-        ...mockTask,
-        callback: 'return typeof game !== "undefined" && typeof ui !== "undefined";',
-      };
+      // Mock macro that checks for Foundry globals
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
+      vi.spyOn(macroManager, 'executeMacro').mockResolvedValue(true); // Simulates successful check for game global
+
+      const task = { ...mockTask };
 
       const result = await executor.executeTask(task);
       expect(result.success).toBe(true);
@@ -138,7 +148,12 @@ describe('TaskExecutor', () => {
     });
 
     it('should store execution history', async () => {
-      const task = { ...mockTask, callback: 'return "history test";' };
+      // Mock macro to return a test result
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
+      vi.spyOn(macroManager, 'executeMacro').mockResolvedValue('history test');
+
+      const task = { ...mockTask };
 
       await executor.executeTask(task);
       const history = executor.getExecutionHistory(task.id);
@@ -170,8 +185,16 @@ describe('TaskExecutor', () => {
 
   describe('execution history', () => {
     it('should maintain execution history per task', async () => {
-      const task1 = { ...mockTask, id: 'task-1', callback: 'return 1;' };
-      const task2 = { ...mockTask, id: 'task-2', callback: 'return 2;' };
+      // Mock macros to return different results
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
+      vi.spyOn(macroManager, 'executeMacro')
+        .mockResolvedValueOnce(1)  // task1 first execution
+        .mockResolvedValueOnce(2)  // task2 execution
+        .mockResolvedValueOnce(1); // task1 second execution
+
+      const task1 = { ...mockTask, id: 'task-1' };
+      const task2 = { ...mockTask, id: 'task-2' };
 
       await executor.executeTask(task1);
       await executor.executeTask(task2);

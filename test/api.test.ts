@@ -74,33 +74,32 @@ describe('TaskTriggerAPI', () => {
       expect(mockScheduler.setTimeout).toHaveBeenCalledWith(delay, callback, options);
     });
 
-    it('should schedule timeout with function callback', async () => {
+    it('should schedule timeout with macro ID', async () => {
       const delay: TimeSpec = { seconds: 30 };
-      const callback = function () {
-        console.log('test');
-      };
+      const macroId = 'test-macro-id';
 
-      const taskId = await api.setTimeout(delay, callback);
+      const taskId = await api.setTimeout(delay, macroId);
 
       expect(taskId).toBe('test-timeout-id');
       expect(mockScheduler.setTimeout).toHaveBeenCalledWith(
         delay,
-        'console.log("test");', // Function body extracted
+        macroId,
         {}
       );
     });
 
-    it('should schedule timeout with arrow function callback', async () => {
+    it('should schedule timeout with macro ID and options', async () => {
       const delay: TimeSpec = { seconds: 10 };
-      const callback = () => ui.notifications?.info('arrow function');
+      const macroId = 'notification-macro-id';
+      const options = { name: 'Test Notification' };
 
-      const taskId = await api.setTimeout(delay, callback);
+      const taskId = await api.setTimeout(delay, macroId, options);
 
       expect(taskId).toBe('test-timeout-id');
       expect(mockScheduler.setTimeout).toHaveBeenCalledWith(
         delay,
-        'return (ui.notifications?.info("arrow function"));',
-        {}
+        macroId,
+        options
       );
     });
 
@@ -319,36 +318,29 @@ describe('TaskTriggerAPI', () => {
     });
   });
 
-  describe('callback normalization', () => {
-    it('should handle complex function callback', async () => {
-      // This tests the fallback case for complex functions
-      const complexFunc = function namedFunction(param1: string, param2: number) {
-        return `${param1}-${param2}`;
-      };
+  describe('macro ID validation', () => {
+    it('should handle complex macro scheduling', async () => {
+      const complexMacroId = 'complex-macro-id';
 
-      const taskId = await api.setTimeout({ seconds: 1 }, complexFunc);
+      const taskId = await api.setTimeout({ seconds: 1 }, complexMacroId);
 
       expect(taskId).toBe('test-timeout-id');
-      // Should extract the function body
       expect(mockScheduler.setTimeout).toHaveBeenCalledWith(
         { seconds: 1 },
-        'return `${param1}-${param2}`;',
+        complexMacroId,
         {}
       );
     });
 
-    it('should handle async function callback', async () => {
-      const asyncFunc = async function () {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        console.log('async done');
-      };
+    it('should handle async macro scheduling', async () => {
+      const asyncMacroId = 'async-macro-id';
 
-      const taskId = await api.setTimeout({ seconds: 1 }, asyncFunc);
+      const taskId = await api.setTimeout({ seconds: 1 }, asyncMacroId);
 
       expect(taskId).toBe('test-timeout-id');
       expect(mockScheduler.setTimeout).toHaveBeenCalledWith(
         { seconds: 1 },
-        expect.stringContaining('await new Promise'),
+        asyncMacroId,
         {}
       );
     });

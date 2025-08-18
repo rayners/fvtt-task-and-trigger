@@ -6,6 +6,7 @@
 import { TimeSpec, CalendarDate, Task } from './types';
 import { TaskManager } from './task-manager';
 import { TimeConverter } from './time-converter';
+import { MacroManager } from './macro-manager';
 import {
   AccumulatedTimeManager,
   AccumulatedTimeTaskOptions,
@@ -43,10 +44,12 @@ export class TaskScheduler {
   private static instance: TaskScheduler;
   private taskManager: TaskManager;
   private accumulatedTimeManager: AccumulatedTimeManager;
+  private macroManager: MacroManager;
 
   private constructor() {
     this.taskManager = TaskManager.getInstance();
     this.accumulatedTimeManager = AccumulatedTimeManager.getInstance();
+    this.macroManager = MacroManager.getInstance();
   }
 
   static getInstance(): TaskScheduler {
@@ -59,18 +62,18 @@ export class TaskScheduler {
   /**
    * Schedule a one-time task to execute after a delay
    * @param delay Time to wait before execution
-   * @param callback JavaScript code to execute
+   * @param macroId ID of the macro to execute
    * @param options Additional options
    * @returns Task ID
    */
   async setTimeout(
     delay: TimeSpec,
-    callback: string,
+    macroId: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
     return this.taskManager.scheduleTask(
       delay,
-      callback,
+      macroId,
       false, // Real time by default
       options.scope || 'client'
     );
@@ -79,18 +82,18 @@ export class TaskScheduler {
   /**
    * Schedule a recurring task to execute at intervals
    * @param interval Time between executions
-   * @param callback JavaScript code to execute
+   * @param macroId ID of the macro to execute
    * @param options Additional options
    * @returns Task ID
    */
   async setInterval(
     interval: TimeSpec,
-    callback: string,
+    macroId: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
     return this.taskManager.scheduleInterval(
       interval,
-      callback,
+      macroId,
       false, // Real time by default
       options.scope || 'client'
     );
@@ -99,18 +102,18 @@ export class TaskScheduler {
   /**
    * Schedule a one-time task to execute at game time
    * @param delay Game time delay
-   * @param callback JavaScript code to execute
+   * @param macroId ID of the macro to execute
    * @param options Additional options
    * @returns Task ID
    */
   async setGameTimeout(
     delay: TimeSpec,
-    callback: string,
+    macroId: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
     return this.taskManager.scheduleTask(
       delay,
-      callback,
+      macroId,
       true, // Game time
       options.scope || 'client'
     );
@@ -119,18 +122,18 @@ export class TaskScheduler {
   /**
    * Schedule a recurring task at game time intervals
    * @param interval Game time interval
-   * @param callback JavaScript code to execute
+   * @param macroId ID of the macro to execute
    * @param options Additional options
    * @returns Task ID
    */
   async setGameInterval(
     interval: TimeSpec,
-    callback: string,
+    macroId: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
     return this.taskManager.scheduleInterval(
       interval,
-      callback,
+      macroId,
       true, // Game time
       options.scope || 'client'
     );
@@ -139,19 +142,19 @@ export class TaskScheduler {
   /**
    * Schedule a task for a specific real-world date/time
    * @param dateTime Target date/time
-   * @param callback JavaScript code to execute
+   * @param macroId ID of the macro to execute
    * @param options Additional options
    * @returns Task ID
    */
   async scheduleAt(
     dateTime: Date,
-    callback: string,
+    macroId: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
     const timestamp = Math.floor(dateTime.getTime() / 1000);
     return this.taskManager.scheduleTask(
       timestamp,
-      callback,
+      macroId,
       false, // Real time
       options.scope || 'client'
     );
@@ -160,18 +163,18 @@ export class TaskScheduler {
   /**
    * Schedule a task for a specific calendar date (requires S&S)
    * @param calendarDate Calendar date specification
-   * @param callback JavaScript code to execute
+   * @param macroId ID of the macro to execute
    * @param options Additional options
    * @returns Task ID
    */
   async scheduleForDate(
     calendarDate: CalendarDate,
-    callback: string,
+    macroId: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
     return this.taskManager.scheduleCalendarTask(
       calendarDate,
-      callback,
+      macroId,
       options.scope || 'world' // Calendar tasks default to world scope
     );
   }
@@ -333,10 +336,22 @@ export class TaskScheduler {
     message: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
-    const callback = `ui.notifications?.info("Reminder: ${message.replace(/"/g, '\\"')}");`;
-    return this.setTimeout(delay, callback, {
+    const macroName = `Reminder: ${message.substring(0, 50)}${
+      message.length > 50 ? '...' : ''
+    }`;
+    const macroCode = `ui.notifications?.info("Reminder: ${message.replace(/"/g, '\\"')}");`;
+    
+    const macro = await this.macroManager.createTaskMacro({
+      name: macroName,
+      code: macroCode,
+      folder: 'task-and-trigger/reminders',
+      moduleId: 'task-and-trigger'
+    });
+    const macroId = macro.id;
+    
+    return this.setTimeout(delay, macroId, {
       ...options,
-      name: options.name || `Reminder: ${message}`,
+      name: options.name || macroName,
       description: options.description || `Reminder notification: ${message}`,
     });
   }
@@ -353,10 +368,22 @@ export class TaskScheduler {
     message: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
-    const callback = `ui.notifications?.info("Reminder: ${message.replace(/"/g, '\\"')}");`;
-    return this.setInterval(interval, callback, {
+    const macroName = `Recurring Reminder: ${message.substring(0, 40)}${
+      message.length > 40 ? '...' : ''
+    }`;
+    const macroCode = `ui.notifications?.info("Reminder: ${message.replace(/"/g, '\\"')}");`;
+    
+    const macro = await this.macroManager.createTaskMacro({
+      name: macroName,
+      code: macroCode,
+      folder: 'task-and-trigger/reminders',
+      moduleId: 'task-and-trigger'
+    });
+    const macroId = macro.id;
+    
+    return this.setInterval(interval, macroId, {
       ...options,
-      name: options.name || `Recurring Reminder: ${message}`,
+      name: options.name || macroName,
       description: options.description || `Recurring reminder: ${message}`,
     });
   }
@@ -373,10 +400,22 @@ export class TaskScheduler {
     message: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
-    const callback = `ui.notifications?.info("Game Time Reminder: ${message.replace(/"/g, '\\"')}");`;
-    return this.setGameTimeout(delay, callback, {
+    const macroName = `Game Reminder: ${message.substring(0, 45)}${
+      message.length > 45 ? '...' : ''
+    }`;
+    const macroCode = `ui.notifications?.info("Game Time Reminder: ${message.replace(/"/g, '\\"')}");`;
+    
+    const macro = await this.macroManager.createTaskMacro({
+      name: macroName,
+      code: macroCode,
+      folder: 'task-and-trigger/reminders',
+      moduleId: 'task-and-trigger'
+    });
+    const macroId = macro.id;
+    
+    return this.setGameTimeout(delay, macroId, {
       ...options,
-      name: options.name || `Game Reminder: ${message}`,
+      name: options.name || macroName,
       description: options.description || `Game time reminder: ${message}`,
     });
   }

@@ -9,6 +9,7 @@ import { TaskPersistence } from './task-persistence';
 import { CalendarIntegration } from './calendar-integration';
 import { TaskManagerApplication } from './task-manager-application';
 import { createAPI } from './api';
+import { createModuleIntegrationAPI } from './module-integration';
 
 // Module state
 let isInitialized = false;
@@ -104,10 +105,13 @@ async function initialize(): Promise<void> {
     // Initialize calendar integration (optional - depends on Seasons & Stars)
     await calendarIntegration.initialize();
 
-    // Create and expose public API
+    // Create and expose public APIs
     const api = createAPI();
+    const moduleAPI = createModuleIntegrationAPI();
+    
     (game as any).taskTrigger = {
       api,
+      modules: moduleAPI,
       // Internal components for debugging (not part of public API)
       _internal: {
         taskManager,
@@ -126,7 +130,7 @@ async function initialize(): Promise<void> {
     console.log('Task & Trigger | Module initialization complete');
 
     // Notify other modules that Task & Trigger is ready
-    Hooks.callAll('taskTriggerReady', api);
+    Hooks.callAll('taskTriggerReady', { api, modules: moduleAPI });
   } catch (error) {
     console.error('Task & Trigger | Module initialization failed:', error);
     ui.notifications?.error(

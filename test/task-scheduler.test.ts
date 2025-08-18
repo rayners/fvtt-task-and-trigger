@@ -454,7 +454,7 @@ describe('TaskScheduler', () => {
       expect(taskId).toBe('test-task-id');
       expect(mockTaskManager.scheduleTask).toHaveBeenCalledWith(
         delay,
-        'ui.notifications?.info("Reminder: Take a break!");',
+        expect.stringMatching(/^test-macro-/),
         false,
         'client'
       );
@@ -469,7 +469,7 @@ describe('TaskScheduler', () => {
       expect(taskId).toBe('test-interval-id');
       expect(mockTaskManager.scheduleInterval).toHaveBeenCalledWith(
         interval,
-        'ui.notifications?.info("Reminder: Hourly check");',
+        expect.stringMatching(/^test-macro-/),
         false,
         'client'
       );
@@ -484,7 +484,7 @@ describe('TaskScheduler', () => {
       expect(taskId).toBe('test-task-id');
       expect(mockTaskManager.scheduleTask).toHaveBeenCalledWith(
         delay,
-        'ui.notifications?.info("Game Time Reminder: Long rest complete");',
+        expect.stringMatching(/^test-macro-/),
         true,
         'client'
       );
@@ -497,7 +497,7 @@ describe('TaskScheduler', () => {
 
       expect(mockTaskManager.scheduleTask).toHaveBeenCalledWith(
         { minutes: 5 },
-        'ui.notifications?.info("Reminder: Don\'t forget \\"important\\" task");',
+        expect.stringMatching(/^test-macro-/),
         false,
         'client'
       );

@@ -230,9 +230,9 @@ export class MacroManager {
    * Clean up macros created by a specific module
    */
   async cleanupModuleMacros(moduleId: string): Promise<number> {
-    const macros = (game as any).macros?.filter((m: any) => 
-      m.getFlag('task-and-trigger', 'moduleId') === moduleId ||
-      m.getFlag('task-and-trigger', 'registeredModule') === moduleId
+    const macros = (game as any).macros?.filter?.((m: any) => 
+      m.getFlag?.('task-and-trigger', 'moduleId') === moduleId ||
+      m.getFlag?.('task-and-trigger', 'registeredModule') === moduleId
     ) || [];
 
     let deletedCount = 0;
@@ -253,7 +253,7 @@ export class MacroManager {
    */
   async validateMacro(macroId: string): Promise<boolean> {
     const macro = (game as any).macros?.get(macroId);
-    return !!macro;
+    return !!macro && typeof macro.execute === 'function';
   }
 
   /**
@@ -276,9 +276,63 @@ export class MacroManager {
    * Get all task-related macros
    */
   getTaskMacros(): any[] {
-    return (game as any).macros?.filter((m: any) => 
-      m.getFlag('task-and-trigger', 'isTaskMacro') ||
+    return (game as any).macros?.filter?.((m: any) => 
+      m.getFlag?.('task-and-trigger', 'isTaskMacro') ||
       m.folder?.name?.includes('Task & Trigger')
     ) || [];
+  }
+
+  /**
+   * Get a macro by ID
+   */
+  async getMacro(macroId: string): Promise<any | null> {
+    return (game as any).macros?.get(macroId) || null;
+  }
+
+  /**
+   * Delete a macro by ID
+   */
+  async deleteMacro(macroId: string): Promise<boolean> {
+    try {
+      const macro = (game as any).macros?.get(macroId);
+      if (!macro) {
+        return false;
+      }
+      await macro.delete();
+      return true;
+    } catch (error) {
+      console.error('Failed to delete macro:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get macros created by a specific module
+   */
+  getMacrosByModule(moduleId: string): any[] {
+    return (game as any).macros?.filter?.((m: any) => 
+      m.getFlag?.('task-and-trigger', 'moduleId') === moduleId
+    ) || [];
+  }
+
+  /**
+   * Clean up temporary macros (marked as ephemeral)
+   */
+  async cleanupTemporaryMacros(): Promise<number> {
+    const tempMacros = (game as any).macros?.filter?.((m: any) => 
+      m.getFlag?.('task-and-trigger', 'isTemporary')
+    ) || [];
+    
+    let cleaned = 0;
+    for (const macro of tempMacros) {
+      try {
+        await macro.delete();
+        cleaned++;
+      } catch (error) {
+        console.error('Failed to cleanup temporary macro:', error);
+      }
+    }
+    
+    return cleaned;
   }
 }

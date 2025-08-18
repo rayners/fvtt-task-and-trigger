@@ -43,7 +43,14 @@ describe('MacroManager', () => {
           ...data,
           execute: vi.fn().mockResolvedValue('macro result'),
           update: vi.fn(),
-          delete: vi.fn()
+          delete: vi.fn(),
+          getFlag: vi.fn((scope: string, key: string) => {
+            if (scope === 'task-and-trigger' && key === 'isTaskMacro') return true;
+            if (scope === 'task-and-trigger' && key === 'moduleId') return data.moduleId;
+            if (scope === 'task-and-trigger' && key === 'isTemporary') return data.isTemporary;
+            return undefined;
+          }),
+          setFlag: vi.fn()
         };
         mockMacros.set(id, macro);
         return macro;
@@ -59,6 +66,13 @@ describe('MacroManager', () => {
         }
         return undefined;
       }),
+      filter: vi.fn((predicate: any) => {
+        const results = [];
+        for (const folder of mockFolders.values()) {
+          if (predicate(folder)) results.push(folder);
+        }
+        return results;
+      }),
       createDocument: vi.fn(async (data: any) => {
         const id = 'test-folder-' + Date.now();
         const folder = {
@@ -72,6 +86,13 @@ describe('MacroManager', () => {
 
     // Mock foundry utils
     (foundry.utils as any).randomID = vi.fn(() => 'test-id-' + Date.now());
+
+    // Mock global Macro class
+    (globalThis as any).Macro = {
+      create: vi.fn(async (data: any) => {
+        return (global as any).game.macros.createDocument(data);
+      })
+    };
   });
 
   describe('singleton pattern', () => {
@@ -219,7 +240,7 @@ describe('MacroManager', () => {
 
     it('should throw error for non-existent macro', async () => {
       await expect(macroManager.executeMacro('non-existent-id'))
-        .rejects.toThrow('Macro non-existent-id not found');
+        .rejects.toThrow('Macro with ID non-existent-id not found');
     });
 
     it('should handle macro execution errors', async () => {

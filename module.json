@@ -5,7 +5,7 @@
   "description": "Advanced task scheduling and automation system with real-time and game-time support, calendar integration, and JavaScript execution capabilities.",
   "version": "0.1.0",
   "compatibility": {
-    "minimum": "11",
+    "minimum": "13",
     "verified": "13",
     "maximum": "13"
   },
@@ -46,8 +46,6 @@
   },
   "socket": true,
   "url": "https://github.com/rayners/fvtt-task-and-trigger",
-  "manifest": "https://github.com/rayners/fvtt-task-and-trigger/releases/download/v0.1.0/module.json",
-  "download": "https://github.com/rayners/fvtt-task-and-trigger/releases/download/v0.1.0/task-and-trigger-v0.1.0.zip",
   "license": "LICENSE",
   "readme": "README.md",
   "changelog": "CHANGELOG.md"

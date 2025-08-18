@@ -1,6 +1,6 @@
 # Task & Trigger API Reference
 
-Complete API documentation for the Task & Trigger FoundryVTT module. The API is exposed as `game.taskTrigger.api` and provides comprehensive task scheduling and management capabilities.
+API documentation for the Task & Trigger FoundryVTT module. The API is exposed as `game.taskTrigger.api` and provides task scheduling and management capabilities.
 
 ## Table of Contents
 
@@ -196,15 +196,22 @@ Schedule a one-time task to execute after a delay in game time.
 **Example:**
 
 ```javascript
-// Trigger an event after 8 hours of game time
-const eventId = await api.setGameTimeout(
-  { hours: 8 },
-  `
+// Create a macro for the caravan arrival event
+const caravanMacro = await Macro.create({
+  name: 'Caravan Arrival Event',
+  type: 'script',
+  command: `
     ChatMessage.create({
         content: "The merchant caravan arrives at the city gates.",
         type: CONST.CHAT_MESSAGE_TYPES.IC
     });
-    `,
+    `
+});
+
+// Trigger an event after 8 hours of game time
+const eventId = await api.setGameTimeout(
+  { hours: 8 },
+  caravanMacro.id,
   {
     name: 'Caravan Arrival',
     scope: 'world',
@@ -227,15 +234,22 @@ Schedule a recurring task to execute at game time intervals.
 **Example:**
 
 ```javascript
-// Daily random encounter check
-const encounterCheck = await api.setGameInterval(
-  { days: 1 },
-  `
+// Create a macro for the encounter check
+const encounterMacro = await Macro.create({
+  name: 'Daily Encounter Check',
+  type: 'script',
+  command: `
     const roll = new Roll("1d20").roll();
     if (roll.total >= 18) {
         ui.notifications.warn("Random encounter incoming!");
     }
-    `,
+    `
+});
+
+// Daily random encounter check
+const encounterCheck = await api.setGameInterval(
+  { days: 1 },
+  encounterMacro.id,
   {
     name: 'Daily Encounter Check',
     scope: 'world',
@@ -261,16 +275,23 @@ Schedule a task for a specific real-world date and time.
 **Example:**
 
 ```javascript
-// Schedule for New Year's Eve
-const newYear = await api.scheduleAt(
-  new Date('2024-12-31 23:59:00'),
-  `
+// Create a macro for the New Year celebration
+const newYearMacro = await Macro.create({
+  name: 'New Year Celebration',
+  type: 'script',
+  command: `
     ui.notifications.info("🎉 Happy New Year! 🎉");
     ChatMessage.create({
         content: "The clock strikes midnight! A new year begins!",
         type: CONST.CHAT_MESSAGE_TYPES.EMOTE
     });
-    `,
+    `
+});
+
+// Schedule for New Year's Eve
+const newYear = await api.scheduleAt(
+  new Date('2024-12-31 23:59:00'),
+  newYearMacro.id,
   {
     name: 'New Year Celebration',
     scope: 'world',
@@ -293,13 +314,20 @@ Schedule a task for a specific calendar date (requires calendar integration).
 **Example:**
 
 ```javascript
+// Create a macro for the summer solstice event
+const solsticeMacro = await Macro.create({
+  name: 'Summer Solstice Festival',
+  type: 'script',
+  command: `
+    ui.notifications.info("🌞 Summer Solstice Festival begins! 🌞");
+    // Trigger festival events
+    `
+});
+
 // Schedule for a specific in-game date
 const festival = await api.scheduleForDate(
   { year: 1358, month: 6, day: 21 }, // Summer solstice
-  `
-    ui.notifications.info("🌞 Summer Solstice Festival begins! 🌞");
-    // Trigger festival events
-    `,
+  solsticeMacro.id,
   {
     name: 'Summer Solstice',
     scope: 'world',
@@ -536,7 +564,7 @@ console.log(`Tasks for summer solstice: ${tasks.length}`);
 
 ### getStatistics()
 
-Get comprehensive statistics about the task system.
+Get statistics about the task system.
 
 **Parameters:** None
 

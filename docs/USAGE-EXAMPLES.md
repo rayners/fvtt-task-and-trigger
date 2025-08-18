@@ -7,16 +7,30 @@ This document provides practical examples for using the Task & Trigger module, i
 ### Real-time Tasks (setTimeout/setInterval style)
 
 ```javascript
+// Create a macro for the 5-minute reminder
+const fiveMinuteMacro = await Macro.create({
+  name: 'Five Minute Reminder',
+  type: 'script',
+  command: 'ui.notifications.info("5 minutes have passed!");'
+});
+
 // Schedule a task to run in 5 minutes
 const taskId = await game.taskTrigger.api.setTimeout(
   { minutes: 5 },
-  'ui.notifications.info("5 minutes have passed!");'
+  fiveMinuteMacro.id
 );
+
+// Create a macro for the hourly reminder
+const hourlyMacro = await Macro.create({
+  name: 'Hourly Reminder',
+  type: 'script',
+  command: 'ui.notifications.info("Hourly reminder!");'
+});
 
 // Schedule a recurring reminder every hour
 const reminderId = await game.taskTrigger.api.setInterval(
   { hours: 1 },
-  'ui.notifications.info("Hourly reminder!");'
+  hourlyMacro.id
 );
 
 // Cancel a task
@@ -26,16 +40,30 @@ await game.taskTrigger.api.cancel(taskId);
 ### Game-time Tasks
 
 ```javascript
+// Create a macro for the rest complete notification
+const restMacro = await Macro.create({
+  name: 'Rest Complete Notification',
+  type: 'script',
+  command: 'ui.notifications.info("You are well rested!");'
+});
+
 // Schedule a task to run in 8 hours of game time
 const gameTaskId = await game.taskTrigger.api.setGameTimeout(
   { hours: 8 },
-  'ui.notifications.info("You are well rested!");'
+  restMacro.id
 );
+
+// Create a macro for the hunger reminder
+const hungerMacro = await Macro.create({
+  name: 'Hunger Reminder',
+  type: 'script',
+  command: 'ui.notifications.warn("You need to eat!");'
+});
 
 // Schedule a recurring game-time reminder
 const gameReminderId = await game.taskTrigger.api.setGameInterval(
   { hours: 4 },
-  'ui.notifications.warn("You need to eat!");'
+  hungerMacro.id
 );
 ```
 
@@ -46,12 +74,11 @@ Accumulated time tasks are perfect for activities that require a specific amount
 ### Spell Research Example
 
 ```javascript
-// Create a spell research task requiring 15 hours total
-const researchTaskId = await game.taskTrigger.api.createAccumulatedTimeTask({
-  name: 'Fireball Spell Research',
-  description: 'Research the ancient secrets of the Fireball spell',
-  requiredTime: { hours: 15 }, // Total time needed
-  callback: `
+// Create a macro for the spell research completion
+const spellResearchMacro = await Macro.create({
+  name: 'Fireball Research Complete',
+  type: 'script',
+  command: `
     ui.notifications.info("Spell research complete! You've learned Fireball!");
     // Add the spell to the character
     const character = game.user.character;
@@ -59,7 +86,15 @@ const researchTaskId = await game.taskTrigger.api.createAccumulatedTimeTask({
       // Implementation depends on your game system
       console.log("Add Fireball spell to character sheet");
     }
-  `,
+  `
+});
+
+// Create a spell research task requiring 15 hours total
+const researchTaskId = await game.taskTrigger.api.createAccumulatedTimeTask({
+  name: 'Fireball Spell Research',
+  description: 'Research the ancient secrets of the Fireball spell',
+  requiredTime: { hours: 15 }, // Total time needed
+  macroId: spellResearchMacro.id,
   scope: 'world', // Make it available to all players
 });
 
@@ -85,12 +120,11 @@ console.log(`Remaining: ${progress.remaining / 3600} hours`);
 ### Crafting Example
 
 ```javascript
-// Create a crafting task for a magic sword (requires 2 days, 4 hours)
-const craftingTaskId = await game.taskTrigger.api.createAccumulatedTimeTask({
-  name: 'Forge Flame Tongue Sword',
-  description: 'Craft a magical sword imbued with fire',
-  requiredTime: { days: 2, hours: 4 }, // 52 hours total
-  callback: `
+// Create a macro for the crafting completion
+const craftingMacro = await Macro.create({
+  name: 'Flame Tongue Sword Complete',
+  type: 'script',
+  command: `
     ui.notifications.info("Your Flame Tongue sword is complete!");
     // Create the item
     const itemData = {
@@ -99,7 +133,15 @@ const craftingTaskId = await game.taskTrigger.api.createAccumulatedTimeTask({
       // ... other item properties
     };
     // Add to character inventory (system-specific)
-  `,
+  `
+});
+
+// Create a crafting task for a magic sword (requires 2 days, 4 hours)
+const craftingTaskId = await game.taskTrigger.api.createAccumulatedTimeTask({
+  name: 'Forge Flame Tongue Sword',
+  description: 'Craft a magical sword imbued with fire',
+  requiredTime: { days: 2, hours: 4 }, // 52 hours total
+  macroId: craftingMacro.id,
   scope: 'client',
 });
 
@@ -125,12 +167,11 @@ console.log(exportData); // CSV data for external tracking
 ### Training Example
 
 ```javascript
-// Character training in swordplay
-const trainingTaskId = await game.taskTrigger.api.createAccumulatedTimeTask({
-  name: 'Advanced Swordplay Training',
-  description: 'Train to master advanced sword techniques',
-  requiredTime: { days: 7 }, // One week of training
-  callback: `
+// Create a macro for the training completion
+const trainingMacro = await Macro.create({
+  name: 'Swordplay Training Complete',
+  type: 'script',
+  command: `
     ui.notifications.info("Training complete! Your sword skills have improved!");
     // Increase character abilities
     const character = game.user.character;
@@ -138,7 +179,15 @@ const trainingTaskId = await game.taskTrigger.api.createAccumulatedTimeTask({
       // Add proficiency, increase stats, etc.
       console.log("Increase sword proficiency");
     }
-  `,
+  `
+});
+
+// Character training in swordplay
+const trainingTaskId = await game.taskTrigger.api.createAccumulatedTimeTask({
+  name: 'Advanced Swordplay Training',
+  description: 'Train to master advanced sword techniques',
+  requiredTime: { days: 7 }, // One week of training
+  macroId: trainingMacro.id,
   logExecution: true, // Log completion to journal
 });
 
@@ -197,10 +246,17 @@ const allTasks = await game.taskTrigger.api.listTasks();
 If you have the Seasons & Stars module installed, tasks can be scheduled for specific calendar dates:
 
 ```javascript
+// Create a macro for the festival event
+const festivalMacro = await Macro.create({
+  name: 'Midsummer Festival Event',
+  type: 'script',
+  command: 'ui.notifications.info("The Midsummer Festival begins!");'
+});
+
 // Schedule a task for a specific in-game date
 const festivalTaskId = await game.taskTrigger.api.scheduleForDate(
   { year: 1421, month: 6, day: 21 }, // Midsummer
-  'ui.notifications.info("The Midsummer Festival begins!");',
+  festivalMacro.id,
   { scope: 'world' }
 );
 

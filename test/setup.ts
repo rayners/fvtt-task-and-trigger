@@ -266,6 +266,28 @@ beforeEach(() => {
     }
   };
 
+  // Mock Macro class
+  (globalThis as any).Macro = {
+    create: vi.fn(async (data: any) => {
+      const id = 'test-macro-' + Date.now();
+      const macro = {
+        id,
+        ...data,
+        execute: vi.fn().mockResolvedValue('macro result'),
+        update: vi.fn(),
+        delete: vi.fn(),
+        getFlag: vi.fn((scope: string, key: string) => {
+          if (scope === 'task-and-trigger' && key === 'isTaskMacro') return true;
+          if (scope === 'task-and-trigger' && key === 'moduleId') return data.moduleId;
+          if (scope === 'task-and-trigger' && key === 'isTemporary') return data.isTemporary;
+          return undefined;
+        }),
+        setFlag: vi.fn(),
+      };
+      return macro;
+    }),
+  };
+
   // Mock ApplicationV2 class
   (global as any).ApplicationV2 = class MockApplicationV2 {
     static DEFAULT_OPTIONS = {

@@ -469,12 +469,17 @@ async function analyzeProductivity(taskId) {
 const csvData = await game.taskTrigger.api.exportTaskTimeLog(taskId, 'csv');
 console.log(csvData);
 
-// Save to file (if running in Electron)
-if (typeof require !== 'undefined') {
-  const fs = require('fs');
-  fs.writeFileSync('task-log.csv', csvData);
-  ui.notifications.info('Time log exported to task-log.csv');
-}
+// Download CSV file using browser APIs
+const blob = new Blob([csvData], { type: 'text/csv' });
+const url = URL.createObjectURL(blob);
+const link = document.createElement('a');
+link.href = url;
+link.download = 'task-log.csv';
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
+URL.revokeObjectURL(url);
+ui.notifications.info('Time log downloaded as task-log.csv');
 ```
 
 ### JSON Export

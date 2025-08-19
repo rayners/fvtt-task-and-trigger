@@ -9,15 +9,15 @@
 - Calendar integration with Seasons & Stars (basic implementation)
 - Task Manager UI for creating and managing tasks
 - Date prefilling from calendar selection with S&S formatting
-- Comprehensive test suite with 235 passing tests
+- Test suite with 285 passing tests (87% pass rate, ongoing development)
 
 ### Documentation
 
-- Complete API documentation and usage examples
+- API documentation and usage examples
 - Development setup and contributing guidelines
 
 ### Build System
 
 - GitHub Actions CI/CD pipeline with automated releases
 - TypeScript build system with foundry-dev-tools
-- Comprehensive testing and code quality checks
+- Initial testing and code quality infrastructure

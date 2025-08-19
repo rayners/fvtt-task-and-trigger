@@ -201,7 +201,7 @@ export class JournalStorage {
       'name',
       'timeSpec',
       'targetTime',
-      'callback',
+      'macroId',
       'useGameTime',
       'recurring',
       'scope',

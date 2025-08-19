@@ -72,20 +72,20 @@ export class TaskManager {
   /**
    * Schedule a one-time task
    * @param timeSpec When to execute the task
-   * @param callback JavaScript code to execute
+   * @param macroId ID of the macro to execute
    * @param useGameTime Whether to use game time or real time
    * @param scope Storage scope (world or client)
    * @returns Task ID
    */
   async scheduleTask(
     timeSpec: TimeSpec,
-    callback: string,
+    macroId: string,
     useGameTime: boolean = false,
     scope: 'world' | 'client' = 'client'
   ): Promise<string> {
     // Validate inputs
-    if (!callback || callback.trim() === '') {
-      throw new Error('Callback cannot be empty');
+    if (!macroId || macroId.trim() === '') {
+      throw new Error('Macro ID cannot be empty');
     }
 
     try {
@@ -97,10 +97,11 @@ export class TaskManager {
     const task: Task = {
       id: foundry.utils.randomID(),
       name: this.generateTaskName(timeSpec, useGameTime),
-      description: `Scheduled task: ${callback.substring(0, 50)}${callback.length > 50 ? '...' : ''}`,
+      description: `Scheduled task: macro ${macroId}`,
       timeSpec,
       targetTime: TimeConverter.toTimestamp(timeSpec, useGameTime),
-      callback,
+      macroId,
+      macroSource: 'existing',
       useGameTime,
       recurring: false,
       scope,
@@ -122,20 +123,20 @@ export class TaskManager {
   /**
    * Schedule a recurring task (interval)
    * @param interval How often to repeat the task
-   * @param callback JavaScript code to execute
+   * @param macroId ID of the macro to execute
    * @param useGameTime Whether to use game time or real time
    * @param scope Storage scope (world or client)
    * @returns Task ID
    */
   async scheduleInterval(
     interval: TimeSpec,
-    callback: string,
+    macroId: string,
     useGameTime: boolean = false,
     scope: 'world' | 'client' = 'client'
   ): Promise<string> {
     // Validate inputs
-    if (!callback || callback.trim() === '') {
-      throw new Error('Callback cannot be empty');
+    if (!macroId || macroId.trim() === '') {
+      throw new Error('Macro ID cannot be empty');
     }
 
     try {
@@ -147,10 +148,11 @@ export class TaskManager {
     const task: Task = {
       id: foundry.utils.randomID(),
       name: this.generateIntervalName(interval, useGameTime),
-      description: `Recurring task: ${callback.substring(0, 50)}${callback.length > 50 ? '...' : ''}`,
+      description: `Recurring task: macro ${macroId}`,
       timeSpec: interval,
       targetTime: Math.floor(Date.now() / 1000) + TimeConverter.toTimestamp(interval, useGameTime),
-      callback,
+      macroId,
+      macroSource: 'existing',
       useGameTime,
       recurring: true,
       interval,
@@ -173,22 +175,23 @@ export class TaskManager {
   /**
    * Schedule a task for a specific calendar date (requires S&S integration)
    * @param calendarDate Calendar date specification
-   * @param callback JavaScript code to execute
+   * @param macroId ID of the macro to execute
    * @param scope Storage scope (world or client)
    * @returns Task ID
    */
   async scheduleCalendarTask(
     calendarDate: CalendarDate,
-    callback: string,
+    macroId: string,
     scope: 'world' | 'client' = 'world'
   ): Promise<string> {
     const task: Task = {
       id: foundry.utils.randomID(),
       name: `Calendar Task: ${calendarDate.year}/${calendarDate.month}/${calendarDate.day}`,
-      description: `Calendar task: ${callback.substring(0, 50)}${callback.length > 50 ? '...' : ''}`,
+      description: `Calendar task: macro ${macroId}`,
       timeSpec: calendarDate,
       targetTime: TimeConverter.calendarDateToWorldTime(calendarDate),
-      callback,
+      macroId,
+      macroSource: 'existing',
       useGameTime: true,
       recurring: false,
       scope,

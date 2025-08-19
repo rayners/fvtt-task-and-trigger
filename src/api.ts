@@ -3,7 +3,7 @@
  * Exposed as game.taskTrigger.api for other modules and macros
  */
 
-import { TimeSpec, CalendarDate, Task, TaskCallback } from './types';
+import { TimeSpec, CalendarDate, Task } from './types';
 import { TaskScheduler, ScheduleOptions, TaskInfo } from './task-scheduler';
 import { TaskPersistence } from './task-persistence';
 import { AccumulatedTimeTaskOptions, TimeLogEntry } from './accumulated-time-manager';
@@ -11,32 +11,20 @@ import { TaskManagerApplication } from './task-manager-application';
 
 export interface TaskTriggerAPI {
   // Basic scheduling methods (setTimeout/setInterval style)
-  setTimeout(delay: TimeSpec, callback: TaskCallback, options?: ScheduleOptions): Promise<string>;
-  setInterval(
-    interval: TimeSpec,
-    callback: TaskCallback,
-    options?: ScheduleOptions
-  ): Promise<string>;
+  setTimeout(delay: TimeSpec, macroId: string, options?: ScheduleOptions): Promise<string>;
+  setInterval(interval: TimeSpec, macroId: string, options?: ScheduleOptions): Promise<string>;
   clearTimeout(taskId: string): Promise<boolean>;
   clearInterval(taskId: string): Promise<boolean>;
 
   // Game time scheduling
-  setGameTimeout(
-    delay: TimeSpec,
-    callback: TaskCallback,
-    options?: ScheduleOptions
-  ): Promise<string>;
-  setGameInterval(
-    interval: TimeSpec,
-    callback: TaskCallback,
-    options?: ScheduleOptions
-  ): Promise<string>;
+  setGameTimeout(delay: TimeSpec, macroId: string, options?: ScheduleOptions): Promise<string>;
+  setGameInterval(interval: TimeSpec, macroId: string, options?: ScheduleOptions): Promise<string>;
 
   // Advanced scheduling
-  scheduleAt(dateTime: Date, callback: TaskCallback, options?: ScheduleOptions): Promise<string>;
+  scheduleAt(dateTime: Date, macroId: string, options?: ScheduleOptions): Promise<string>;
   scheduleForDate(
     calendarDate: CalendarDate,
-    callback: TaskCallback,
+    macroId: string,
     options?: ScheduleOptions
   ): Promise<string>;
 
@@ -103,33 +91,31 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
   /**
    * Schedule a one-time task after a delay (real time)
    * @param delay Time to wait before execution
-   * @param callback Function or string to execute
+   * @param macroId ID of the macro to execute
    * @param options Additional options
    * @returns Task ID
    */
   async setTimeout(
     delay: TimeSpec,
-    callback: TaskCallback,
+    macroId: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
-    const callbackCode = this.normalizeCallback(callback);
-    return this.scheduler.setTimeout(delay, callbackCode, options);
+    return this.scheduler.setTimeout(delay, macroId, options);
   }
 
   /**
    * Schedule a recurring task at intervals (real time)
    * @param interval Time between executions
-   * @param callback Function or string to execute
+   * @param macroId ID of the macro to execute
    * @param options Additional options
    * @returns Task ID
    */
   async setInterval(
     interval: TimeSpec,
-    callback: TaskCallback,
+    macroId: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
-    const callbackCode = this.normalizeCallback(callback);
-    return this.scheduler.setInterval(interval, callbackCode, options);
+    return this.scheduler.setInterval(interval, macroId, options);
   }
 
   /**
@@ -153,65 +139,61 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
   /**
    * Schedule a one-time task after a delay (game time)
    * @param delay Game time to wait before execution
-   * @param callback Function or string to execute
+   * @param macroId ID of the macro to execute
    * @param options Additional options
    * @returns Task ID
    */
   async setGameTimeout(
     delay: TimeSpec,
-    callback: TaskCallback,
+    macroId: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
-    const callbackCode = this.normalizeCallback(callback);
-    return this.scheduler.setGameTimeout(delay, callbackCode, options);
+    return this.scheduler.setGameTimeout(delay, macroId, options);
   }
 
   /**
    * Schedule a recurring task at intervals (game time)
    * @param interval Game time between executions
-   * @param callback Function or string to execute
+   * @param macroId ID of the macro to execute
    * @param options Additional options
    * @returns Task ID
    */
   async setGameInterval(
     interval: TimeSpec,
-    callback: TaskCallback,
+    macroId: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
-    const callbackCode = this.normalizeCallback(callback);
-    return this.scheduler.setGameInterval(interval, callbackCode, options);
+    return this.scheduler.setGameInterval(interval, macroId, options);
   }
 
   /**
    * Schedule a task for a specific date/time
    * @param dateTime Target date/time
-   * @param callback Function or string to execute
+   * @param macroId ID of the macro to execute
    * @param options Additional options
    * @returns Task ID
    */
   async scheduleAt(
     dateTime: Date,
-    callback: TaskCallback,
+    macroId: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
-    const callbackCode = this.normalizeCallback(callback);
-    return this.scheduler.scheduleAt(dateTime, callbackCode, options);
+    return this.scheduler.scheduleAt(dateTime, macroId, options);
   }
 
   /**
    * Schedule a task for a specific calendar date
    * @param calendarDate Calendar date specification
-   * @param callback Function or string to execute
+   * @param macroId ID of the macro to execute
    * @param options Additional options
    * @returns Task ID
    */
   async scheduleForDate(
     calendarDate: CalendarDate,
-    callback: TaskCallback,
+    macroId: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
-    const callbackCode = this.normalizeCallback(callback);
-    return this.scheduler.scheduleForDate(calendarDate, callbackCode, options);
+    return this.scheduler.scheduleForDate(calendarDate, macroId, options);
   }
 
   /**
@@ -375,11 +357,7 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
    * @returns Task ID
    */
   async createAccumulatedTimeTask(options: AccumulatedTimeTaskOptions): Promise<string> {
-    const callbackCode = this.normalizeCallback(options.callback);
-    return this.scheduler.createAccumulatedTimeTask({
-      ...options,
-      callback: callbackCode,
-    });
+    return this.scheduler.createAccumulatedTimeTask(options);
   }
 
   /**
@@ -463,38 +441,6 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
    */
   async cleanupOldTasks(olderThanDays: number = 7): Promise<number> {
     return this.persistence.cleanupOldTasks(olderThanDays);
-  }
-
-  /**
-   * Convert callback to string format for execution
-   * @param callback Function or string callback
-   * @returns String callback
-   */
-  private normalizeCallback(callback: TaskCallback): string {
-    if (typeof callback === 'function') {
-      // Convert function to string - this will lose closure but work for simple functions
-      const funcString = callback.toString();
-
-      // Extract function body if it's a regular function
-      const match = funcString.match(
-        /^(?:async\s+)?(?:function\s*)?(?:\w+\s*)?\([^)]*\)\s*(?:=>\s*)?\{([\s\S]*)\}$/
-      );
-      if (match) {
-        return match[1].trim();
-      }
-
-      // Handle arrow functions without braces
-      const arrowMatch = funcString.match(/^(?:async\s+)?\([^)]*\)\s*=>\s*(.+)$/);
-      if (arrowMatch) {
-        return `return (${arrowMatch[1]});`;
-      }
-
-      // Fall back to the full function string
-      console.warn('Task & Trigger | Complex function callback may not work as expected');
-      return `(${funcString})();`;
-    }
-
-    return callback;
   }
 }
 

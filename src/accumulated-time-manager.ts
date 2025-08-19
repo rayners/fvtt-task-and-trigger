@@ -12,7 +12,7 @@ export interface AccumulatedTimeTaskOptions {
   name: string;
   description?: string;
   requiredTime: TimeSpec; // Total time required for completion
-  callback: string; // JavaScript to execute when completed
+  macroId: string; // Macro to execute when completed
   scope?: 'world' | 'client';
   logExecution?: boolean;
 }
@@ -50,7 +50,8 @@ export class AccumulatedTimeManager {
       id: (foundry.utils as any).randomID(),
       name: options.name,
       description: options.description,
-      callback: options.callback,
+      macroId: options.macroId,
+      macroSource: 'existing',
       timeSpec: options.requiredTime,
       targetTime: 0, // Will be set when accumulated time is reached
       useGameTime: false, // Accumulated time tasks are time-agnostic

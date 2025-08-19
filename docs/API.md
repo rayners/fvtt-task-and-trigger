@@ -1,6 +1,6 @@
 # Task & Trigger API Reference
 
-Complete API documentation for the Task & Trigger FoundryVTT module. The API is exposed as `game.taskTrigger.api` and provides comprehensive task scheduling and management capabilities.
+API documentation for the Task & Trigger FoundryVTT module. The API is exposed as `game.taskTrigger.api` and provides task scheduling and management capabilities.
 
 ## Table of Contents
 
@@ -16,6 +16,31 @@ Complete API documentation for the Task & Trigger FoundryVTT module. The API is 
 - [Types and Interfaces](#types-and-interfaces)
 
 ## Getting Started
+
+### Macro-Based Execution
+
+**Important:** Task & Trigger uses FoundryVTT macros for task execution instead of direct JavaScript strings. This provides enhanced security and better integration with Foundry's permission system.
+
+Key changes:
+- All task scheduling methods now require a `macroId` parameter instead of callback strings
+- Macros are automatically organized in the "Task & Trigger Macros" folder structure
+- Tasks can use existing macros or create new ones
+- Module integration supports macro registration and cleanup
+
+Folder organization:
+```
+Task & Trigger Macros/
+├── Real-Time Tasks/
+│   ├── One-Time/
+│   └── Recurring/
+├── Game-Time Tasks/
+│   ├── One-Time/
+│   └── Recurring/
+├── Calendar Tasks/
+├── Accumulated Time Tasks/
+└── Module Tasks/
+    └── [Module Name]/
+```
 
 ### API Availability
 
@@ -36,7 +61,14 @@ const api = game.taskTrigger.api;
 
 // Example usage pattern
 try {
-  const taskId = await api.setTimeout({ minutes: 5 }, 'console.log("Hello!");');
+  // Create a macro first, then schedule it
+  const macro = await Macro.create({
+    name: 'Hello Task',
+    type: 'script',
+    command: 'console.log("Hello!");'
+  });
+  
+  const taskId = await api.setTimeout({ minutes: 5 }, macro.id);
   console.log('Task scheduled:', taskId);
 } catch (error) {
   console.error('Scheduling failed:', error);
@@ -45,14 +77,14 @@ try {
 
 ## Basic Scheduling
 
-### setTimeout(delay, callback, options?)
+### setTimeout(delay, macroId, options?)
 
 Schedule a one-time task to execute after a delay using real time.
 
 **Parameters:**
 
 - `delay: TimeSpec` - Time to wait before execution
-- `callback: string | Function` - JavaScript code or function to execute
+- `macroId: string` - ID of the FoundryVTT macro to execute
 - `options?: ScheduleOptions` - Additional configuration options
 
 **Returns:** `Promise<string>` - Task ID
@@ -60,10 +92,17 @@ Schedule a one-time task to execute after a delay using real time.
 **Example:**
 
 ```javascript
-// Schedule a notification in 30 minutes
+// Create a reminder macro
+const reminderMacro = await Macro.create({
+  name: 'Meeting Reminder Macro',
+  type: 'script',
+  command: 'ui.notifications.info("Meeting in 30 minutes!");'
+});
+
+// Schedule the macro to execute in 30 minutes
 const taskId = await api.setTimeout(
   { minutes: 30 },
-  'ui.notifications.info("Meeting in 30 minutes!");',
+  reminderMacro.id,
   {
     name: 'Meeting Reminder',
     scope: 'client',
@@ -71,21 +110,21 @@ const taskId = await api.setTimeout(
   }
 );
 
-// Using milliseconds
+// Using existing macro by ID
 const quickTask = await api.setTimeout(
   30000, // 30 seconds
-  () => console.log('Quick task executed')
+  'existing-macro-id'
 );
 ```
 
-### setInterval(interval, callback, options?)
+### setInterval(interval, macroId, options?)
 
 Schedule a recurring task to execute at regular intervals using real time.
 
 **Parameters:**
 
 - `interval: TimeSpec` - Time between executions
-- `callback: string | Function` - JavaScript code or function to execute
+- `macroId: string` - ID of the FoundryVTT macro to execute
 - `options?: ScheduleOptions` - Additional configuration options
 
 **Returns:** `Promise<string>` - Task ID
@@ -93,15 +132,22 @@ Schedule a recurring task to execute at regular intervals using real time.
 **Example:**
 
 ```javascript
-// Auto-save every 10 minutes
-const autoSave = await api.setInterval(
-  { minutes: 10 },
-  `
+// Create auto-save macro
+const autoSaveMacro = await Macro.create({
+  name: 'Auto Save Macro',
+  type: 'script',
+  command: `
     if (game.user.isGM) {
         ui.notifications.info("Auto-saving...");
         // Perform save operations
     }
-    `,
+    `
+});
+
+// Schedule auto-save every 10 minutes
+const autoSave = await api.setInterval(
+  { minutes: 10 },
+  autoSaveMacro.id,
   {
     name: 'Auto Save',
     scope: 'world',
@@ -123,7 +169,8 @@ Cancel a scheduled task (both methods are aliases).
 **Example:**
 
 ```javascript
-const taskId = await api.setTimeout({ minutes: 5 }, 'console.log("test");');
+// Assuming you have a macro ID
+const taskId = await api.setTimeout({ minutes: 5 }, 'macro-id-here');
 
 // Cancel the task
 const cancelled = await api.clearTimeout(taskId);
@@ -134,14 +181,14 @@ if (cancelled) {
 
 ## Game Time Scheduling
 
-### setGameTimeout(delay, callback, options?)
+### setGameTimeout(delay, macroId, options?)
 
 Schedule a one-time task to execute after a delay in game time.
 
 **Parameters:**
 
 - `delay: TimeSpec` - Game time to wait before execution
-- `callback: string | Function` - JavaScript code or function to execute
+- `macroId: string` - ID of the FoundryVTT macro to execute
 - `options?: ScheduleOptions` - Additional configuration options
 
 **Returns:** `Promise<string>` - Task ID
@@ -149,15 +196,22 @@ Schedule a one-time task to execute after a delay in game time.
 **Example:**
 
 ```javascript
-// Trigger an event after 8 hours of game time
-const eventId = await api.setGameTimeout(
-  { hours: 8 },
-  `
+// Create a macro for the caravan arrival event
+const caravanMacro = await Macro.create({
+  name: 'Caravan Arrival Event',
+  type: 'script',
+  command: `
     ChatMessage.create({
         content: "The merchant caravan arrives at the city gates.",
         type: CONST.CHAT_MESSAGE_TYPES.IC
     });
-    `,
+    `
+});
+
+// Trigger an event after 8 hours of game time
+const eventId = await api.setGameTimeout(
+  { hours: 8 },
+  caravanMacro.id,
   {
     name: 'Caravan Arrival',
     scope: 'world',
@@ -165,14 +219,14 @@ const eventId = await api.setGameTimeout(
 );
 ```
 
-### setGameInterval(interval, callback, options?)
+### setGameInterval(interval, macroId, options?)
 
 Schedule a recurring task to execute at game time intervals.
 
 **Parameters:**
 
 - `interval: TimeSpec` - Game time between executions
-- `callback: string | Function` - JavaScript code or function to execute
+- `macroId: string` - ID of the FoundryVTT macro to execute
 - `options?: ScheduleOptions` - Additional configuration options
 
 **Returns:** `Promise<string>` - Task ID
@@ -180,15 +234,22 @@ Schedule a recurring task to execute at game time intervals.
 **Example:**
 
 ```javascript
-// Daily random encounter check
-const encounterCheck = await api.setGameInterval(
-  { days: 1 },
-  `
+// Create a macro for the encounter check
+const encounterMacro = await Macro.create({
+  name: 'Daily Encounter Check',
+  type: 'script',
+  command: `
     const roll = new Roll("1d20").roll();
     if (roll.total >= 18) {
         ui.notifications.warn("Random encounter incoming!");
     }
-    `,
+    `
+});
+
+// Daily random encounter check
+const encounterCheck = await api.setGameInterval(
+  { days: 1 },
+  encounterMacro.id,
   {
     name: 'Daily Encounter Check',
     scope: 'world',
@@ -199,14 +260,14 @@ const encounterCheck = await api.setGameInterval(
 
 ## Advanced Scheduling
 
-### scheduleAt(dateTime, callback, options?)
+### scheduleAt(dateTime, macroId, options?)
 
 Schedule a task for a specific real-world date and time.
 
 **Parameters:**
 
 - `dateTime: Date` - Target date and time
-- `callback: string | Function` - JavaScript code or function to execute
+- `macroId: string` - ID of the FoundryVTT macro to execute
 - `options?: ScheduleOptions` - Additional configuration options
 
 **Returns:** `Promise<string>` - Task ID
@@ -214,16 +275,23 @@ Schedule a task for a specific real-world date and time.
 **Example:**
 
 ```javascript
-// Schedule for New Year's Eve
-const newYear = await api.scheduleAt(
-  new Date('2024-12-31 23:59:00'),
-  `
+// Create a macro for the New Year celebration
+const newYearMacro = await Macro.create({
+  name: 'New Year Celebration',
+  type: 'script',
+  command: `
     ui.notifications.info("🎉 Happy New Year! 🎉");
     ChatMessage.create({
         content: "The clock strikes midnight! A new year begins!",
         type: CONST.CHAT_MESSAGE_TYPES.EMOTE
     });
-    `,
+    `
+});
+
+// Schedule for New Year's Eve
+const newYear = await api.scheduleAt(
+  new Date('2024-12-31 23:59:00'),
+  newYearMacro.id,
   {
     name: 'New Year Celebration',
     scope: 'world',
@@ -231,14 +299,14 @@ const newYear = await api.scheduleAt(
 );
 ```
 
-### scheduleForDate(calendarDate, callback, options?)
+### scheduleForDate(calendarDate, macroId, options?)
 
 Schedule a task for a specific calendar date (requires calendar integration).
 
 **Parameters:**
 
 - `calendarDate: CalendarDate` - Calendar date specification
-- `callback: string | Function` - JavaScript code or function to execute
+- `macroId: string` - ID of the FoundryVTT macro to execute
 - `options?: ScheduleOptions` - Additional configuration options
 
 **Returns:** `Promise<string>` - Task ID
@@ -246,13 +314,20 @@ Schedule a task for a specific calendar date (requires calendar integration).
 **Example:**
 
 ```javascript
+// Create a macro for the summer solstice event
+const solsticeMacro = await Macro.create({
+  name: 'Summer Solstice Festival',
+  type: 'script',
+  command: `
+    ui.notifications.info("🌞 Summer Solstice Festival begins! 🌞");
+    // Trigger festival events
+    `
+});
+
 // Schedule for a specific in-game date
 const festival = await api.scheduleForDate(
   { year: 1358, month: 6, day: 21 }, // Summer solstice
-  `
-    ui.notifications.info("🌞 Summer Solstice Festival begins! 🌞");
-    // Trigger festival events
-    `,
+  solsticeMacro.id,
   {
     name: 'Summer Solstice',
     scope: 'world',
@@ -489,7 +564,7 @@ console.log(`Tasks for summer solstice: ${tasks.length}`);
 
 ### getStatistics()
 
-Get comprehensive statistics about the task system.
+Get statistics about the task system.
 
 **Parameters:** None
 
@@ -536,14 +611,21 @@ Create a task that requires manual time logging to complete.
 **Example:**
 
 ```javascript
+// Create macro for spell completion
+const spellMacro = await Macro.create({
+  name: 'Spell Research Complete',
+  type: 'script',
+  command: `
+        ui.notifications.info("Spell research complete!");
+        // Add spell to character
+    `
+});
+
 const researchId = await api.createAccumulatedTimeTask({
   name: 'Spell Research',
   description: 'Researching new teleportation spell',
   requiredTime: { hours: 50 },
-  callback: `
-        ui.notifications.info("Spell research complete!");
-        // Add spell to character
-    `,
+  macroId: spellMacro.id,
   scope: 'world',
   logExecution: true,
 });
@@ -793,7 +875,7 @@ interface AccumulatedTimeTaskOptions {
   name: string; // Task name
   description?: string; // Task description
   requiredTime: TimeSpec; // Total time required
-  callback: string; // Completion callback
+  macroId: string; // ID of macro to execute on completion
   scope?: 'world' | 'client'; // Storage scope
   logExecution?: boolean; // Log execution
 }
@@ -848,7 +930,14 @@ All API methods return promises and should be used with proper error handling:
 
 ```javascript
 try {
-  const taskId = await api.setTimeout({ minutes: 5 }, 'console.log("test");');
+  // Create macro first
+  const testMacro = await Macro.create({
+    name: 'Test Task',
+    type: 'script', 
+    command: 'console.log("test");'
+  });
+  
+  const taskId = await api.setTimeout({ minutes: 5 }, testMacro.id);
   console.log('Task scheduled successfully:', taskId);
 } catch (error) {
   console.error('Failed to schedule task:', error.message);
@@ -860,8 +949,9 @@ Common error scenarios:
 
 - Module not initialized (`isReady()` returns false)
 - Invalid time specifications
-- JavaScript syntax errors in callback code
-- Permission issues (world tasks require GM permissions)
+- Macro not found or invalid macro ID
+- Macro permission issues (world tasks require GM permissions)
+- Macro creation failures (invalid JavaScript syntax)
 - Storage failures
 - Task not found for management operations
 
@@ -876,10 +966,11 @@ Common error scenarios:
 
 ### Security
 
-- Validate callback code before scheduling
-- Use string callbacks for complex logic
+- Create macros with proper validation before scheduling
+- Use FoundryVTT's built-in macro permission system
 - Be cautious with world-scoped tasks
 - Implement proper error handling
+- Leverage macro folder organization for better management
 
 ### Maintenance
 

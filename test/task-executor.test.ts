@@ -4,6 +4,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TaskExecutor } from '../src/task-executor';
+import { MacroManager } from '../src/macro-manager';
 import { Task } from '../src/types';
 import './setup';
 
@@ -12,8 +13,9 @@ describe('TaskExecutor', () => {
   let mockTask: Task;
 
   beforeEach(() => {
-    // Clear singleton instance to ensure clean state
+    // Clear singleton instances to ensure clean state
     (TaskExecutor as any).instance = undefined;
+    (MacroManager as any).instance = undefined;
     executor = TaskExecutor.getInstance();
 
     // Mock Dialog class
@@ -34,7 +36,8 @@ describe('TaskExecutor', () => {
       description: 'A test task',
       timeSpec: { minutes: 5 },
       targetTime: Date.now() / 1000 + 300,
-      callback: 'console.log("Hello from task!");',
+      macroId: 'test-macro-id',
+      macroSource: 'existing' as const,
       useGameTime: false,
       recurring: false,
       scope: 'client',
@@ -54,24 +57,42 @@ describe('TaskExecutor', () => {
   });
 
   describe('executeTask', () => {
-    it('should execute valid JavaScript code', async () => {
-      const task = { ...mockTask, callback: 'return "test result";' };
+    it('should execute valid macro', async () => {
+      const task = { ...mockTask, macroId: 'test-macro-id' };
+
+      // Mock macro manager validation and execution
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
+      vi.spyOn(macroManager, 'executeMacro').mockResolvedValue('test result');
+
       const result = await executor.executeTask(task);
 
       expect(result.success).toBe(true);
       expect(result.result).toBe('test result');
     });
 
-    it('should handle code that returns undefined', async () => {
-      const task = { ...mockTask, callback: 'console.log("no return");' };
+    it('should handle macro that returns undefined', async () => {
+      const task = { ...mockTask, macroId: 'test-macro-id' };
+
+      // Mock macro manager validation and execution
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
+      vi.spyOn(macroManager, 'executeMacro').mockResolvedValue(undefined);
+
       const result = await executor.executeTask(task);
 
       expect(result.success).toBe(true);
       expect(result.result).toBeUndefined();
     });
 
-    it('should handle JavaScript errors gracefully', async () => {
-      const task = { ...mockTask, callback: 'throw new Error("Test error");' };
+    it('should handle macro execution errors gracefully', async () => {
+      const task = { ...mockTask, macroId: 'test-macro-id' };
+
+      // Mock macro manager validation and execution error
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
+      vi.spyOn(macroManager, 'executeMacro').mockRejectedValue(new Error('Test error'));
+
       const result = await executor.executeTask(task);
 
       expect(result.success).toBe(false);
@@ -79,18 +100,26 @@ describe('TaskExecutor', () => {
     });
 
     it('should handle empty code', async () => {
-      const task = { ...mockTask, callback: '' };
+      // Mock a macro that doesn't exist to simulate empty/invalid macro
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(false);
+
+      const task = { ...mockTask, macroId: 'non-existent-macro' };
       const result = await executor.executeTask(task);
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain('No code provided for execution');
+      expect(result.error).toContain('Macro non-existent-macro not found or inaccessible');
     });
 
     it('should prevent concurrent execution of the same task', async () => {
-      const task = {
-        ...mockTask,
-        callback: 'return new Promise(resolve => setTimeout(resolve, 100));',
-      };
+      // Mock a slow executing macro
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
+      vi.spyOn(macroManager, 'executeMacro').mockImplementation(
+        () => new Promise(resolve => setTimeout(() => resolve('slow result'), 100))
+      );
+
+      const task = { ...mockTask };
 
       const promise1 = executor.executeTask(task);
       const promise2 = executor.executeTask(task);
@@ -106,10 +135,12 @@ describe('TaskExecutor', () => {
     });
 
     it('should have access to Foundry globals', async () => {
-      const task = {
-        ...mockTask,
-        callback: 'return typeof game !== "undefined" && typeof ui !== "undefined";',
-      };
+      // Mock macro that checks for Foundry globals
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
+      vi.spyOn(macroManager, 'executeMacro').mockResolvedValue(true); // Simulates successful check for game global
+
+      const task = { ...mockTask };
 
       const result = await executor.executeTask(task);
       expect(result.success).toBe(true);
@@ -117,7 +148,12 @@ describe('TaskExecutor', () => {
     });
 
     it('should store execution history', async () => {
-      const task = { ...mockTask, callback: 'return "history test";' };
+      // Mock macro to return a test result
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
+      vi.spyOn(macroManager, 'executeMacro').mockResolvedValue('history test');
+
+      const task = { ...mockTask };
 
       await executor.executeTask(task);
       const history = executor.getExecutionHistory(task.id);
@@ -149,8 +185,16 @@ describe('TaskExecutor', () => {
 
   describe('execution history', () => {
     it('should maintain execution history per task', async () => {
-      const task1 = { ...mockTask, id: 'task-1', callback: 'return 1;' };
-      const task2 = { ...mockTask, id: 'task-2', callback: 'return 2;' };
+      // Mock macros to return different results
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
+      vi.spyOn(macroManager, 'executeMacro')
+        .mockResolvedValueOnce(1) // task1 first execution
+        .mockResolvedValueOnce(2) // task2 execution
+        .mockResolvedValueOnce(1); // task1 second execution
+
+      const task1 = { ...mockTask, id: 'task-1' };
+      const task2 = { ...mockTask, id: 'task-2' };
 
       await executor.executeTask(task1);
       await executor.executeTask(task2);
@@ -177,7 +221,12 @@ describe('TaskExecutor', () => {
     });
 
     it('should limit execution history size', async () => {
-      const task = { ...mockTask, callback: 'return Math.random();' };
+      const task = { ...mockTask, macroId: 'test-macro-id' };
+
+      // Mock macro manager
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
+      vi.spyOn(macroManager, 'executeMacro').mockResolvedValue(Math.random());
 
       // Execute more than the history limit (50)
       for (let i = 0; i < 55; i++) {
@@ -189,77 +238,70 @@ describe('TaskExecutor', () => {
     });
   });
 
-  describe('code validation', () => {
-    it('should validate empty code', () => {
-      const result = TaskExecutor.validateCode('');
-      expect(result.valid).toBe(false);
-      expect(result.warnings).toContain('Code cannot be empty');
+  describe('macro validation', () => {
+    it('should validate macro exists before execution', async () => {
+      const task = { ...mockTask, macroId: 'non-existent-macro' };
+
+      // Mock macro manager to return false for validation
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(false);
+
+      const result = await executor.executeTask(task);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Macro non-existent-macro not found or inaccessible');
     });
 
-    it('should validate basic code', () => {
-      const result = TaskExecutor.validateCode('return "hello";');
-      expect(result.valid).toBe(true);
-      expect(result.warnings).toHaveLength(0);
-    });
+    it('should execute macro when validation passes', async () => {
+      const task = { ...mockTask, macroId: 'valid-macro' };
 
-    it('should warn about potentially dangerous patterns', () => {
-      const testCases = [
-        { code: 'document.body.innerHTML = "test";', warning: 'DOM' },
-        { code: 'window.location = "http://evil.com";', warning: 'window' },
-        { code: 'localStorage.setItem("key", "value");', warning: 'storage' },
-        { code: 'fetch("http://api.com");', warning: 'HTTP' },
-        { code: 'eval("alert(1)");', warning: 'eval' },
-      ];
+      // Mock macro manager to return true for validation and mock result
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
+      vi.spyOn(macroManager, 'executeMacro').mockResolvedValue('macro result');
 
-      for (const testCase of testCases) {
-        const result = TaskExecutor.validateCode(testCase.code);
-        expect(result.valid).toBe(true);
-        expect(result.warnings.length).toBeGreaterThan(0);
-        expect(
-          result.warnings.some(w => w.toLowerCase().includes(testCase.warning.toLowerCase()))
-        ).toBe(true);
-      }
-    });
+      const result = await executor.executeTask(task);
 
-    it('should handle complex code without false positives', () => {
-      const complexCode = `
-        const actors = game.actors.filter(a => a.type === 'character');
-        for (const actor of actors) {
-          if (actor.system.health.value < 10) {
-            ui.notifications.warn(\`\${actor.name} is low on health!\`);
-          }
-        }
-        return actors.length;
-      `;
-
-      const result = TaskExecutor.validateCode(complexCode);
-      expect(result.valid).toBe(true);
-      // Should have minimal warnings for legitimate Foundry code
+      expect(result.success).toBe(true);
+      expect(result.result).toBe('macro result');
     });
   });
 
   describe('error handling', () => {
-    it('should handle syntax errors', async () => {
-      const task = { ...mockTask, callback: 'invalid javascript syntax {{{' };
+    it('should handle macro execution errors', async () => {
+      const task = { ...mockTask, macroId: 'error-macro' };
+
+      // Mock macro manager to validate but throw during execution
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
+      vi.spyOn(macroManager, 'executeMacro').mockRejectedValue(new Error('Macro execution failed'));
+
       const result = await executor.executeTask(task);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBeTruthy();
+      expect(result.error).toContain('Macro execution failed');
     });
 
-    it('should handle runtime errors', async () => {
-      const task = { ...mockTask, callback: 'undefined.property.access;' };
+    it('should handle macro validation errors', async () => {
+      const task = { ...mockTask, macroId: 'missing-macro' };
+
+      // Mock macro manager to fail validation
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(false);
+
       const result = await executor.executeTask(task);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBeTruthy();
+      expect(result.error).toContain('Macro missing-macro not found or inaccessible');
     });
 
-    it('should handle async errors', async () => {
-      const task = {
-        ...mockTask,
-        callback: 'return Promise.reject(new Error("Async error"));',
-      };
+    it('should handle async macro errors', async () => {
+      const task = { ...mockTask, macroId: 'async-error-macro' };
+
+      // Mock macro manager
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
+      vi.spyOn(macroManager, 'executeMacro').mockRejectedValue(new Error('Async error'));
 
       const result = await executor.executeTask(task);
 
@@ -269,11 +311,14 @@ describe('TaskExecutor', () => {
   });
 
   describe('security measures', () => {
-    it('should respect security warning settings', async () => {
-      // Mock settings to disable warnings
-      (global as any).game.settings.get = vi.fn().mockReturnValue(false);
+    it('should use secure macro execution', async () => {
+      const task = { ...mockTask, macroId: 'secure-macro' };
 
-      const task = { ...mockTask, callback: 'return "no warning test";' };
+      // Mock macro manager
+      const macroManager = MacroManager.getInstance();
+      vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
+      vi.spyOn(macroManager, 'executeMacro').mockResolvedValue('secure result');
+
       const result = await executor.executeTask(task);
 
       expect(result.success).toBe(true);

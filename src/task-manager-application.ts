@@ -7,6 +7,7 @@
 
 import { TaskScheduler, TaskInfo } from './task-scheduler';
 import { TaskPersistence } from './task-persistence';
+import { MacroManager } from './macro-manager';
 import { TimeSpec, CalendarDate } from './types';
 
 // Declare types to work around namespace resolution issues
@@ -19,7 +20,9 @@ export interface TaskFormData {
   name: string;
   description: string;
   timeSpec: TimeSpec;
-  callback: string;
+  macroId: string;
+  macroSource: 'existing' | 'create';
+  taskCode?: string; // For creating new macros
   useGameTime: boolean;
   recurring: boolean;
   scope: 'world' | 'client';
@@ -30,6 +33,7 @@ export interface TaskFormData {
 export class TaskManagerApplication extends HandlebarsApplicationMixin(ApplicationV2) {
   private scheduler: TaskScheduler;
   private persistence: TaskPersistence;
+  private macroManager: MacroManager;
   private activeTab: string = 'tasks';
   private tasks: TaskInfo[] = [];
   private statistics: any = {};
@@ -47,6 +51,7 @@ export class TaskManagerApplication extends HandlebarsApplicationMixin(Applicati
     super(options);
     this.scheduler = TaskScheduler.getInstance();
     this.persistence = TaskPersistence.getInstance();
+    this.macroManager = MacroManager.getInstance();
     this.loadSettings();
   }
 
@@ -434,39 +439,49 @@ export class TaskManagerApplication extends HandlebarsApplicationMixin(Applicati
     const taskData = this.parseTaskFormData(formData);
 
     try {
+      let macroId: string;
+
+      // Handle macro creation or selection
+      if (taskData.macroSource === 'create') {
+        if (!taskData.taskCode?.trim()) {
+          throw new Error('Task code is required when creating a new macro');
+        }
+
+        // Create a new macro
+        const macro = await this.macroManager.createTaskMacro({
+          name: taskData.name,
+          code: taskData.taskCode,
+          folder: 'task-and-trigger/ui-tasks',
+          moduleId: 'task-and-trigger',
+        });
+        macroId = macro.id;
+      } else {
+        // Use existing macro
+        if (!taskData.macroId) {
+          throw new Error('Please select a macro or choose to create a new one');
+        }
+        macroId = taskData.macroId;
+      }
+
       let taskId: string;
+      const options = {
+        name: taskData.name,
+        description: taskData.description,
+        scope: taskData.scope,
+        logExecution: taskData.logExecution,
+      };
 
       if (taskData.recurring) {
         if (taskData.useGameTime) {
-          taskId = await this.scheduler.setGameInterval(taskData.timeSpec, taskData.callback, {
-            name: taskData.name,
-            description: taskData.description,
-            scope: taskData.scope,
-            logExecution: taskData.logExecution,
-          });
+          taskId = await this.scheduler.setGameInterval(taskData.timeSpec, macroId, options);
         } else {
-          taskId = await this.scheduler.setInterval(taskData.timeSpec, taskData.callback, {
-            name: taskData.name,
-            description: taskData.description,
-            scope: taskData.scope,
-            logExecution: taskData.logExecution,
-          });
+          taskId = await this.scheduler.setInterval(taskData.timeSpec, macroId, options);
         }
       } else {
         if (taskData.useGameTime) {
-          taskId = await this.scheduler.setGameTimeout(taskData.timeSpec, taskData.callback, {
-            name: taskData.name,
-            description: taskData.description,
-            scope: taskData.scope,
-            logExecution: taskData.logExecution,
-          });
+          taskId = await this.scheduler.setGameTimeout(taskData.timeSpec, macroId, options);
         } else {
-          taskId = await this.scheduler.setTimeout(taskData.timeSpec, taskData.callback, {
-            name: taskData.name,
-            description: taskData.description,
-            scope: taskData.scope,
-            logExecution: taskData.logExecution,
-          });
+          taskId = await this.scheduler.setTimeout(taskData.timeSpec, macroId, options);
         }
       }
 
@@ -481,6 +496,7 @@ export class TaskManagerApplication extends HandlebarsApplicationMixin(Applicati
         dialogInstance.close();
       }
     } catch (error) {
+      console.error('Task creation failed:', error);
       ui.notifications?.error(`Failed to create task: ${error}`);
     }
   }
@@ -549,6 +565,9 @@ export class TaskManagerApplication extends HandlebarsApplicationMixin(Applicati
       (this as any)._contextDate = null;
     }
 
+    // Get available macros for selection
+    const availableMacros = await this.getAvailableMacros();
+
     const data = {
       task,
       isEdit: !!task,
@@ -556,6 +575,11 @@ export class TaskManagerApplication extends HandlebarsApplicationMixin(Applicati
       scopeOptions: [
         { value: 'client', label: 'Client (Personal)' },
         { value: 'world', label: 'World (Shared)' },
+      ],
+      macros: availableMacros,
+      macroSourceOptions: [
+        { value: 'existing', label: 'Use Existing Macro' },
+        { value: 'create', label: 'Create New Macro' },
       ],
       // Add context data for calendar integration
       defaultDateTime,
@@ -823,12 +847,15 @@ export class TaskManagerApplication extends HandlebarsApplicationMixin(Applicati
    */
   private parseTaskFormData(formData: FormData): TaskFormData {
     const timeSpec = this.parseTimeSpec(formData);
+    const macroSource = (formData.get('macroSource') as 'existing' | 'create') || 'create';
 
     return {
       name: (formData.get('name') as string) || 'Unnamed Task',
       description: (formData.get('description') as string) || '',
       timeSpec,
-      callback: (formData.get('callback') as string) || '',
+      macroId: (formData.get('macroId') as string) || '',
+      macroSource,
+      taskCode: macroSource === 'create' ? (formData.get('taskCode') as string) || '' : undefined,
       useGameTime: formData.get('useGameTime') === 'on',
       recurring: formData.get('recurring') === 'on',
       scope: (formData.get('scope') as 'world' | 'client') || 'client',
@@ -879,6 +906,25 @@ export class TaskManagerApplication extends HandlebarsApplicationMixin(Applicati
         { value: { days: 7 }, label: '1 week' },
       ],
     };
+  }
+
+  /**
+   * Get available macros for selection
+   */
+  private async getAvailableMacros(): Promise<Array<{ id: string; name: string; type: string }>> {
+    const macros: Array<{ id: string; name: string; type: string }> = [];
+
+    if ((game as any).macros) {
+      for (const macro of (game as any).macros) {
+        macros.push({
+          id: macro.id,
+          name: macro.name || 'Unnamed Macro',
+          type: macro.type || 'script',
+        });
+      }
+    }
+
+    return macros.sort((a, b) => a.name.localeCompare(b.name));
   }
 
   /**

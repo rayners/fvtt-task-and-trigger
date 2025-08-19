@@ -105,7 +105,7 @@ describe('AccumulatedTimeManager', () => {
         name: 'Spell Research',
         description: 'Research a new spell',
         requiredTime: { hours: 15 },
-        callback: 'console.log("Spell research complete!");',
+        macroId: 'test-macro-id',
         scope: 'client',
       };
 
@@ -127,7 +127,7 @@ describe('AccumulatedTimeManager', () => {
       const options: AccumulatedTimeTaskOptions = {
         name: 'Crafting Project',
         requiredTime: { days: 2, hours: 4, minutes: 30 },
-        callback: 'console.log("Crafting complete!");',
+        macroId: 'test-macro-id',
       };
 
       const taskId = await accumulatedTimeManager.createAccumulatedTimeTask(options);
@@ -145,7 +145,7 @@ describe('AccumulatedTimeManager', () => {
       const options: AccumulatedTimeTaskOptions = {
         name: 'Test Task',
         requiredTime: { hours: 10 },
-        callback: 'console.log("Complete!");',
+        macroId: 'test-macro-id',
       };
       taskId = await accumulatedTimeManager.createAccumulatedTimeTask(options);
     });
@@ -223,7 +223,7 @@ describe('AccumulatedTimeManager', () => {
       const options: AccumulatedTimeTaskOptions = {
         name: 'Progress Test',
         requiredTime: { hours: 20 },
-        callback: 'console.log("Done!");',
+        macroId: 'test-macro-id',
       };
       taskId = await accumulatedTimeManager.createAccumulatedTimeTask(options);
     });
@@ -265,7 +265,8 @@ describe('AccumulatedTimeManager', () => {
         description: '',
         timeSpec: { minutes: 5 },
         targetTime: Date.now() + 300000,
-        callback: 'console.log("regular");',
+        macroId: 'test-macro-id',
+        macroSource: 'existing' as const,
         useGameTime: false,
         recurring: false,
         scope: 'client',
@@ -280,7 +281,7 @@ describe('AccumulatedTimeManager', () => {
       await accumulatedTimeManager.createAccumulatedTimeTask({
         name: 'Accumulated Task',
         requiredTime: { hours: 5 },
-        callback: 'console.log("accumulated");',
+        macroId: 'test-macro-id',
       });
 
       const accumulatedTasks = await accumulatedTimeManager.listAccumulatedTimeTasks();
@@ -293,14 +294,14 @@ describe('AccumulatedTimeManager', () => {
       await accumulatedTimeManager.createAccumulatedTimeTask({
         name: 'Client Task',
         requiredTime: { hours: 5 },
-        callback: 'console.log("client");',
+        macroId: 'test-macro-id',
         scope: 'client',
       });
 
       await accumulatedTimeManager.createAccumulatedTimeTask({
         name: 'World Task',
         requiredTime: { hours: 3 },
-        callback: 'console.log("world");',
+        macroId: 'test-macro-id',
         scope: 'world',
       });
 
@@ -321,7 +322,7 @@ describe('AccumulatedTimeManager', () => {
       taskId = await accumulatedTimeManager.createAccumulatedTimeTask({
         name: 'Entry Management Test',
         requiredTime: { hours: 10 },
-        callback: 'console.log("test");',
+        macroId: 'test-macro-id',
       });
 
       // Add some time entries
@@ -379,7 +380,7 @@ describe('AccumulatedTimeManager', () => {
       taskId = await accumulatedTimeManager.createAccumulatedTimeTask({
         name: 'Export Test',
         requiredTime: { hours: 10 },
-        callback: 'console.log("export test");',
+        macroId: 'test-macro-id',
       });
 
       await accumulatedTimeManager.addTime(taskId, {
@@ -418,7 +419,7 @@ describe('AccumulatedTimeManager', () => {
       taskId = await accumulatedTimeManager.createAccumulatedTimeTask({
         name: 'Stats Test',
         requiredTime: { hours: 20 },
-        callback: 'console.log("stats");',
+        macroId: 'test-macro-id',
       });
 
       // Mock time entries with different durations

@@ -11,6 +11,16 @@ export default [
         project: null, // Disable TypeScript project checking for source files
       },
     },
+    rules: {
+      // Allow console statements for development and debugging
+      'no-console': 'off',
+      // Allow any types for FoundryVTT integration where types are complex
+      '@typescript-eslint/no-explicit-any': 'off',
+      // Allow missing return types for event handlers and simple functions
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      // Allow non-null assertions for FoundryVTT APIs that are known to exist
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
   },
 
   // Test files can use TypeScript project

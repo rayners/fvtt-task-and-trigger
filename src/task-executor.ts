@@ -1,15 +1,19 @@
 /**
- * TaskExecutor - Handles secure JavaScript execution with user consent and error boundaries
+ * TaskExecutor - Handles macro-based task execution with safety measures
  */
 
 import { Task, TaskExecutionResult } from './types';
+import { MacroManager } from './macro-manager';
 
 export class TaskExecutor {
   private static instance: TaskExecutor;
   private executingTasks = new Set<string>();
   private executionHistory = new Map<string, TaskExecutionResult[]>();
+  private macroManager: MacroManager;
 
-  private constructor() {}
+  private constructor() {
+    this.macroManager = MacroManager.getInstance();
+  }
 
   static getInstance(): TaskExecutor {
     if (!this.instance) {
@@ -19,7 +23,7 @@ export class TaskExecutor {
   }
 
   /**
-   * Execute a task's JavaScript code with safety measures
+   * Execute a task's macro with safety measures
    * @param task The task to execute
    * @returns Promise resolving to execution result
    */
@@ -40,8 +44,13 @@ export class TaskExecutor {
     this.executingTasks.add(task.id);
 
     try {
-      // Execute the JavaScript code directly like Foundry macros
-      const result = await this.safeExecute(task.callback);
+      // Validate macro exists before execution
+      if (!(await this.macroManager.validateMacro(task.macroId))) {
+        throw new Error(`Macro ${task.macroId} not found or inaccessible`);
+      }
+
+      // Execute the macro
+      const result = await this.macroManager.executeMacro(task.macroId);
       const executionTime = Date.now() - startTime;
 
       const executionResult: TaskExecutionResult = {
@@ -79,76 +88,6 @@ export class TaskExecutor {
     } finally {
       this.executingTasks.delete(task.id);
     }
-  }
-
-  /**
-   * Execute JavaScript code with error boundaries and context isolation
-   * @param code The JavaScript code to execute
-   * @returns The result of the execution
-   */
-  private async safeExecute(code: string): Promise<any> {
-    // Validate the code is not empty
-    if (!code || typeof code !== 'string' || code.trim().length === 0) {
-      throw new Error('No code provided for execution');
-    }
-
-    try {
-      // Create execution context with access to Foundry globals
-      // This provides the same access as the browser console, as requested
-      const executionContext = this.createExecutionContext();
-
-      // Use Function constructor instead of eval for slightly better security
-      // while still providing full access as requested
-      const asyncFunction = new Function(
-        ...Object.keys(executionContext),
-        `
-        "use strict";
-        return (async function() {
-          ${code}
-        })();
-        `
-      );
-
-      // Execute with the Foundry context
-      const result = await asyncFunction.call(globalThis, ...Object.values(executionContext));
-
-      return result;
-    } catch (error) {
-      // Re-throw with more context
-      throw new Error(
-        `JavaScript execution error: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-
-  /**
-   * Create execution context with access to Foundry globals
-   * This provides the same access as F12 console, as requested by the user
-   */
-  private createExecutionContext(): Record<string, any> {
-    return {
-      // Core Foundry globals (with safety checks)
-      game: typeof game !== 'undefined' ? game : undefined,
-      ui: typeof ui !== 'undefined' ? ui : undefined,
-      canvas: typeof canvas !== 'undefined' ? canvas : undefined,
-      Hooks: typeof Hooks !== 'undefined' ? Hooks : undefined,
-      CONFIG: typeof CONFIG !== 'undefined' ? CONFIG : undefined,
-      CONST: typeof CONST !== 'undefined' ? CONST : undefined,
-      foundry: typeof foundry !== 'undefined' ? foundry : undefined,
-
-      // Common utilities
-      console,
-      setTimeout,
-      setInterval,
-      clearTimeout,
-      clearInterval,
-
-      // jQuery if available
-      $: typeof $ !== 'undefined' ? $ : undefined,
-
-      // Task & Trigger API
-      taskTrigger: typeof game !== 'undefined' ? (game as any).taskTrigger : undefined,
-    };
   }
 
   /**
@@ -206,41 +145,6 @@ export class TaskExecutor {
    */
   isTaskExecuting(taskId: string): boolean {
     return this.executingTasks.has(taskId);
-  }
-
-  /**
-   * Validate JavaScript code for common issues
-   * This is a basic validation - not a security measure
-   */
-  static validateCode(code: string): { valid: boolean; warnings: string[] } {
-    const warnings: string[] = [];
-
-    if (!code || code.trim().length === 0) {
-      return { valid: false, warnings: ['Code cannot be empty'] };
-    }
-
-    // Check for potentially dangerous patterns (informational only)
-    const dangerousPatterns = [
-      {
-        pattern: /document\./,
-        message: 'Accesses browser DOM - may not work as expected in Foundry',
-      },
-      { pattern: /window\./, message: 'Accesses browser window object' },
-      { pattern: /localStorage|sessionStorage/, message: 'Accesses browser storage' },
-      { pattern: /XMLHttpRequest|fetch\(/, message: 'Makes HTTP requests' },
-      { pattern: /eval\(/, message: 'Uses eval() function' },
-      { pattern: /Function\(/, message: 'Uses Function constructor' },
-      { pattern: /import\(/, message: 'Uses dynamic imports' },
-      { pattern: /require\(/, message: 'Uses CommonJS require' },
-    ];
-
-    for (const { pattern, message } of dangerousPatterns) {
-      if (pattern.test(code)) {
-        warnings.push(message);
-      }
-    }
-
-    return { valid: true, warnings };
   }
 }
 

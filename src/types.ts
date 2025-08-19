@@ -5,8 +5,25 @@
 // Time specification types
 export type TimeSpec = Date | number | RelativeTimeSpec | AbsoluteTimeSpec;
 
-// Common callback type for task execution
-export type TaskCallback = string | ((...args: any[]) => any);
+// Module integration types
+export interface ModuleMacroRegistration {
+  moduleId: string;
+  macroId?: string; // existing macro
+  macroCode?: string; // or code to create new macro
+  name: string;
+  description?: string;
+}
+
+export interface ModuleTaskScheduling {
+  moduleId: string;
+  macroId: string;
+  schedule: TimeSpec;
+  name: string;
+  description?: string;
+  recurring?: boolean;
+  interval?: TimeSpec;
+  scope?: 'world' | 'client';
+}
 
 export interface RelativeTimeSpec {
   days?: number;
@@ -31,7 +48,9 @@ export interface Task {
   description?: string;
   timeSpec: TimeSpec;
   targetTime: number; // Unix timestamp when task should execute
-  callback: string; // JavaScript code to execute
+  macroId: string; // Reference to the macro document that will be executed
+  macroSource: 'generated' | 'existing' | 'module'; // How the macro was created
+  owningModule?: string; // Module that created this task (for module-created tasks)
   useGameTime: boolean; // Whether to use game time or real time
   recurring: boolean; // Whether this is a recurring task
   interval?: TimeSpec; // For recurring tasks, the interval
@@ -104,13 +123,13 @@ export interface TaskTriggerSettings {
 
 // API types
 export interface TaskTriggerAPI {
-  scheduleTask(time: TimeSpec, callback: TaskCallback, useGameTime?: boolean): string;
-  scheduleInterval(interval: TimeSpec, callback: TaskCallback, useGameTime?: boolean): string;
+  scheduleTask(time: TimeSpec, macroId: string, useGameTime?: boolean): string;
+  scheduleInterval(interval: TimeSpec, macroId: string, useGameTime?: boolean): string;
   cancelTask(taskId: string): boolean;
   showTaskCreator(): void;
   scheduleCalendarTask(
     calendarDate: CalendarDate,
-    callback: TaskCallback,
+    macroId: string,
     scope: 'world' | 'client'
   ): string;
   getTasksForDate(calendarDate: CalendarDate): Task[];

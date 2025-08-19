@@ -505,12 +505,13 @@ describe('TaskScheduler - Macro Integration', () => {
 
     it('should handle special characters in notification code', async () => {
       const message = 'Special chars: $, {}, [], \\';
+      const escapedMessage = message.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
       
       await scheduler.scheduleReminder({ minutes: 5 }, message);
 
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith(
         expect.objectContaining({
-          code: `ui.notifications?.info("Reminder: ${message}");`
+          code: `ui.notifications?.info("Reminder: ${escapedMessage}");`
         })
       );
     });

@@ -339,7 +339,7 @@ export class TaskScheduler {
     const macroName = options.name || `Reminder: ${message.substring(0, 50)}${
       message.length > 50 ? '...' : ''
     }`;
-    const macroCode = `ui.notifications?.info("Reminder: ${message.replace(/"/g, '\\"')}");`;
+    const macroCode = `ui.notifications?.info("Reminder: ${message.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}");`;
     
     const macro = await this.macroManager.createTaskMacro({
       name: macroName,
@@ -371,7 +371,7 @@ export class TaskScheduler {
     const macroName = options.name || `Recurring Reminder: ${message.substring(0, 40)}${
       message.length > 40 ? '...' : ''
     }`;
-    const macroCode = `ui.notifications?.info("Reminder: ${message.replace(/"/g, '\\"')}");`;
+    const macroCode = `ui.notifications?.info("Reminder: ${message.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}");`;
     
     const macro = await this.macroManager.createTaskMacro({
       name: macroName,
@@ -403,7 +403,7 @@ export class TaskScheduler {
     const macroName = options.name || `Game Reminder: ${message.substring(0, 45)}${
       message.length > 45 ? '...' : ''
     }`;
-    const macroCode = `ui.notifications?.info("Game Time Reminder: ${message.replace(/"/g, '\\"')}");`;
+    const macroCode = `ui.notifications?.info("Game Time Reminder: ${message.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}");`;
     
     const macro = await this.macroManager.createTaskMacro({
       name: macroName,

@@ -10,7 +10,7 @@ This document describes how external modules can integrate with the Task & Trigg
 Hooks.once('taskTriggerReady', ({ api, modules }) => {
   // Task & Trigger is now ready for use
   console.log('Task & Trigger is ready!');
-  
+
   // Register your module
   modules.registerModule('my-module-id', 'My Awesome Module');
 });
@@ -29,7 +29,7 @@ const taskId = await taskTrigger.createNotificationTask(
   {
     moduleId: 'my-module-id',
     name: 'Break Reminder',
-    scope: 'client'
+    scope: 'client',
   }
 );
 
@@ -40,7 +40,7 @@ const recurringId = await taskTrigger.createRecurringTask(
     moduleId: 'my-module-id',
     taskCode: 'ui.notifications.info("Hourly check-in!");',
     name: 'Hourly Reminder',
-    scope: 'client'
+    scope: 'client',
   }
 );
 ```
@@ -50,7 +50,10 @@ const recurringId = await taskTrigger.createRecurringTask(
 Before creating tasks, modules should register themselves:
 
 ```javascript
-await game.taskTrigger.modules.registerModule('my-module-id', 'My Module Display Name');
+await game.taskTrigger.modules.registerModule(
+  'my-module-id',
+  'My Module Display Name'
+);
 ```
 
 This creates a dedicated folder in the macro directory for your module's tasks and enables cleanup when your module is disabled.
@@ -60,6 +63,7 @@ This creates a dedicated folder in the macro directory for your module's tasks a
 ### Basic Task Creation
 
 #### `createOneTimeTask(delay, options)`
+
 Creates a task that executes once after a delay.
 
 ```javascript
@@ -70,12 +74,13 @@ const taskId = await taskTrigger.createOneTimeTask(
     taskCode: 'console.log("Task executed!");',
     name: 'My Task',
     description: 'A simple one-time task',
-    scope: 'client'
+    scope: 'client',
   }
 );
 ```
 
 #### `createRecurringTask(interval, options)`
+
 Creates a task that executes repeatedly at intervals.
 
 ```javascript
@@ -84,29 +89,28 @@ const taskId = await taskTrigger.createRecurringTask(
   {
     moduleId: 'my-module',
     taskCode: 'ui.notifications.info("Daily reminder!");',
-    name: 'Daily Task'
+    name: 'Daily Task',
   }
 );
 ```
 
 #### `createScheduledTask(dateTime, options)`
+
 Creates a task for a specific date and time.
 
 ```javascript
 const futureDate = new Date('2025-12-25T09:00:00');
-const taskId = await taskTrigger.createScheduledTask(
-  futureDate,
-  {
-    moduleId: 'my-module',
-    taskCode: 'ui.notifications.info("Merry Christmas!");',
-    name: 'Holiday Greeting'
-  }
-);
+const taskId = await taskTrigger.createScheduledTask(futureDate, {
+  moduleId: 'my-module',
+  taskCode: 'ui.notifications.info("Merry Christmas!");',
+  name: 'Holiday Greeting',
+});
 ```
 
 ### Game Time Tasks
 
 #### `createGameTimeTask(delay, options)`
+
 Creates a task that triggers based on in-game time.
 
 ```javascript
@@ -115,7 +119,7 @@ const taskId = await taskTrigger.createGameTimeTask(
   {
     moduleId: 'my-module',
     taskCode: 'ui.notifications.info("Long rest complete!");',
-    name: 'Rest Complete'
+    name: 'Rest Complete',
   }
 );
 ```
@@ -123,6 +127,7 @@ const taskId = await taskTrigger.createGameTimeTask(
 ### Convenience Methods
 
 #### `createNotificationTask(delay, message, options)`
+
 Shorthand for creating notification tasks.
 
 ```javascript
@@ -131,12 +136,13 @@ const taskId = await taskTrigger.createNotificationTask(
   'Remember to save your progress!',
   {
     moduleId: 'my-module',
-    name: 'Save Reminder'
+    name: 'Save Reminder',
   }
 );
 ```
 
 #### `createChatTask(delay, message, options)`
+
 Shorthand for creating chat message tasks.
 
 ```javascript
@@ -145,7 +151,7 @@ const taskId = await taskTrigger.createChatTask(
   'Combat round timer started!',
   {
     moduleId: 'my-module',
-    name: 'Combat Timer'
+    name: 'Combat Timer',
   }
 );
 ```
@@ -182,14 +188,14 @@ await taskTrigger.unregisterModule('my-module-id');
 
 ```typescript
 interface ModuleTaskOptions {
-  moduleId: string;           // Your module ID (required)
-  taskCode: string;           // JavaScript code to execute (required)
-  name?: string;              // Human-readable task name
-  description?: string;       // Task description
+  moduleId: string; // Your module ID (required)
+  taskCode: string; // JavaScript code to execute (required)
+  name?: string; // Human-readable task name
+  description?: string; // Task description
   scope?: 'world' | 'client'; // Where to store the task (default: 'client')
-  logExecution?: boolean;     // Whether to log execution results
-  enabled?: boolean;          // Whether task starts enabled (default: true)
-  temporary?: boolean;        // Whether task is temporary (default: false)
+  logExecution?: boolean; // Whether to log execution results
+  enabled?: boolean; // Whether task starts enabled (default: true)
+  temporary?: boolean; // Whether task is temporary (default: false)
 }
 ```
 
@@ -221,13 +227,13 @@ const taskId = await taskTrigger.createAccumulatedTimeTask({
   description: 'Research a new spell',
   requiredTime: { hours: 15 },
   macroId: 'research-complete-macro',
-  scope: 'world'
+  scope: 'world',
 });
 
 // Add time to the task
 await game.taskTrigger.api.addTimeToTask(taskId, {
   duration: { hours: 3 },
-  description: 'Morning research session'
+  description: 'Morning research session',
 });
 ```
 
@@ -235,7 +241,9 @@ await game.taskTrigger.api.addTimeToTask(taskId, {
 
 ```javascript
 const stats = await taskTrigger.getModuleTaskStats('my-module-id');
-console.log(`Module has ${stats.totalTasks} tasks, ${stats.activeTasks} active`);
+console.log(
+  `Module has ${stats.totalTasks} tasks, ${stats.activeTasks} active`
+);
 
 // List all registered modules
 const modules = taskTrigger.getRegisteredModules();
@@ -262,7 +270,7 @@ try {
     {
       moduleId: 'my-module',
       taskCode: 'console.log("Hello world!");',
-      name: 'Test Task'
+      name: 'Test Task',
     }
   );
   console.log(`Created task: ${taskId}`);

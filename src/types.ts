@@ -5,7 +5,6 @@
 // Time specification types
 export type TimeSpec = Date | number | RelativeTimeSpec | AbsoluteTimeSpec;
 
-
 // Module integration types
 export interface ModuleMacroRegistration {
   moduleId: string;

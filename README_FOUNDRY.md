@@ -7,22 +7,26 @@ Task & Trigger brings sophisticated automation to your FoundryVTT sessions. Sche
 ## 🎯 What Can You Do?
 
 ### ⏰ **Real-Time Automation**
+
 - **Session Timers**: "Remind me to take a break in 2 hours"
 - **Event Scheduling**: "Trigger the ambush in 30 minutes"
 - **Recurring Reminders**: "Save the game every hour"
 
 ### 🗓️ **Game-Time Events**
+
 - **Story Triggers**: "The merchant leaves town after 3 days"
 - **Environmental Changes**: "Advance weather every 6 hours of game time"
 - **Character Actions**: "The spell effect wears off in 1 hour of game time"
 
-### 📚 **Long-Term Projects** *(New!)*
+### 📚 **Long-Term Projects** _(New!)_
+
 - **Spell Research**: Track 40 hours of magical study
 - **Crafting Projects**: Log daily smithing work on that legendary sword
 - **Training Activities**: Monitor language learning progress
 - **Construction**: Track fortress building over multiple sessions
 
 ### 📅 **Calendar Integration**
+
 - **Festival Events**: "Start the harvest festival on Autumn Equinox"
 - **Historical Dates**: "The eclipse happens on the 15th day of the 3rd month"
 - **Campaign Milestones**: Schedule major story events for specific dates
@@ -56,48 +60,52 @@ await game.taskTrigger.api.scheduleReminder(
 ### For Game Masters
 
 **Session Management**:
+
 ```javascript
 // Remind players about saving progress
 await game.taskTrigger.api.scheduleRecurringReminder(
   { hours: 1 },
-  "Remember to save your character sheets!"
+  'Remember to save your character sheets!'
 );
 
 // Schedule story events
 await game.taskTrigger.api.scheduleGameReminder(
   { days: 3 },
-  "The caravan arrives at the next town"
+  'The caravan arrives at the next town'
 );
 ```
 
 **Campaign Events**:
+
 ```javascript
 // Festival on a specific date (requires calendar module)
 await game.taskTrigger.api.scheduleForDate(
   { year: 1358, month: 6, day: 21 },
-  "🌞 Summer Solstice Festival begins!"
+  '🌞 Summer Solstice Festival begins!'
 );
 ```
 
 ### For Players
 
 **Character Activities**:
+
 ```javascript
 // Track spell research (40 hours total)
 const researchId = await game.taskTrigger.api.createAccumulatedTimeTask({
   name: 'Fireball Spell Research',
   description: 'Learning the ancient art of evocation',
-  requiredTime: { hours: 40 }
+  requiredTime: { hours: 40 },
 });
 
 // Log study sessions
 await game.taskTrigger.api.addTimeToTask(researchId, {
   duration: { hours: 3 },
-  description: 'Studied fire elemental theory in the library'
+  description: 'Studied fire elemental theory in the library',
 });
 ```
 
 **Game Reminders**:
+
 ```javascript
 // Spell duration tracking
 await game.taskTrigger.api.scheduleGameReminder(
@@ -139,7 +147,7 @@ await game.taskTrigger.api.scheduleGameReminder(
 // The blacksmith works on orders during the day
 await game.taskTrigger.api.setGameInterval(
   { hours: 8 }, // Every 8 game hours
-  "The blacksmith completes another order. Update shop inventory!"
+  'The blacksmith completes another order. Update shop inventory!'
 );
 ```
 
@@ -149,7 +157,7 @@ await game.taskTrigger.api.setGameInterval(
 // Track spell durations
 await game.taskTrigger.api.scheduleGameReminder(
   { minutes: 10 }, // 10 minutes of game time
-  "Mage Armor spell expires in 1 minute!"
+  'Mage Armor spell expires in 1 minute!'
 );
 ```
 
@@ -160,13 +168,13 @@ await game.taskTrigger.api.scheduleGameReminder(
 const languageTaskId = await game.taskTrigger.api.createAccumulatedTimeTask({
   name: 'Learning Elvish',
   description: 'Studying with the court wizard',
-  requiredTime: { hours: 100 }
+  requiredTime: { hours: 100 },
 });
 
 // Log daily lessons
 await game.taskTrigger.api.addTimeToTask(languageTaskId, {
   duration: { hours: 2 },
-  description: 'Daily lesson with Elrond'
+  description: 'Daily lesson with Elrond',
 });
 ```
 
@@ -176,13 +184,13 @@ await game.taskTrigger.api.addTimeToTask(languageTaskId, {
 // Automatic world saves
 await game.taskTrigger.api.setInterval(
   { minutes: 30 },
-  "Auto-saving world data... 💾"
+  'Auto-saving world data... 💾'
 );
 
 // End-of-session reminders
 await game.taskTrigger.api.setTimeout(
   { hours: 4 },
-  "Session has been running for 4 hours - consider wrapping up!"
+  'Session has been running for 4 hours - consider wrapping up!'
 );
 ```
 
@@ -222,21 +230,25 @@ Task & Trigger accepts flexible time formats:
 ## 🎯 Use Cases by Game Style
 
 ### Narrative Campaigns
+
 - Schedule story beats and dramatic moments
 - Track character development activities
 - Manage NPC schedules and world events
 
 ### Dungeon Crawls
+
 - Spell and ability duration tracking
 - Torch burning time
 - Random encounter schedules
 
 ### Sandbox Games
+
 - Economic simulation (market changes, trade routes)
 - Weather and seasonal effects
 - Long-term construction projects
 
 ### Mystery Games
+
 - Evidence revelation timing
 - NPC movement schedules
 - Investigation deadline tracking
@@ -244,11 +256,13 @@ Task & Trigger accepts flexible time formats:
 ## 🔒 Security & Performance
 
 ### Safe Execution
+
 - All tasks run in FoundryVTT's secure macro environment
 - No direct code execution from strings
 - Automatic cleanup of old tasks
 
 ### Performance
+
 - Minimal impact on FoundryVTT performance
 - Efficient storage and retrieval
 - Optional task cleanup tools
@@ -258,15 +272,18 @@ Task & Trigger accepts flexible time formats:
 ### Common Issues
 
 **"Task not executing"**
+
 - Check if the task is enabled in the Task Manager
 - Verify you have macro creation permissions
 - Look for JavaScript errors in the browser console
 
 **"Can't create world tasks"**
+
 - Only GMs can create world-scoped tasks
 - Check your user permissions
 
 **"Time not logging for accumulated tasks"**
+
 - Verify the task ID is correct
 - Check that the task is an accumulated time task type
 
@@ -280,13 +297,13 @@ Task & Trigger accepts flexible time formats:
 
 ```javascript
 // Check if module is ready
-game.taskTrigger.api.isReady()
+game.taskTrigger.api.isReady();
 
 // List all your tasks
-await game.taskTrigger.api.listTasks()
+await game.taskTrigger.api.listTasks();
 
 // Get task information
-await game.taskTrigger.api.getTaskInfo(taskId)
+await game.taskTrigger.api.getTaskInfo(taskId);
 ```
 
 ## 📚 More Resources
@@ -303,4 +320,4 @@ Task & Trigger is actively developed with community input. Share your automation
 
 ---
 
-*Built with AI assistance for the FoundryVTT community*
+_Built with AI assistance for the FoundryVTT community_

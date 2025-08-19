@@ -336,19 +336,18 @@ export class TaskScheduler {
     message: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
-    const macroName = options.name || `Reminder: ${message.substring(0, 50)}${
-      message.length > 50 ? '...' : ''
-    }`;
+    const macroName =
+      options.name || `Reminder: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`;
     const macroCode = `ui.notifications?.info("Reminder: ${message.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}");`;
-    
+
     const macro = await this.macroManager.createTaskMacro({
       name: macroName,
       code: macroCode,
       folder: 'task-and-trigger/reminders',
-      moduleId: 'task-and-trigger'
+      moduleId: 'task-and-trigger',
     });
     const macroId = macro.id;
-    
+
     return this.setTimeout(delay, macroId, {
       ...options,
       name: options.name || macroName,
@@ -368,19 +367,19 @@ export class TaskScheduler {
     message: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
-    const macroName = options.name || `Recurring Reminder: ${message.substring(0, 40)}${
-      message.length > 40 ? '...' : ''
-    }`;
+    const macroName =
+      options.name ||
+      `Recurring Reminder: ${message.substring(0, 40)}${message.length > 40 ? '...' : ''}`;
     const macroCode = `ui.notifications?.info("Reminder: ${message.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}");`;
-    
+
     const macro = await this.macroManager.createTaskMacro({
       name: macroName,
       code: macroCode,
       folder: 'task-and-trigger/reminders',
-      moduleId: 'task-and-trigger'
+      moduleId: 'task-and-trigger',
     });
     const macroId = macro.id;
-    
+
     return this.setInterval(interval, macroId, {
       ...options,
       name: options.name || macroName,
@@ -400,19 +399,19 @@ export class TaskScheduler {
     message: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
-    const macroName = options.name || `Game Reminder: ${message.substring(0, 45)}${
-      message.length > 45 ? '...' : ''
-    }`;
+    const macroName =
+      options.name ||
+      `Game Reminder: ${message.substring(0, 45)}${message.length > 45 ? '...' : ''}`;
     const macroCode = `ui.notifications?.info("Game Time Reminder: ${message.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}");`;
-    
+
     const macro = await this.macroManager.createTaskMacro({
       name: macroName,
       code: macroCode,
       folder: 'task-and-trigger/reminders',
-      moduleId: 'task-and-trigger'
+      moduleId: 'task-and-trigger',
     });
     const macroId = macro.id;
-    
+
     return this.setGameTimeout(delay, macroId, {
       ...options,
       name: options.name || macroName,
@@ -513,7 +512,7 @@ export class TaskScheduler {
    * @param taskId Task ID
    * @returns Task progress or null if not found
    */
-  async getAccumulatedTimeProgress(taskId: string) {
+  async getAccumulatedTimeProgress(taskId: string): Promise<any> {
     return this.accumulatedTimeManager.getTaskProgress(taskId);
   }
 
@@ -558,7 +557,7 @@ export class TaskScheduler {
    * @param taskId Task ID
    * @returns Task statistics or null
    */
-  async getAccumulatedTimeStatistics(taskId: string) {
+  async getAccumulatedTimeStatistics(taskId: string): Promise<any> {
     return this.accumulatedTimeManager.getTaskStatistics(taskId);
   }
 

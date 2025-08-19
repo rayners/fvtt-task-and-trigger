@@ -440,19 +440,19 @@ export class TaskManagerApplication extends HandlebarsApplicationMixin(Applicati
 
     try {
       let macroId: string;
-      
+
       // Handle macro creation or selection
       if (taskData.macroSource === 'create') {
         if (!taskData.taskCode?.trim()) {
           throw new Error('Task code is required when creating a new macro');
         }
-        
+
         // Create a new macro
         const macro = await this.macroManager.createTaskMacro({
           name: taskData.name,
           code: taskData.taskCode,
           folder: 'task-and-trigger/ui-tasks',
-          moduleId: 'task-and-trigger'
+          moduleId: 'task-and-trigger',
         });
         macroId = macro.id;
       } else {
@@ -567,7 +567,7 @@ export class TaskManagerApplication extends HandlebarsApplicationMixin(Applicati
 
     // Get available macros for selection
     const availableMacros = await this.getAvailableMacros();
-    
+
     const data = {
       task,
       isEdit: !!task,
@@ -913,17 +913,17 @@ export class TaskManagerApplication extends HandlebarsApplicationMixin(Applicati
    */
   private async getAvailableMacros(): Promise<Array<{ id: string; name: string; type: string }>> {
     const macros: Array<{ id: string; name: string; type: string }> = [];
-    
+
     if ((game as any).macros) {
       for (const macro of (game as any).macros) {
         macros.push({
           id: macro.id,
           name: macro.name || 'Unnamed Macro',
-          type: macro.type || 'script'
+          type: macro.type || 'script',
         });
       }
     }
-    
+
     return macros.sort((a, b) => a.name.localeCompare(b.name));
   }
 

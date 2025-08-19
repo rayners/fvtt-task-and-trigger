@@ -49,11 +49,11 @@ describe('MacroManager', () => {
             if (scope === 'task-and-trigger' && key === 'isTemporary') return data.isTemporary;
             return undefined;
           }),
-          setFlag: vi.fn()
+          setFlag: vi.fn(),
         };
         mockMacros.set(id, macro);
         return macro;
-      })
+      }),
     };
 
     // Mock game.folders collection
@@ -76,11 +76,11 @@ describe('MacroManager', () => {
         const id = 'test-folder-' + Date.now();
         const folder = {
           id,
-          ...data
+          ...data,
         };
         mockFolders.set(id, folder);
         return folder;
-      })
+      }),
     };
 
     // Mock foundry utils
@@ -90,18 +90,18 @@ describe('MacroManager', () => {
     (globalThis as any).Macro = {
       create: vi.fn(async (data: any) => {
         return (global as any).game.macros.createDocument(data);
-      })
+      }),
     };
 
     // Mock global Folder class
     (globalThis as any).Folder = {
       create: vi.fn(async (data: any) => {
         return (global as any).game.folders.createDocument(data);
-      })
+      }),
     };
 
     macroManager = MacroManager.getInstance();
-    
+
     // Initialize macro manager to set up folder structure
     await macroManager.initialize();
   });
@@ -120,7 +120,7 @@ describe('MacroManager', () => {
         name: 'Test Task Macro',
         code: 'console.log("test");',
         folder: 'task-and-trigger/test',
-        moduleId: 'test-module'
+        moduleId: 'test-module',
       };
 
       const macro = await macroManager.createTaskMacro(options);
@@ -137,9 +137,9 @@ describe('MacroManager', () => {
           flags: expect.objectContaining({
             'task-and-trigger': expect.objectContaining({
               isTaskMacro: true,
-              moduleId: 'test-module'
-            })
-          })
+              moduleId: 'test-module',
+            }),
+          }),
         })
       );
     });
@@ -147,11 +147,11 @@ describe('MacroManager', () => {
     it('should create folder if it does not exist', async () => {
       // Reset the createDocument spy to track only this test's calls
       vi.clearAllMocks();
-      
+
       const options: MacroCreationOptions = {
         name: 'Test Macro',
         code: 'console.log("test");',
-        folder: 'task-and-trigger/new-folder'
+        folder: 'task-and-trigger/new-folder',
       };
 
       await macroManager.createTaskMacro(options);
@@ -161,7 +161,7 @@ describe('MacroManager', () => {
         expect.objectContaining({
           name: 'Test Macro',
           command: 'console.log("test");',
-          type: 'script'
+          type: 'script',
         })
       );
     });
@@ -169,11 +169,11 @@ describe('MacroManager', () => {
     it('should handle nested folder creation', async () => {
       // Reset the createDocument spy to track only this test's calls
       vi.clearAllMocks();
-      
+
       const options: MacroCreationOptions = {
         name: 'Test Macro',
         code: 'console.log("test");',
-        folder: 'task-and-trigger/parent/child'
+        folder: 'task-and-trigger/parent/child',
       };
 
       await macroManager.createTaskMacro(options);
@@ -183,7 +183,7 @@ describe('MacroManager', () => {
         expect.objectContaining({
           name: 'Test Macro',
           command: 'console.log("test");',
-          type: 'script'
+          type: 'script',
         })
       );
     });
@@ -191,12 +191,12 @@ describe('MacroManager', () => {
     it('should use existing folder if it exists', async () => {
       // Reset the createDocument spy to track only this test's calls
       vi.clearAllMocks();
-      
+
       // Pre-create a folder
       const existingFolder = {
         id: 'existing-folder',
         name: 'test-folder',
-        type: 'Macro'
+        type: 'Macro',
       };
       mockFolders.set('existing-folder', existingFolder);
       (global as any).game.folders.find.mockReturnValueOnce(existingFolder);
@@ -204,7 +204,7 @@ describe('MacroManager', () => {
       const options: MacroCreationOptions = {
         name: 'Test Macro',
         code: 'console.log("test");',
-        folder: 'task-and-trigger/test-folder'
+        folder: 'task-and-trigger/test-folder',
       };
 
       await macroManager.createTaskMacro(options);
@@ -214,7 +214,7 @@ describe('MacroManager', () => {
         expect.objectContaining({
           name: 'Test Macro',
           command: 'console.log("test");',
-          type: 'script'
+          type: 'script',
         })
       );
     });
@@ -226,7 +226,7 @@ describe('MacroManager', () => {
       const mockMacro = {
         id: 'test-macro-id',
         name: 'Test Macro',
-        execute: vi.fn()
+        execute: vi.fn(),
       };
       mockMacros.set('test-macro-id', mockMacro);
 
@@ -245,7 +245,7 @@ describe('MacroManager', () => {
       // Create a mock macro without execute method
       const mockMacro = {
         id: 'invalid-macro-id',
-        name: 'Invalid Macro'
+        name: 'Invalid Macro',
         // No execute method
       };
       mockMacros.set('invalid-macro-id', mockMacro);
@@ -261,7 +261,7 @@ describe('MacroManager', () => {
       const mockMacro = {
         id: 'test-macro-id',
         name: 'Test Macro',
-        execute: vi.fn().mockResolvedValue('execution result')
+        execute: vi.fn().mockResolvedValue('execution result'),
       };
       mockMacros.set('test-macro-id', mockMacro);
 
@@ -272,20 +272,20 @@ describe('MacroManager', () => {
     });
 
     it('should throw error for non-existent macro', async () => {
-      await expect(macroManager.executeMacro('non-existent-id'))
-        .rejects.toThrow('Macro with ID non-existent-id not found');
+      await expect(macroManager.executeMacro('non-existent-id')).rejects.toThrow(
+        'Macro with ID non-existent-id not found'
+      );
     });
 
     it('should handle macro execution errors', async () => {
       const mockMacro = {
         id: 'error-macro-id',
         name: 'Error Macro',
-        execute: vi.fn().mockRejectedValue(new Error('Execution failed'))
+        execute: vi.fn().mockRejectedValue(new Error('Execution failed')),
       };
       mockMacros.set('error-macro-id', mockMacro);
 
-      await expect(macroManager.executeMacro('error-macro-id'))
-        .rejects.toThrow('Execution failed');
+      await expect(macroManager.executeMacro('error-macro-id')).rejects.toThrow('Execution failed');
     });
   });
 
@@ -293,7 +293,7 @@ describe('MacroManager', () => {
     it('should retrieve macro by id', async () => {
       const mockMacro = {
         id: 'test-macro-id',
-        name: 'Test Macro'
+        name: 'Test Macro',
       };
       mockMacros.set('test-macro-id', mockMacro);
 
@@ -314,7 +314,7 @@ describe('MacroManager', () => {
       const mockMacro = {
         id: 'test-macro-id',
         name: 'Test Macro',
-        delete: vi.fn().mockResolvedValue(true)
+        delete: vi.fn().mockResolvedValue(true),
       };
       mockMacros.set('test-macro-id', mockMacro);
 
@@ -334,7 +334,7 @@ describe('MacroManager', () => {
       const mockMacro = {
         id: 'error-macro-id',
         name: 'Error Macro',
-        delete: vi.fn().mockRejectedValue(new Error('Delete failed'))
+        delete: vi.fn().mockRejectedValue(new Error('Delete failed')),
       };
       mockMacros.set('error-macro-id', mockMacro);
 
@@ -348,7 +348,7 @@ describe('MacroManager', () => {
     it('should create module folder', async () => {
       // Reset the createDocument spy to track only this test's calls
       vi.clearAllMocks();
-      
+
       const folder = await macroManager.createModuleFolder('test-module');
 
       expect(folder).toBeTruthy();
@@ -356,7 +356,7 @@ describe('MacroManager', () => {
         expect.objectContaining({
           name: 'test-module',
           type: 'Macro',
-          color: '#4a90e2'
+          color: '#4a90e2',
         })
       );
     });
@@ -371,20 +371,20 @@ describe('MacroManager', () => {
     it('should return existing folder if it exists', async () => {
       // Reset the createDocument spy to track only this test's calls
       vi.clearAllMocks();
-      
+
       // Pre-create folders
       const rootFolder = {
         id: 'root-folder',
         name: 'task-and-trigger',
-        type: 'Macro'
+        type: 'Macro',
       };
       const testFolder = {
         id: 'test-folder',
         name: 'test',
         type: 'Macro',
-        parent: 'root-folder'
+        parent: 'root-folder',
       };
-      
+
       mockFolders.set('root-folder', rootFolder);
       mockFolders.set('test-folder', testFolder);
 
@@ -410,20 +410,20 @@ describe('MacroManager', () => {
         flags: {
           'task-and-trigger': {
             isTaskMacro: true,
-            moduleId: 'test-module'
-          }
+            moduleId: 'test-module',
+          },
         },
         getFlag: vi.fn((scope: string, key: string) => {
           if (scope === 'task-and-trigger' && key === 'isTaskMacro') return true;
           if (scope === 'task-and-trigger' && key === 'moduleId') return 'test-module';
           return undefined;
-        })
+        }),
       };
-      
+
       const regularMacro = {
         id: 'regular-macro',
         name: 'Regular Macro',
-        getFlag: vi.fn(() => undefined)
+        getFlag: vi.fn(() => undefined),
       };
 
       mockMacros.set('task-macro', taskMacro);
@@ -460,8 +460,8 @@ describe('MacroManager', () => {
         flags: {
           'task-and-trigger': {
             isTaskMacro: true,
-            temporary: true
-          }
+            temporary: true,
+          },
         },
         delete: vi.fn().mockResolvedValue(true),
         getFlag: vi.fn((scope: string, key: string) => {
@@ -469,7 +469,7 @@ describe('MacroManager', () => {
           if (scope === 'task-and-trigger' && key === 'moduleId') return 'test-module';
           if (scope === 'task-and-trigger' && key === 'registeredModule') return 'test-module';
           return undefined;
-        })
+        }),
       };
 
       const permanentMacro = {
@@ -478,8 +478,8 @@ describe('MacroManager', () => {
         flags: {
           'task-and-trigger': {
             isTaskMacro: true,
-            temporary: false
-          }
+            temporary: false,
+          },
         },
         delete: vi.fn().mockResolvedValue(true),
         getFlag: vi.fn((scope: string, key: string) => {
@@ -487,7 +487,7 @@ describe('MacroManager', () => {
           if (scope === 'task-and-trigger' && key === 'moduleId') return 'test-module';
           if (scope === 'task-and-trigger' && key === 'registeredModule') return 'test-module';
           return undefined;
-        })
+        }),
       };
 
       mockMacros.set('temp-macro', tempMacro);
@@ -521,34 +521,35 @@ describe('MacroManager', () => {
 
       const options: MacroCreationOptions = {
         name: 'Error Macro',
-        code: 'console.log("test");'
+        code: 'console.log("test");',
       };
 
-      await expect(macroManager.createTaskMacro(options))
-        .rejects.toThrow('Creation failed');
+      await expect(macroManager.createTaskMacro(options)).rejects.toThrow('Creation failed');
     });
 
     it('should handle folder creation errors gracefully', async () => {
       // Reset mocks and make only macro creation succeed
       vi.clearAllMocks();
-      (global as any).game.folders.createDocument.mockRejectedValue(new Error('Folder creation failed'));
+      (global as any).game.folders.createDocument.mockRejectedValue(
+        new Error('Folder creation failed')
+      );
 
       const options: MacroCreationOptions = {
         name: 'Test Macro',
         code: 'console.log("test");',
-        folder: 'task-and-trigger/error-folder'
+        folder: 'task-and-trigger/error-folder',
       };
 
       // Should create macro even if folder doesn't exist (folder field will be undefined)
       const macro = await macroManager.createTaskMacro(options);
-      
+
       expect(macro).toBeTruthy();
       expect(macro.folder).toBeUndefined(); // No folder assigned since it couldn't be found/created
       expect((global as any).game.macros.createDocument).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'Test Macro',
           command: 'console.log("test");',
-          folder: undefined
+          folder: undefined,
         })
       );
     });
@@ -559,7 +560,7 @@ describe('MacroManager', () => {
       const options: MacroCreationOptions = {
         name: 'Test Macro',
         code: 'console.log("test");',
-        moduleId: 'test-module'
+        moduleId: 'test-module',
       };
 
       await macroManager.createTaskMacro(options);
@@ -570,9 +571,9 @@ describe('MacroManager', () => {
             'task-and-trigger': {
               isTaskMacro: true,
               moduleId: 'test-module',
-              createdAt: expect.any(Number)
-            }
-          }
+              createdAt: expect.any(Number),
+            },
+          },
         })
       );
     });
@@ -580,7 +581,7 @@ describe('MacroManager', () => {
     it('should handle macros without task flags', async () => {
       const regularMacro = {
         id: 'regular-macro',
-        name: 'Regular Macro'
+        name: 'Regular Macro',
         // No flags
       };
       mockMacros.set('regular-macro', regularMacro);

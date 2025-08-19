@@ -540,7 +540,7 @@ describe('EventLogger', () => {
         name: 'Test Task',
         timeSpec: { hours: 1 },
         macroId: 'test-macro-id',
-      macroSource: 'existing' as const,
+        macroSource: 'existing' as const,
         targetTime: Date.now() / 1000,
         recurring: false,
         interval: undefined,

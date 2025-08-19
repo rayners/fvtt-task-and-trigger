@@ -45,7 +45,7 @@ export class TaskExecutor {
 
     try {
       // Validate macro exists before execution
-      if (!await this.macroManager.validateMacro(task.macroId)) {
+      if (!(await this.macroManager.validateMacro(task.macroId))) {
         throw new Error(`Macro ${task.macroId} not found or inaccessible`);
       }
 
@@ -89,8 +89,6 @@ export class TaskExecutor {
       this.executingTasks.delete(task.id);
     }
   }
-
-
 
   /**
    * Show execution error notification to user
@@ -148,7 +146,6 @@ export class TaskExecutor {
   isTaskExecuting(taskId: string): boolean {
     return this.executingTasks.has(taskId);
   }
-
 }
 
 // Dialog class is provided by foundry-dev-tools types

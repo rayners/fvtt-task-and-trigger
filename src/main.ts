@@ -108,7 +108,7 @@ async function initialize(): Promise<void> {
     // Create and expose public APIs
     const api = createAPI();
     const moduleAPI = createModuleIntegrationAPI();
-    
+
     (game as any).taskTrigger = {
       api,
       modules: moduleAPI,

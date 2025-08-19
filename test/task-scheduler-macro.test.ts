@@ -35,17 +35,16 @@ describe('TaskScheduler - Macro Integration', () => {
     // Mock MacroManager methods
     vi.spyOn(mockMacroManager, 'createTaskMacro').mockResolvedValue({
       id: 'test-macro-id',
-      name: 'Test Macro'
+      name: 'Test Macro',
     });
   });
 
   describe('basic scheduling with macros', () => {
     it('should schedule timeout with macro ID', async () => {
-      const taskId = await scheduler.setTimeout(
-        { minutes: 5 },
-        'existing-macro-id',
-        { name: 'Test Task', scope: 'client' }
-      );
+      const taskId = await scheduler.setTimeout({ minutes: 5 }, 'existing-macro-id', {
+        name: 'Test Task',
+        scope: 'client',
+      });
 
       expect(taskId).toBe('test-task-id');
       expect(mockTaskManager.scheduleTask).toHaveBeenCalledWith(
@@ -57,11 +56,10 @@ describe('TaskScheduler - Macro Integration', () => {
     });
 
     it('should schedule interval with macro ID', async () => {
-      const taskId = await scheduler.setInterval(
-        { hours: 1 },
-        'recurring-macro-id',
-        { name: 'Recurring Task', scope: 'world' }
-      );
+      const taskId = await scheduler.setInterval({ hours: 1 }, 'recurring-macro-id', {
+        name: 'Recurring Task',
+        scope: 'world',
+      });
 
       expect(taskId).toBe('test-interval-id');
       expect(mockTaskManager.scheduleInterval).toHaveBeenCalledWith(
@@ -73,11 +71,10 @@ describe('TaskScheduler - Macro Integration', () => {
     });
 
     it('should schedule game timeout with macro ID', async () => {
-      const taskId = await scheduler.setGameTimeout(
-        { hours: 8 },
-        'rest-macro-id',
-        { name: 'Rest Complete', scope: 'client' }
-      );
+      const taskId = await scheduler.setGameTimeout({ hours: 8 }, 'rest-macro-id', {
+        name: 'Rest Complete',
+        scope: 'client',
+      });
 
       expect(taskId).toBe('test-task-id');
       expect(mockTaskManager.scheduleTask).toHaveBeenCalledWith(
@@ -89,11 +86,10 @@ describe('TaskScheduler - Macro Integration', () => {
     });
 
     it('should schedule game interval with macro ID', async () => {
-      const taskId = await scheduler.setGameInterval(
-        { days: 1 },
-        'daily-macro-id',
-        { name: 'Daily Check', scope: 'world' }
-      );
+      const taskId = await scheduler.setGameInterval({ days: 1 }, 'daily-macro-id', {
+        name: 'Daily Check',
+        scope: 'world',
+      });
 
       expect(taskId).toBe('test-interval-id');
       expect(mockTaskManager.scheduleInterval).toHaveBeenCalledWith(
@@ -106,11 +102,9 @@ describe('TaskScheduler - Macro Integration', () => {
 
     it('should schedule at specific date with macro ID', async () => {
       const targetDate = new Date('2025-12-25T09:00:00');
-      const taskId = await scheduler.scheduleAt(
-        targetDate,
-        'holiday-macro-id',
-        { name: 'Holiday Task' }
-      );
+      const taskId = await scheduler.scheduleAt(targetDate, 'holiday-macro-id', {
+        name: 'Holiday Task',
+      });
 
       expect(taskId).toBe('test-task-id');
       expect(mockTaskManager.scheduleTask).toHaveBeenCalledWith(
@@ -123,11 +117,9 @@ describe('TaskScheduler - Macro Integration', () => {
 
     it('should schedule for calendar date with macro ID', async () => {
       const calendarDate = { year: 2025, month: 6, day: 15 };
-      const taskId = await scheduler.scheduleForDate(
-        calendarDate,
-        'calendar-macro-id',
-        { name: 'Calendar Task' }
-      );
+      const taskId = await scheduler.scheduleForDate(calendarDate, 'calendar-macro-id', {
+        name: 'Calendar Task',
+      });
 
       expect(taskId).toBe('test-calendar-id');
       expect(mockTaskManager.scheduleCalendarTask).toHaveBeenCalledWith(
@@ -140,18 +132,16 @@ describe('TaskScheduler - Macro Integration', () => {
 
   describe('reminder methods with macro creation', () => {
     it('should create reminder with auto-generated macro', async () => {
-      const taskId = await scheduler.scheduleReminder(
-        { minutes: 15 },
-        'Take a break!',
-        { name: 'Break Reminder' }
-      );
+      const taskId = await scheduler.scheduleReminder({ minutes: 15 }, 'Take a break!', {
+        name: 'Break Reminder',
+      });
 
       expect(taskId).toBe('test-task-id');
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith({
         name: 'Break Reminder',
         code: 'ui.notifications?.info("Reminder: Take a break!");',
         folder: 'task-and-trigger/reminders',
-        moduleId: 'task-and-trigger'
+        moduleId: 'task-and-trigger',
       });
       expect(mockTaskManager.scheduleTask).toHaveBeenCalledWith(
         { minutes: 15 },
@@ -162,18 +152,16 @@ describe('TaskScheduler - Macro Integration', () => {
     });
 
     it('should create recurring reminder with auto-generated macro', async () => {
-      const taskId = await scheduler.scheduleRecurringReminder(
-        { hours: 2 },
-        'Hourly check-in',
-        { name: 'Hourly Reminder' }
-      );
+      const taskId = await scheduler.scheduleRecurringReminder({ hours: 2 }, 'Hourly check-in', {
+        name: 'Hourly Reminder',
+      });
 
       expect(taskId).toBe('test-interval-id');
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith({
         name: 'Hourly Reminder',
         code: 'ui.notifications?.info("Reminder: Hourly check-in");',
         folder: 'task-and-trigger/reminders',
-        moduleId: 'task-and-trigger'
+        moduleId: 'task-and-trigger',
       });
       expect(mockTaskManager.scheduleInterval).toHaveBeenCalledWith(
         { hours: 2 },
@@ -184,18 +172,16 @@ describe('TaskScheduler - Macro Integration', () => {
     });
 
     it('should create game time reminder with auto-generated macro', async () => {
-      const taskId = await scheduler.scheduleGameReminder(
-        { hours: 8 },
-        'Long rest complete',
-        { name: 'Rest Reminder' }
-      );
+      const taskId = await scheduler.scheduleGameReminder({ hours: 8 }, 'Long rest complete', {
+        name: 'Rest Reminder',
+      });
 
       expect(taskId).toBe('test-task-id');
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith({
         name: 'Rest Reminder',
         code: 'ui.notifications?.info("Game Time Reminder: Long rest complete");',
         folder: 'task-and-trigger/reminders',
-        moduleId: 'task-and-trigger'
+        moduleId: 'task-and-trigger',
       });
       expect(mockTaskManager.scheduleTask).toHaveBeenCalledWith(
         { hours: 8 },
@@ -206,36 +192,29 @@ describe('TaskScheduler - Macro Integration', () => {
     });
 
     it('should handle long reminder messages with truncation', async () => {
-      const longMessage = 'This is a very long reminder message that exceeds the typical length limit for macro names and should be truncated appropriately';
-      
-      await scheduler.scheduleReminder(
-        { minutes: 5 },
-        longMessage,
-        { name: 'Long Reminder' }
-      );
+      const longMessage =
+        'This is a very long reminder message that exceeds the typical length limit for macro names and should be truncated appropriately';
+
+      await scheduler.scheduleReminder({ minutes: 5 }, longMessage, { name: 'Long Reminder' });
 
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith({
         name: 'Long Reminder',
         code: `ui.notifications?.info("Reminder: ${longMessage}");`,
         folder: 'task-and-trigger/reminders',
-        moduleId: 'task-and-trigger'
+        moduleId: 'task-and-trigger',
       });
     });
 
     it('should escape quotes in reminder messages', async () => {
       const messageWithQuotes = 'Don\'t forget "important" meeting';
-      
-      await scheduler.scheduleReminder(
-        { minutes: 30 },
-        messageWithQuotes,
-        { name: 'Quote Test' }
-      );
+
+      await scheduler.scheduleReminder({ minutes: 30 }, messageWithQuotes, { name: 'Quote Test' });
 
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith({
         name: 'Quote Test',
         code: 'ui.notifications?.info("Reminder: Don\'t forget \\"important\\" meeting");',
         folder: 'task-and-trigger/reminders',
-        moduleId: 'task-and-trigger'
+        moduleId: 'task-and-trigger',
       });
     });
   });
@@ -287,7 +266,7 @@ describe('TaskScheduler - Macro Integration', () => {
 
     it('should use world scope for calendar tasks by default', async () => {
       const calendarDate = { year: 2025, month: 3, day: 21 };
-      
+
       await scheduler.scheduleForDate(calendarDate, 'test-macro-id');
 
       expect(mockTaskManager.scheduleCalendarTask).toHaveBeenCalledWith(
@@ -299,7 +278,7 @@ describe('TaskScheduler - Macro Integration', () => {
 
     it('should respect custom scope for calendar tasks', async () => {
       const calendarDate = { year: 2025, month: 3, day: 21 };
-      
+
       await scheduler.scheduleForDate(calendarDate, 'test-macro-id', { scope: 'client' });
 
       expect(mockTaskManager.scheduleCalendarTask).toHaveBeenCalledWith(
@@ -317,7 +296,7 @@ describe('TaskScheduler - Macro Integration', () => {
         description: 'A complex test task',
         scope: 'world' as const,
         logExecution: true,
-        enabled: true
+        enabled: true,
       };
 
       await scheduler.setTimeout({ minutes: 10 }, 'test-macro-id', options);
@@ -331,20 +310,16 @@ describe('TaskScheduler - Macro Integration', () => {
     });
 
     it('should override default names in reminder methods', async () => {
-      await scheduler.scheduleReminder(
-        { minutes: 5 },
-        'Test message',
-        { 
-          name: 'Custom Reminder Name',
-          description: 'Custom description'
-        }
-      );
+      await scheduler.scheduleReminder({ minutes: 5 }, 'Test message', {
+        name: 'Custom Reminder Name',
+        description: 'Custom description',
+      });
 
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith({
         name: 'Custom Reminder Name',
         code: 'ui.notifications?.info("Reminder: Test message");',
         folder: 'task-and-trigger/reminders',
-        moduleId: 'task-and-trigger'
+        moduleId: 'task-and-trigger',
       });
     });
   });
@@ -353,41 +328,35 @@ describe('TaskScheduler - Macro Integration', () => {
     it('should handle macro creation errors in reminders', async () => {
       mockMacroManager.createTaskMacro.mockRejectedValue(new Error('Macro creation failed'));
 
-      await expect(scheduler.scheduleReminder(
-        { minutes: 5 },
-        'Test reminder',
-        { name: 'Error Test' }
-      )).rejects.toThrow('Macro creation failed');
+      await expect(
+        scheduler.scheduleReminder({ minutes: 5 }, 'Test reminder', { name: 'Error Test' })
+      ).rejects.toThrow('Macro creation failed');
     });
 
     it('should handle task scheduling errors', async () => {
       mockTaskManager.scheduleTask.mockRejectedValue(new Error('Scheduling failed'));
 
-      await expect(scheduler.setTimeout(
-        { minutes: 5 },
-        'test-macro-id',
-        { name: 'Error Task' }
-      )).rejects.toThrow('Scheduling failed');
+      await expect(
+        scheduler.setTimeout({ minutes: 5 }, 'test-macro-id', { name: 'Error Task' })
+      ).rejects.toThrow('Scheduling failed');
     });
 
     it('should handle macro creation errors for recurring reminders', async () => {
       mockMacroManager.createTaskMacro.mockRejectedValue(new Error('Macro creation failed'));
 
-      await expect(scheduler.scheduleRecurringReminder(
-        { hours: 1 },
-        'Test recurring reminder',
-        { name: 'Error Test' }
-      )).rejects.toThrow('Macro creation failed');
+      await expect(
+        scheduler.scheduleRecurringReminder({ hours: 1 }, 'Test recurring reminder', {
+          name: 'Error Test',
+        })
+      ).rejects.toThrow('Macro creation failed');
     });
 
     it('should handle macro creation errors for game reminders', async () => {
       mockMacroManager.createTaskMacro.mockRejectedValue(new Error('Macro creation failed'));
 
-      await expect(scheduler.scheduleGameReminder(
-        { hours: 8 },
-        'Test game reminder',
-        { name: 'Error Test' }
-      )).rejects.toThrow('Macro creation failed');
+      await expect(
+        scheduler.scheduleGameReminder({ hours: 8 }, 'Test game reminder', { name: 'Error Test' })
+      ).rejects.toThrow('Macro creation failed');
     });
   });
 
@@ -398,7 +367,7 @@ describe('TaskScheduler - Macro Integration', () => {
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith(
         expect.objectContaining({
           folder: 'task-and-trigger/reminders',
-          moduleId: 'task-and-trigger'
+          moduleId: 'task-and-trigger',
         })
       );
     });
@@ -409,7 +378,7 @@ describe('TaskScheduler - Macro Integration', () => {
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith(
         expect.objectContaining({
           folder: 'task-and-trigger/reminders',
-          moduleId: 'task-and-trigger'
+          moduleId: 'task-and-trigger',
         })
       );
     });
@@ -420,7 +389,7 @@ describe('TaskScheduler - Macro Integration', () => {
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith(
         expect.objectContaining({
           folder: 'task-and-trigger/reminders',
-          moduleId: 'task-and-trigger'
+          moduleId: 'task-and-trigger',
         })
       );
     });
@@ -429,43 +398,43 @@ describe('TaskScheduler - Macro Integration', () => {
   describe('macro naming consistency', () => {
     it('should use consistent naming for reminders', async () => {
       const message = 'Test message';
-      
+
       await scheduler.scheduleReminder({ minutes: 5 }, message);
 
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: `Reminder: ${message}`
+          name: `Reminder: ${message}`,
         })
       );
     });
 
     it('should use consistent naming for recurring reminders', async () => {
       const message = 'Recurring message';
-      
+
       await scheduler.scheduleRecurringReminder({ hours: 1 }, message);
 
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: `Recurring Reminder: ${message}`
+          name: `Recurring Reminder: ${message}`,
         })
       );
     });
 
     it('should use consistent naming for game reminders', async () => {
       const message = 'Game time message';
-      
+
       await scheduler.scheduleGameReminder({ hours: 8 }, message);
 
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: `Game Reminder: ${message}`
+          name: `Game Reminder: ${message}`,
         })
       );
     });
 
     it('should truncate long messages consistently', async () => {
       const longMessage = 'A'.repeat(100);
-      
+
       await scheduler.scheduleReminder({ minutes: 5 }, longMessage);
       await scheduler.scheduleRecurringReminder({ hours: 1 }, longMessage);
       await scheduler.scheduleGameReminder({ hours: 8 }, longMessage);
@@ -481,24 +450,24 @@ describe('TaskScheduler - Macro Integration', () => {
   describe('macro code generation', () => {
     it('should generate correct notification code for reminders', async () => {
       const message = 'Test notification';
-      
+
       await scheduler.scheduleReminder({ minutes: 5 }, message);
 
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith(
         expect.objectContaining({
-          code: `ui.notifications?.info("Reminder: ${message}");`
+          code: `ui.notifications?.info("Reminder: ${message}");`,
         })
       );
     });
 
     it('should generate correct notification code for game reminders', async () => {
       const message = 'Game time notification';
-      
+
       await scheduler.scheduleGameReminder({ hours: 8 }, message);
 
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith(
         expect.objectContaining({
-          code: `ui.notifications?.info("Game Time Reminder: ${message}");`
+          code: `ui.notifications?.info("Game Time Reminder: ${message}");`,
         })
       );
     });
@@ -506,12 +475,12 @@ describe('TaskScheduler - Macro Integration', () => {
     it('should handle special characters in notification code', async () => {
       const message = 'Special chars: $, {}, [], \\';
       const escapedMessage = message.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-      
+
       await scheduler.scheduleReminder({ minutes: 5 }, message);
 
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith(
         expect.objectContaining({
-          code: `ui.notifications?.info("Reminder: ${escapedMessage}");`
+          code: `ui.notifications?.info("Reminder: ${escapedMessage}");`,
         })
       );
     });

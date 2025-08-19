@@ -3,6 +3,7 @@
 ## Project Context and Current State
 
 ### Current Module Status
+
 - **Version**: Feature branch `feature/macro-based-execution`
 - **Test Status**: 326/326 tests passing (100% pass rate)
 - **Architecture**: Recently converted from direct JavaScript execution to macro-based execution for security
@@ -10,6 +11,7 @@
 - **Language**: TypeScript with strict mode
 
 ### Current Architecture Overview
+
 ```
 src/
 ├── api.ts                    # Main API interface (game.taskTrigger.api)
@@ -24,6 +26,7 @@ src/
 ```
 
 ### Current Capabilities
+
 - **Real-time scheduling**: `setTimeout`/`setInterval` style tasks using system time
 - **Game-time scheduling**: Tasks triggered by in-game time progression
 - **Accumulated time tasks**: Manual time logging for activities requiring specific durations
@@ -32,7 +35,9 @@ src/
 - **Calendar integration**: Optional integration with Seasons & Stars module
 
 ### Problem Being Solved
+
 The current architecture allows any user to create tasks and macros, leading to:
+
 1. **Permission complications**: Players hitting macro creation limits
 2. **Security concerns**: Players can create arbitrary JavaScript execution
 3. **Clutter**: Player-created macros scattered throughout the macro directory
@@ -41,6 +46,7 @@ The current architecture allows any user to create tasks and macros, leading to:
 ## Target Architecture Vision
 
 ### New GM-Centric Model
+
 - **All task creation restricted to GMs**: Only GMs can create scheduled tasks
 - **Socket-based player requests**: Players request accumulated time logging via sockets
 - **Task visibility controls**: GM can control what players see (`gm-only`, `player-visible`, `player-notify`)
@@ -48,6 +54,7 @@ The current architecture allows any user to create tasks and macros, leading to:
 - **Organized macro structure**: All task macros organized in GM-controlled folder hierarchy
 
 ### Key Benefits
+
 1. **Simplified permissions**: No more player macro creation issues
 2. **Enhanced security**: GMs control all executable code
 3. **Better organization**: Centralized task and macro management
@@ -113,7 +120,10 @@ export class TaskManager {
 
   private isVisibleToPlayer(task: Task, userId?: string): boolean {
     if (task.visibility === 'gm-only') return false;
-    if (task.visibility === 'player-visible' || task.visibility === 'player-notify') {
+    if (
+      task.visibility === 'player-visible' ||
+      task.visibility === 'player-notify'
+    ) {
       if (task.targetPlayers && task.targetPlayers.length > 0) {
         return task.targetPlayers.includes(userId || game.user.id);
       }
@@ -129,7 +139,7 @@ export class TaskManager {
       description: task.description,
       nextExecution: task.nextExecution,
       isRecurring: task.isRecurring,
-      useGameTime: task.useGameTime
+      useGameTime: task.useGameTime,
     };
   }
 }
@@ -186,22 +196,36 @@ export class SocketManager {
   async initialize(): Promise<void> {
     if (game.modules.get('socketlib')?.active) {
       Hooks.once('socketlib.ready', () => {
-        this.socketHandler = (socketlib as any).registerModule('task-and-trigger');
-        
+        this.socketHandler = (socketlib as any).registerModule(
+          'task-and-trigger'
+        );
+
         // Register socket handlers
-        this.socketHandler.register('requestTimeLog', this.handleTimeLogRequest.bind(this));
-        this.socketHandler.register('notifyTimeLogUpdate', this.handleTimeLogUpdate.bind(this));
-        this.socketHandler.register('requestTaskProgress', this.handleProgressRequest.bind(this));
+        this.socketHandler.register(
+          'requestTimeLog',
+          this.handleTimeLogRequest.bind(this)
+        );
+        this.socketHandler.register(
+          'notifyTimeLogUpdate',
+          this.handleTimeLogUpdate.bind(this)
+        );
+        this.socketHandler.register(
+          'requestTaskProgress',
+          this.handleProgressRequest.bind(this)
+        );
       });
     } else {
       // Fallback to native socket handling
-      game.socket?.on('module.task-and-trigger', this.handleSocketMessage.bind(this));
+      game.socket?.on(
+        'module.task-and-trigger',
+        this.handleSocketMessage.bind(this)
+      );
     }
   }
 
   // Player requests time logging
   async requestTimeLog(
-    taskId: string, 
+    taskId: string,
     entry: TimeLogEntry
   ): Promise<{ success: boolean; message?: string }> {
     if (game.user.isGM) {
@@ -214,13 +238,20 @@ export class SocketManager {
     try {
       const result = await this.socketHandler.executeAsGM('requestTimeLog', {
         taskId,
-        entry: { ...entry, requestedBy: game.user.id, requestedByName: game.user.name },
-        timestamp: Date.now()
+        entry: {
+          ...entry,
+          requestedBy: game.user.id,
+          requestedByName: game.user.name,
+        },
+        timestamp: Date.now(),
       });
       return result;
     } catch (error) {
       console.error('Socket request failed:', error);
-      return { success: false, message: 'Failed to reach GM - they may be offline' };
+      return {
+        success: false,
+        message: 'Failed to reach GM - they may be offline',
+      };
     }
   }
 
@@ -230,7 +261,6 @@ export class SocketManager {
     entry: TimeLogEntry & { requestedBy: string; requestedByName: string };
     timestamp: number;
   }): Promise<{ success: boolean; message?: string }> {
-    
     if (!game.user.isGM) {
       return { success: false, message: 'Only GM can approve time logs' };
     }
@@ -243,7 +273,10 @@ export class SocketManager {
       }
 
       // Option 1: Auto-approve
-      const isComplete = await this.accumulatedTimeManager.addTime(data.taskId, data.entry);
+      const isComplete = await this.accumulatedTimeManager.addTime(
+        data.taskId,
+        data.entry
+      );
 
       // Option 2: Add to approval queue (future enhancement)
       // await this.addToApprovalQueue(data);
@@ -254,14 +287,14 @@ export class SocketManager {
         taskName: task.name,
         loggedBy: data.entry.requestedByName,
         duration: data.entry.duration,
-        isComplete
+        isComplete,
       });
 
       // Create chat message for transparency
       ChatMessage.create({
         content: `Time logged for "${task.name}": ${this.formatDuration(data.entry.duration)} by ${data.entry.requestedByName}`,
         type: CONST.CHAT_MESSAGE_TYPES.OTHER,
-        speaker: { alias: "Task & Trigger" }
+        speaker: { alias: 'Task & Trigger' },
       });
 
       return { success: true };
@@ -283,10 +316,10 @@ export class SocketManager {
     Hooks.callAll('taskTriggerTimeLogged', data);
 
     // Show notification
-    const message = data.isComplete 
+    const message = data.isComplete
       ? `Task "${data.taskName}" completed!`
       : `Time logged for "${data.taskName}" by ${data.loggedBy}`;
-    
+
     ui.notifications.info(message);
   }
 }
@@ -364,24 +397,25 @@ export class PlayerTaskView extends Application {
       template: 'modules/task-and-trigger/templates/player-task-view.hbs',
       width: 400,
       height: 600,
-      resizable: true
+      resizable: true,
     };
   }
 
   async getData() {
     const upcomingTasks = await game.taskTrigger.api.getUpcomingEvents();
-    const myProgressTasks = await game.taskTrigger.api.getPlayerAccumulatedTimeTasks();
-    
+    const myProgressTasks =
+      await game.taskTrigger.api.getPlayerAccumulatedTimeTasks();
+
     return {
       upcomingTasks: upcomingTasks.slice(0, 10), // Next 10 events
       myProgressTasks,
-      canLogTime: !game.user.isGM // Players use request system
+      canLogTime: !game.user.isGM, // Players use request system
     };
   }
 
   activateListeners(html) {
     super.activateListeners(html);
-    
+
     html.find('.log-time-btn').click(this._onLogTime.bind(this));
     html.find('.view-progress-btn').click(this._onViewProgress.bind(this));
   }
@@ -390,12 +424,15 @@ export class PlayerTaskView extends Application {
     const taskId = event.currentTarget.dataset.taskId;
     const dialog = new TimeLogDialog(taskId, {
       submitCallback: async (taskId, entry) => {
-        const success = await game.taskTrigger.accumulatedTime.requestTimeLog(taskId, entry);
+        const success = await game.taskTrigger.accumulatedTime.requestTimeLog(
+          taskId,
+          entry
+        );
         if (success) {
           ui.notifications.info('Time log request sent to GM');
           this.render();
         }
-      }
+      },
     });
     dialog.render(true);
   }
@@ -411,29 +448,34 @@ export class TaskManagerApplication extends Application {
   // Add visibility controls to task creation form
   async getData() {
     const data = await super.getData();
-    
+
     return {
       ...data,
       visibilityOptions: [
         { value: 'gm-only', label: 'GM Only (Private)' },
         { value: 'player-visible', label: 'Players Can See' },
-        { value: 'player-notify', label: 'Notify Players When Executed' }
+        { value: 'player-notify', label: 'Notify Players When Executed' },
       ],
-      playerList: game.users.filter(u => !u.isGM).map(u => ({
-        id: u.id,
-        name: u.name
-      })),
-      pendingApprovals: await game.taskTrigger.accumulatedTime.getPendingApprovals()
+      playerList: game.users
+        .filter(u => !u.isGM)
+        .map(u => ({
+          id: u.id,
+          name: u.name,
+        })),
+      pendingApprovals:
+        await game.taskTrigger.accumulatedTime.getPendingApprovals(),
     };
   }
 
   activateListeners(html) {
     super.activateListeners(html);
-    
+
     // Existing listeners...
-    
+
     // New visibility controls
-    html.find('.visibility-control').change(this._onVisibilityChange.bind(this));
+    html
+      .find('.visibility-control')
+      .change(this._onVisibilityChange.bind(this));
     html.find('.approve-time-btn').click(this._onApproveTime.bind(this));
     html.find('.reject-time-btn').click(this._onRejectTime.bind(this));
     html.find('.player-view-btn').click(this._onShowPlayerView.bind(this));
@@ -460,51 +502,57 @@ export class TaskManagerApplication extends Application {
 **File: `templates/player-task-view.hbs` (New)**
 
 ```handlebars
-<div class="player-task-view">
-  <div class="tab-bar">
-    <a class="tab active" data-tab="upcoming">Upcoming Events</a>
-    <a class="tab" data-tab="progress">My Progress</a>
+<div class='player-task-view'>
+  <div class='tab-bar'>
+    <a class='tab active' data-tab='upcoming'>Upcoming Events</a>
+    <a class='tab' data-tab='progress'>My Progress</a>
   </div>
 
-  <div class="tab-content" data-tab="upcoming">
+  <div class='tab-content' data-tab='upcoming'>
     <h3>Next Events</h3>
     {{#if upcomingTasks}}
-      <ul class="task-list">
+      <ul class='task-list'>
         {{#each upcomingTasks}}
-        <li class="task-item">
-          <div class="task-name">{{name}}</div>
-          <div class="task-time">{{formatTime nextExecution}}</div>
-          {{#if description}}<div class="task-desc">{{description}}</div>{{/if}}
-        </li>
+          <li class='task-item'>
+            <div class='task-name'>{{name}}</div>
+            <div class='task-time'>{{formatTime nextExecution}}</div>
+            {{#if description}}<div
+                class='task-desc'
+              >{{description}}</div>{{/if}}
+          </li>
         {{/each}}
       </ul>
     {{else}}
-      <p class="no-tasks">No upcoming events scheduled</p>
+      <p class='no-tasks'>No upcoming events scheduled</p>
     {{/if}}
   </div>
 
-  <div class="tab-content" data-tab="progress" style="display: none;">
+  <div class='tab-content' data-tab='progress' style='display: none;'>
     <h3>My Active Projects</h3>
     {{#if myProgressTasks}}
-      <ul class="progress-list">
+      <ul class='progress-list'>
         {{#each myProgressTasks}}
-        <li class="progress-item">
-          <div class="progress-header">
-            <span class="task-name">{{name}}</span>
-            <span class="progress-percent">{{progressPercent}}%</span>
-          </div>
-          <div class="progress-bar">
-            <div class="progress-fill" style="width: {{progressPercent}}%"></div>
-          </div>
-          <div class="progress-actions">
-            <button class="log-time-btn" data-task-id="{{id}}">Log Time</button>
-            <button class="view-progress-btn" data-task-id="{{id}}">View Details</button>
-          </div>
-        </li>
+          <li class='progress-item'>
+            <div class='progress-header'>
+              <span class='task-name'>{{name}}</span>
+              <span class='progress-percent'>{{progressPercent}}%</span>
+            </div>
+            <div class='progress-bar'>
+              <div
+                class='progress-fill'
+                style='width: {{progressPercent}}%'
+              ></div>
+            </div>
+            <div class='progress-actions'>
+              <button class='log-time-btn' data-task-id='{{id}}'>Log Time</button>
+              <button class='view-progress-btn' data-task-id='{{id}}'>View
+                Details</button>
+            </div>
+          </li>
         {{/each}}
       </ul>
     {{else}}
-      <p class="no-tasks">No active projects</p>
+      <p class='no-tasks'>No active projects</p>
     {{/if}}
   </div>
 </div>
@@ -540,10 +588,10 @@ export class TaskManagerApplication extends Application {
 // Initialize socket manager
 Hooks.once('ready', async () => {
   // ... existing initialization
-  
+
   // Initialize socket communications
   await game.taskTrigger.accumulatedTime.initialize();
-  
+
   // Add player task view button to UI
   if (!game.user.isGM) {
     const button = $(`
@@ -552,11 +600,11 @@ Hooks.once('ready', async () => {
         <span>My Tasks</span>
       </li>
     `);
-    
+
     button.click(() => {
       new PlayerTaskView().render(true);
     });
-    
+
     $('#controls .main-controls').append(button);
   }
 });
@@ -565,7 +613,9 @@ Hooks.once('ready', async () => {
 ## Implementation Timeline (Test-Driven Development)
 
 ### Week 1: Foundation with TDD
+
 **Day 1-2: Test Setup and Task Visibility Model**
+
 - [ ] Write tests for task visibility filtering logic
 - [ ] Write tests for PlayerTaskView data structure
 - [ ] Implement TaskVisibilityOptions interface (red → green)
@@ -573,6 +623,7 @@ Hooks.once('ready', async () => {
 - [ ] Implement visibility filtering in TaskManager (red → green)
 
 **Day 3-4: API Layer Tests**
+
 - [ ] Write tests for GM-only task creation restrictions
 - [ ] Write tests for player read-only API methods
 - [ ] Implement GM permission checks (red → green)
@@ -580,12 +631,15 @@ Hooks.once('ready', async () => {
 - [ ] Implement player API methods (red → green)
 
 **Day 5: Refactor and Integration**
+
 - [ ] Refactor visibility logic for better testability
 - [ ] Write integration tests for complete visibility workflow
 - [ ] Ensure all tests pass before moving to Week 2
 
 ### Week 2: Socket Infrastructure with TDD
+
 **Day 1-2: Socket Manager Tests**
+
 - [ ] Write tests for SocketManager initialization
 - [ ] Write tests for socket message handling (mocked)
 - [ ] Implement basic SocketManager structure (red → green)
@@ -593,6 +647,7 @@ Hooks.once('ready', async () => {
 - [ ] Implement socket request logic (red → green)
 
 **Day 3-4: Time Logging Tests**
+
 - [ ] Write tests for GM-side time log processing
 - [ ] Write tests for player notification broadcasts
 - [ ] Implement handleTimeLogRequest() method (red → green)
@@ -600,13 +655,16 @@ Hooks.once('ready', async () => {
 - [ ] Implement offline handling (red → green)
 
 **Day 5: Socket Integration Tests**
+
 - [ ] Write end-to-end socket communication tests
 - [ ] Write tests for SocketLib vs native socket fallback
 - [ ] Refactor socket handling for better testability
 - [ ] Mock SocketLib for testing environment
 
 ### Week 3: UI Components with TDD
+
 **Day 1-2: Player Interface Tests**
+
 - [ ] Write tests for PlayerTaskView component rendering
 - [ ] Write tests for task list filtering and display
 - [ ] Implement PlayerTaskView component (red → green)
@@ -614,6 +672,7 @@ Hooks.once('ready', async () => {
 - [ ] Implement TimeLogDialog component (red → green)
 
 **Day 3-4: GM Interface Tests**
+
 - [ ] Write tests for enhanced TaskManager visibility controls
 - [ ] Write tests for pending approval queue display
 - [ ] Implement GM interface enhancements (red → green)
@@ -621,19 +680,23 @@ Hooks.once('ready', async () => {
 - [ ] Implement "what players see" functionality (red → green)
 
 **Day 5: UI Integration Tests**
+
 - [ ] Write tests for complete user workflows
 - [ ] Write tests for error handling in UI components
 - [ ] Refactor UI components for better testability
 - [ ] Mock socket communications for UI tests
 
 ### Week 4: System Integration and E2E Testing
+
 **Day 1-2: End-to-End Test Suite**
+
 - [ ] Write E2E tests for complete GM→Player task workflows
 - [ ] Write E2E tests for accumulated time request→approval cycles
 - [ ] Write E2E tests for offline/online GM scenarios
 - [ ] Implement test fixtures and mock data helpers
 
 **Day 3-4: Error Scenarios and Edge Cases**
+
 - [ ] Write tests for socket timeout scenarios
 - [ ] Write tests for malformed data handling
 - [ ] Write tests for permission edge cases
@@ -641,6 +704,7 @@ Hooks.once('ready', async () => {
 - [ ] Implement robust error handling (red → green)
 
 **Day 5: Documentation and Final Polish**
+
 - [ ] Write tests for migration from existing tasks
 - [ ] Implement migration utilities (red → green)
 - [ ] Update all documentation
@@ -649,18 +713,21 @@ Hooks.once('ready', async () => {
 ## Dependencies and Prerequisites
 
 ### Required Modules
+
 - **SocketLib**: Optional but recommended for enhanced socket reliability
   - Repository: https://github.com/manuelVo/foundryvtt-socketlib
   - Version: 1.0.0+
   - Purpose: Simplified socket communication with GM execution patterns
 
 ### Development Dependencies
+
 - **@rayners/foundry-dev-tools**: Already configured for FoundryVTT testing
 - **Vitest**: Test runner (configured)
 - **TypeScript**: 5.0+ with strict mode
 - **Node.js**: 18+ for development
 
 ### Current Test Infrastructure
+
 ```bash
 # Existing test commands (maintain these patterns)
 npm test              # Watch mode testing
@@ -678,29 +745,38 @@ test/
 ### Key Files to Understand Before Starting
 
 #### Core API Entry Point
+
 **File**: `src/api.ts`
+
 - Current public interface: `game.taskTrigger.api`
 - Methods: `setTimeout`, `setInterval`, `createAccumulatedTimeTask`, etc.
 - **Changes needed**: Add GM permission checks to all creation methods
 
 #### Task Management Core
-**File**: `src/task-manager.ts`  
+
+**File**: `src/task-manager.ts`
+
 - Handles task persistence and lifecycle
 - Currently uses world/client scoping
 - **Changes needed**: Add visibility filtering methods
 
 #### Accumulated Time System
+
 **File**: `src/accumulated-time-manager.ts`
+
 - Current: Direct player access to `addTime()` method
 - **Changes needed**: Convert to socket-based request system
 
 #### Current Macro System
+
 **File**: `src/macro-manager.ts`
+
 - Handles macro creation and organization
 - Already has folder structure support
 - **Changes needed**: Minimal - already supports GM-only creation
 
 ### Environment Setup
+
 ```bash
 # Clone and setup (if starting fresh)
 git clone <repository>
@@ -719,23 +795,24 @@ npm test          # Watch mode for TDD
 ## TDD Implementation Guidelines
 
 ### Current Test Patterns to Follow
+
 The existing test suite uses these patterns that should be maintained:
 
 ```typescript
 // Example from existing tests (follow this structure)
 describe('TaskManager', () => {
   let taskManager: TaskManager;
-  
+
   beforeEach(async () => {
     // Clear singleton instance (existing pattern)
     (TaskManager as any).instance = undefined;
-    
+
     // Setup mocks (existing pattern)
     setupFoundryMocks();
-    
+
     taskManager = TaskManager.getInstance();
   });
-  
+
   it('should handle task creation', async () => {
     // Arrange - Act - Assert pattern
   });
@@ -743,6 +820,7 @@ describe('TaskManager', () => {
 ```
 
 ### Test Structure Standards
+
 ```typescript
 // Example test structure for each feature
 describe('TaskVisibilityManager', () => {
@@ -751,18 +829,18 @@ describe('TaskVisibilityManager', () => {
       // Arrange
       const task: Task = { visibility: 'gm-only', ... };
       const playerId = 'player1';
-      
+
       // Act
       const result = manager.isVisibleToPlayer(task, playerId);
-      
+
       // Assert
       expect(result).toBe(false);
     });
-    
+
     it('should return true for player-visible tasks', async () => {
       // Similar structure...
     });
-    
+
     it('should respect targetPlayers array', async () => {
       // Similar structure...
     });
@@ -773,24 +851,28 @@ describe('TaskVisibilityManager', () => {
 ### Test Categories by Phase
 
 **Phase 1: Unit Tests**
+
 - Individual method functionality
 - Data model validation
 - Permission checking logic
 - Visibility filtering algorithms
 
 **Phase 2: Integration Tests**
+
 - Socket message flow
 - Component interaction
 - API layer integration
 - Error propagation
 
 **Phase 3: Component Tests**
+
 - UI component rendering
 - User interaction simulation
 - Form validation
 - State management
 
 **Phase 4: End-to-End Tests**
+
 - Complete user workflows
 - Cross-component communication
 - Real-world scenario simulation
@@ -799,26 +881,27 @@ describe('TaskVisibilityManager', () => {
 ### Test Tools and Setup
 
 **File: `test/setup-tdd.ts` (New)**
+
 ```typescript
 // Enhanced test setup for TDD workflow
 export class TDDTestHelper {
   static createMockGM(): User {
     return { id: 'gm1', isGM: true, name: 'TestGM' };
   }
-  
+
   static createMockPlayer(id: string): User {
     return { id, isGM: false, name: `Player${id}` };
   }
-  
+
   static createMockTask(overrides: Partial<Task> = {}): Task {
     return {
       id: 'test-task',
       visibility: 'player-visible',
       name: 'Test Task',
-      ...overrides
+      ...overrides,
     };
   }
-  
+
   static mockSocketLib(): void {
     // Mock SocketLib for testing
   }
@@ -828,17 +911,20 @@ export class TDDTestHelper {
 ### Red-Green-Refactor Cycle
 
 **Red Phase**: Write failing test
+
 ```typescript
 it('should restrict task creation to GMs only', async () => {
   const mockPlayer = TDDTestHelper.createMockPlayer('player1');
   game.user = mockPlayer;
-  
-  await expect(api.setTimeout({ minutes: 5 }, 'macro-id'))
-    .rejects.toThrow('Only GMs can create scheduled tasks');
+
+  await expect(api.setTimeout({ minutes: 5 }, 'macro-id')).rejects.toThrow(
+    'Only GMs can create scheduled tasks'
+  );
 });
 ```
 
 **Green Phase**: Minimal implementation
+
 ```typescript
 async setTimeout(delay: TimeSpec, macroId: string): Promise<string> {
   if (!game.user.isGM) {
@@ -849,6 +935,7 @@ async setTimeout(delay: TimeSpec, macroId: string): Promise<string> {
 ```
 
 **Refactor Phase**: Improve code quality
+
 ```typescript
 private validateGMPermission(): void {
   if (!game.user.isGM) {
@@ -872,6 +959,7 @@ async setTimeout(delay: TimeSpec, macroId: string): Promise<string> {
 ### Test Data Management
 
 **File: `test/fixtures/tdd-fixtures.ts` (New)**
+
 ```typescript
 export const TaskFixtures = {
   gmOnlyTask: (): Task => ({
@@ -880,33 +968,35 @@ export const TaskFixtures = {
     name: 'GM Secret Reminder',
     // ... other properties
   }),
-  
+
   playerVisibleTask: (): Task => ({
-    id: 'player-task-1', 
+    id: 'player-task-1',
     visibility: 'player-visible',
     name: 'Public Event',
     // ... other properties
   }),
-  
+
   targetedTask: (players: string[]): Task => ({
     id: 'targeted-task-1',
     visibility: 'player-visible',
     targetPlayers: players,
     name: 'Targeted Event',
     // ... other properties
-  })
+  }),
 };
 ```
 
 ## Risk Mitigation
 
 ### Technical Risks
+
 1. **SocketLib Dependency**: Provide fallback to native sockets
 2. **GM Offline Scenarios**: Implement local queuing with sync
 3. **Race Conditions**: Use acknowledgment patterns and retries
 4. **Performance**: Batch updates and implement rate limiting
 
 ### User Experience Risks
+
 1. **Learning Curve**: Provide clear documentation and examples
 2. **GM Workflow Disruption**: Make approval process optional initially
 3. **Player Confusion**: Clear feedback on request status
@@ -932,6 +1022,7 @@ export const TaskFixtures = {
 ### Getting Started in a New Session
 
 1. **Check Current State**:
+
    ```bash
    git status                    # Verify you're on feature/macro-based-execution
    npm run test:run             # Should show 326/326 tests passing
@@ -947,7 +1038,7 @@ export const TaskFixtures = {
 3. **Implementation Status Tracking**:
    Current todos in progression order:
    - [ ] Create enhanced TDD test setup with socket-specific mocking
-   - [ ] Implement TaskFixtures and SocketFixtures for test data  
+   - [ ] Implement TaskFixtures and SocketFixtures for test data
    - [ ] Add socket test patterns for GM offline scenarios
    - [ ] Add task visibility controls (gm-only/player-visible/player-notify)
    - [ ] Split API into GM (full) and Player (read-only) interfaces
@@ -988,12 +1079,14 @@ npm run lint                 # Code quality check
 ### Files to Focus on First (TDD Order)
 
 **Week 1 - Day 1 Focus**:
+
 1. **src/types.ts**: Add visibility interfaces
-2. **test/setup-tdd.ts**: Create TDD helper (new file)  
+2. **test/setup-tdd.ts**: Create TDD helper (new file)
 3. **test/fixtures/**: Create test data fixtures
 4. **src/task-manager.ts**: Add visibility filtering
 
 **Reference Files** (understand but don't modify yet):
+
 - `src/api.ts`: Current public interface
 - `src/accumulated-time-manager.ts`: Socket conversion target
 - `test/setup.ts`: Existing mock patterns to follow
@@ -1009,6 +1102,7 @@ npm run lint                 # Code quality check
 ### Expert Review Summary
 
 The foundry-module-expert reviewed this plan and confirmed:
+
 - ✅ **TDD approach is excellent** for this conversion
 - ✅ **Socket-based architecture is recommended** (follows FoundryVTT patterns)
 - ✅ **Timeline is realistic** with suggested buffer days
@@ -1019,18 +1113,21 @@ The foundry-module-expert reviewed this plan and confirmed:
 ### Success Criteria for This Implementation
 
 **Technical**:
+
 - All 326 existing tests continue passing
 - New features achieve 95%+ test coverage
 - Socket communication works reliably with offline handling
 - GM-only permissions properly enforced
 
 **User Experience**:
+
 - Players can request time logging without macro permissions
 - GMs have full control over task visibility and execution
 - "Upcoming events" view shows relevant information to players
 - Accumulated time progress tracking works seamlessly
 
 **Architecture**:
+
 - Clean separation between GM and player APIs
 - Robust error handling for socket failures
 - Maintainable code following existing patterns

@@ -64,7 +64,7 @@ Schedule tasks that execute based on system time:
 const reminderMacro = await Macro.create({
   name: 'Break Reminder Macro',
   type: 'script',
-  command: 'ui.notifications.info("Time for a break!");'
+  command: 'ui.notifications.info("Time for a break!");',
 });
 
 // Schedule a one-time reminder in 30 minutes
@@ -78,7 +78,7 @@ const taskId = await game.taskTrigger.api.setTimeout(
 const backupMacro = await Macro.create({
   name: 'Hourly Backup Macro',
   type: 'script',
-  command: `console.log("Backup performed at: " + new Date().toLocaleString());`
+  command: `console.log("Backup performed at: " + new Date().toLocaleString());`,
 });
 
 // Schedule a recurring backup every hour
@@ -101,7 +101,7 @@ const merchantMacro = await Macro.create({
   command: `
     ui.notifications.warn("The merchant has left town!");
     // Additional game logic here
-    `
+    `,
 });
 
 // Advance time by 8 hours in-game and trigger an event
@@ -119,7 +119,7 @@ const dailyEventMacro = await Macro.create({
     // Roll for random encounters
     const roll = new Roll("1d20").roll();
     ui.notifications.info(\`Daily event roll: \${roll.total}\`);
-    `
+    `,
 });
 
 // Daily game events
@@ -145,7 +145,7 @@ const festivalMacro = await Macro.create({
         content: "🌸 Spring Festival Day! 🌸",
         type: CONST.CHAT_MESSAGE_TYPES.EMOTE
     });
-    `
+    `,
 });
 
 // Schedule task for a specific date
@@ -168,7 +168,7 @@ const researchMacro = await Macro.create({
   command: `
     ui.notifications.info("Spell research complete! Fireball learned.");
     // Add spell to character sheet
-    `
+    `,
 });
 
 // Character needs 40 hours of spell research
@@ -307,9 +307,9 @@ try {
   const testMacro = await Macro.create({
     name: 'Test Task Macro',
     type: 'script',
-    command: 'invalid javascript code here;'  // This contains syntax errors
+    command: 'invalid javascript code here;', // This contains syntax errors
   });
-  
+
   const taskId = await game.taskTrigger.api.setTimeout(
     { minutes: 30 },
     testMacro.id,
@@ -332,7 +332,9 @@ async function createTaskMacroSafely(macroData) {
     return macro;
   } catch (error) {
     if (error.message.includes('permission')) {
-      ui.notifications.error('You need macro creation permissions to schedule tasks');
+      ui.notifications.error(
+        'You need macro creation permissions to schedule tasks'
+      );
       console.error('Macro creation permission denied:', error);
     } else if (error.message.includes('syntax')) {
       ui.notifications.error('Task code contains syntax errors');
@@ -350,15 +352,15 @@ try {
   const macro = await createTaskMacroSafely({
     name: 'Safe Task Macro',
     type: 'script',
-    command: 'ui.notifications.info("Task executed safely");'
+    command: 'ui.notifications.info("Task executed safely");',
   });
-  
+
   const taskId = await game.taskTrigger.api.setTimeout(
     { minutes: 5 },
     macro.id,
     { name: 'Safe Task', scope: 'client' }
   );
-  
+
   ui.notifications.info('Task scheduled successfully');
 } catch (error) {
   // Error already handled in createTaskMacroSafely
@@ -377,19 +379,18 @@ async function scheduleWorldTask(timeSpec, macroCode, options) {
     ui.notifications.warn('Only GMs can create world-scoped tasks');
     return null;
   }
-  
+
   try {
     const macro = await Macro.create({
       name: options.name + ' Macro',
       type: 'script',
-      command: macroCode
+      command: macroCode,
     });
-    
-    return await game.taskTrigger.api.setTimeout(
-      timeSpec,
-      macro.id,
-      { ...options, scope: 'world' }
-    );
+
+    return await game.taskTrigger.api.setTimeout(timeSpec, macro.id, {
+      ...options,
+      scope: 'world',
+    });
   } catch (error) {
     ui.notifications.error('Failed to create world task');
     console.error('World task creation failed:', error);
@@ -410,29 +411,25 @@ Tasks can be scoped to different storage levels:
 const personalMacro = await Macro.create({
   name: 'Personal Reminder',
   type: 'script',
-  command: 'console.log("Personal reminder");'
+  command: 'console.log("Personal reminder");',
 });
 
 // Client-only task
-await game.taskTrigger.api.setTimeout(
-  { minutes: 10 },
-  personalMacro.id,
-  { scope: 'client' }
-);
+await game.taskTrigger.api.setTimeout({ minutes: 10 }, personalMacro.id, {
+  scope: 'client',
+});
 
 // Create macro for world event
 const worldEventMacro = await Macro.create({
   name: 'World Event Trigger',
   type: 'script',
-  command: 'ui.notifications.info("World event triggered!");'
+  command: 'ui.notifications.info("World event triggered!");',
 });
 
 // World-shared task (requires GM permissions for creation)
-await game.taskTrigger.api.setTimeout(
-  { hours: 1 },
-  worldEventMacro.id,
-  { scope: 'world' }
-);
+await game.taskTrigger.api.setTimeout({ hours: 1 }, worldEventMacro.id, {
+  scope: 'world',
+});
 ```
 
 ## Integration Patterns
@@ -448,9 +445,9 @@ if (game.modules.get('seasons-and-stars')?.active) {
   const solsticeMacro = await Macro.create({
     name: 'Summer Solstice Event',
     type: 'script',
-    command: 'game.seasonsAndStars.api.triggerEvent("summer-solstice");'
+    command: 'game.seasonsAndStars.api.triggerEvent("summer-solstice");',
   });
-  
+
   await game.taskTrigger.api.scheduleForDate(
     { year: 1358, month: 6, day: 21 },
     solsticeMacro.id
@@ -586,10 +583,11 @@ if (macro) {
 }
 
 // List all Task & Trigger macros
-const taskMacros = game.macros.filter(m => 
-  m.folder?.name?.includes('Task & Trigger') || 
-  m.name.includes('Task') || 
-  m.name.includes('Macro')
+const taskMacros = game.macros.filter(
+  m =>
+    m.folder?.name?.includes('Task & Trigger') ||
+    m.name.includes('Task') ||
+    m.name.includes('Macro')
 );
 console.log('Task-related macros:', taskMacros.length);
 taskMacros.forEach(m => console.log(`- ${m.name} (${m.id})`));

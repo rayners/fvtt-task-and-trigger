@@ -81,11 +81,7 @@ describe('TaskTriggerAPI', () => {
       const taskId = await api.setTimeout(delay, macroId);
 
       expect(taskId).toBe('test-timeout-id');
-      expect(mockScheduler.setTimeout).toHaveBeenCalledWith(
-        delay,
-        macroId,
-        {}
-      );
+      expect(mockScheduler.setTimeout).toHaveBeenCalledWith(delay, macroId, {});
     });
 
     it('should schedule timeout with macro ID and options', async () => {
@@ -96,11 +92,7 @@ describe('TaskTriggerAPI', () => {
       const taskId = await api.setTimeout(delay, macroId, options);
 
       expect(taskId).toBe('test-timeout-id');
-      expect(mockScheduler.setTimeout).toHaveBeenCalledWith(
-        delay,
-        macroId,
-        options
-      );
+      expect(mockScheduler.setTimeout).toHaveBeenCalledWith(delay, macroId, options);
     });
 
     it('should schedule interval', async () => {
@@ -325,11 +317,7 @@ describe('TaskTriggerAPI', () => {
       const taskId = await api.setTimeout({ seconds: 1 }, complexMacroId);
 
       expect(taskId).toBe('test-timeout-id');
-      expect(mockScheduler.setTimeout).toHaveBeenCalledWith(
-        { seconds: 1 },
-        complexMacroId,
-        {}
-      );
+      expect(mockScheduler.setTimeout).toHaveBeenCalledWith({ seconds: 1 }, complexMacroId, {});
     });
 
     it('should handle async macro scheduling', async () => {
@@ -338,11 +326,7 @@ describe('TaskTriggerAPI', () => {
       const taskId = await api.setTimeout({ seconds: 1 }, asyncMacroId);
 
       expect(taskId).toBe('test-timeout-id');
-      expect(mockScheduler.setTimeout).toHaveBeenCalledWith(
-        { seconds: 1 },
-        asyncMacroId,
-        {}
-      );
+      expect(mockScheduler.setTimeout).toHaveBeenCalledWith({ seconds: 1 }, asyncMacroId, {});
     });
 
     it('should handle string callback as-is', async () => {

@@ -23,27 +23,37 @@ export interface ModuleIntegrationAPI {
   createRecurringTask(interval: TimeSpec, options: ModuleTaskOptions): Promise<string>;
   createScheduledTask(dateTime: Date, options: ModuleTaskOptions): Promise<string>;
   createCalendarTask(calendarDate: CalendarDate, options: ModuleTaskOptions): Promise<string>;
-  
+
   // Game time tasks
   createGameTimeTask(delay: TimeSpec, options: ModuleTaskOptions): Promise<string>;
   createGameTimeRecurring(interval: TimeSpec, options: ModuleTaskOptions): Promise<string>;
-  
+
   // Accumulated time tasks
-  createAccumulatedTimeTask(options: AccumulatedTimeTaskOptions & { moduleId: string }): Promise<string>;
-  
+  createAccumulatedTimeTask(
+    options: AccumulatedTimeTaskOptions & { moduleId: string }
+  ): Promise<string>;
+
   // Task management
   cancelTask(taskId: string): Promise<boolean>;
   enableTask(taskId: string): Promise<void>;
   disableTask(taskId: string): Promise<void>;
-  
+
   // Module lifecycle
   registerModule(moduleId: string, displayName: string): Promise<void>;
   unregisterModule(moduleId: string): Promise<void>;
   cleanupModuleTasks(moduleId: string): Promise<number>;
-  
+
   // Helper methods
-  createNotificationTask(delay: TimeSpec, message: string, options: Omit<ModuleTaskOptions, 'taskCode'>): Promise<string>;
-  createChatTask(delay: TimeSpec, message: string, options: Omit<ModuleTaskOptions, 'taskCode'>): Promise<string>;
+  createNotificationTask(
+    delay: TimeSpec,
+    message: string,
+    options: Omit<ModuleTaskOptions, 'taskCode'>
+  ): Promise<string>;
+  createChatTask(
+    delay: TimeSpec,
+    message: string,
+    options: Omit<ModuleTaskOptions, 'taskCode'>
+  ): Promise<string>;
 }
 
 export class ModuleIntegrationImpl implements ModuleIntegrationAPI {
@@ -64,12 +74,12 @@ export class ModuleIntegrationImpl implements ModuleIntegrationAPI {
     if (!this.registeredModules.has(moduleId)) {
       this.registeredModules.set(moduleId, {
         displayName,
-        taskIds: new Set()
+        taskIds: new Set(),
       });
-      
+
       // Create module folder for organization
       await this.macroManager.createModuleFolder(moduleId);
-      
+
       console.log(`Task & Trigger: Registered module ${moduleId} (${displayName})`);
     }
   }
@@ -82,10 +92,12 @@ export class ModuleIntegrationImpl implements ModuleIntegrationAPI {
     if (moduleData) {
       // Cancel all tasks created by this module
       const cleanedCount = await this.cleanupModuleTasks(moduleId);
-      
+
       this.registeredModules.delete(moduleId);
-      
-      console.log(`Task & Trigger: Unregistered module ${moduleId}, cleaned up ${cleanedCount} tasks`);
+
+      console.log(
+        `Task & Trigger: Unregistered module ${moduleId}, cleaned up ${cleanedCount} tasks`
+      );
     }
   }
 
@@ -105,7 +117,7 @@ export class ModuleIntegrationImpl implements ModuleIntegrationAPI {
         console.warn(`Failed to cancel task ${taskId} for module ${moduleId}:`, error);
       }
     }
-    
+
     moduleData.taskIds.clear();
     return cleanedCount;
   }
@@ -143,7 +155,10 @@ export class ModuleIntegrationImpl implements ModuleIntegrationAPI {
   /**
    * Create a task for a specific calendar date
    */
-  async createCalendarTask(calendarDate: CalendarDate, options: ModuleTaskOptions): Promise<string> {
+  async createCalendarTask(
+    calendarDate: CalendarDate,
+    options: ModuleTaskOptions
+  ): Promise<string> {
     const macroId = await this.createTaskMacro(options);
     const taskId = await this.scheduler.scheduleForDate(calendarDate, macroId, options);
     this.trackTask(options.moduleId, taskId);
@@ -222,7 +237,7 @@ export class ModuleIntegrationImpl implements ModuleIntegrationAPI {
       ...options,
       taskCode,
       name: options.name || `Notification: ${message.substring(0, 50)}`,
-      description: options.description || `Show notification: ${message}`
+      description: options.description || `Show notification: ${message}`,
     });
   }
 
@@ -239,7 +254,7 @@ export class ModuleIntegrationImpl implements ModuleIntegrationAPI {
       ...options,
       taskCode,
       name: options.name || `Chat: ${message.substring(0, 50)}`,
-      description: options.description || `Send chat message: ${message}`
+      description: options.description || `Send chat message: ${message}`,
     });
   }
 
@@ -248,15 +263,15 @@ export class ModuleIntegrationImpl implements ModuleIntegrationAPI {
    */
   private async createTaskMacro(options: ModuleTaskOptions): Promise<string> {
     const moduleData = this.registeredModules.get(options.moduleId);
-    const folderName = moduleData 
-      ? `task-and-trigger/${options.moduleId}` 
+    const folderName = moduleData
+      ? `task-and-trigger/${options.moduleId}`
       : 'task-and-trigger/external';
 
     const macro = await this.macroManager.createTaskMacro({
       name: options.name || 'Module Task',
       code: options.taskCode,
       folder: folderName,
-      moduleId: options.moduleId
+      moduleId: options.moduleId,
     });
 
     return macro.id;
@@ -305,7 +320,7 @@ export class ModuleIntegrationImpl implements ModuleIntegrationAPI {
     return {
       totalTasks: moduleData.taskIds.size,
       activeTasks,
-      completedTasks
+      completedTasks,
     };
   }
 
@@ -316,7 +331,7 @@ export class ModuleIntegrationImpl implements ModuleIntegrationAPI {
     return Array.from(this.registeredModules.entries()).map(([moduleId, data]) => ({
       moduleId,
       displayName: data.displayName,
-      taskCount: data.taskIds.size
+      taskCount: data.taskIds.size,
     }));
   }
 }

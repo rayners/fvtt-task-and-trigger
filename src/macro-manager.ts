@@ -53,7 +53,7 @@ export class MacroManager {
       'Game-Time Tasks/Recurring',
       'Calendar Tasks',
       'Accumulated Time Tasks',
-      'Module Tasks'
+      'Module Tasks',
     ];
 
     // Create root folder
@@ -78,13 +78,10 @@ export class MacroManager {
    */
   private async findOrCreateFolder(name: string, parent?: any): Promise<any> {
     const folders = (game as any).folders?.filter((f: any) => f.type === 'Macro') || [];
-    
+
     // Look for existing folder
-    const existing = folders.find(f => 
-      f.name === name && 
-      (!parent || f.folder?.id === parent.id)
-    );
-    
+    const existing = folders.find(f => f.name === name && (!parent || f.folder?.id === parent.id));
+
     if (existing) {
       return existing;
     }
@@ -94,7 +91,7 @@ export class MacroManager {
       name,
       type: 'Macro',
       color: '#4a90e2', // Blue color for task folders
-      sort: 0
+      sort: 0,
     };
 
     if (parent) {
@@ -109,7 +106,7 @@ export class MacroManager {
    */
   async createTaskMacro(options: MacroCreationOptions): Promise<any> {
     const folder = await this.getOrCreateTaskFolder(options.folder);
-    
+
     const macroData = {
       name: options.name,
       type: options.type || 'script',
@@ -120,9 +117,9 @@ export class MacroManager {
         'task-and-trigger': {
           isTaskMacro: true,
           moduleId: options.moduleId || null,
-          createdAt: Date.now()
-        }
-      }
+          createdAt: Date.now(),
+        },
+      },
     };
 
     return await (globalThis as any).Macro.create(macroData);
@@ -145,7 +142,7 @@ export class MacroManager {
     // If not in cache, try to find it
     const folders = (game as any).folders?.filter((f: any) => f.type === 'Macro') || [];
     const found = folders.find((f: any) => f.name === folderHint.split('/').pop());
-    
+
     if (found) {
       this.folderCache.set(folderHint, found);
       return found;
@@ -165,10 +162,10 @@ export class MacroManager {
 
     const folderName = game.modules.get(moduleId)?.title || moduleId;
     const folder = await this.findOrCreateFolder(folderName, modulesFolder);
-    
+
     const cachePath = `Task & Trigger Macros/Module Tasks/${folderName}`;
     this.folderCache.set(cachePath, folder);
-    
+
     return folder;
   }
 
@@ -187,12 +184,12 @@ export class MacroManager {
     } else if (options.macroCode) {
       // Create new macro
       const moduleFolder = await this.createModuleFolder(options.moduleId);
-      
+
       macro = await this.createTaskMacro({
         name: `[T&T-${options.moduleId}] ${options.name}`,
         code: options.macroCode,
         folder: `Task & Trigger Macros/Module Tasks/${moduleFolder.name}`,
-        moduleId: options.moduleId
+        moduleId: options.moduleId,
       });
     } else {
       throw new Error('Either macroId or macroCode must be provided');
@@ -200,7 +197,7 @@ export class MacroManager {
 
     // Mark macro as registered for this module
     await macro.setFlag('task-and-trigger', 'registeredModule', options.moduleId);
-    
+
     return macro.id!;
   }
 
@@ -230,10 +227,12 @@ export class MacroManager {
    * Clean up macros created by a specific module
    */
   async cleanupModuleMacros(moduleId: string): Promise<number> {
-    const macros = (game as any).macros?.filter?.((m: any) => 
-      m.getFlag?.('task-and-trigger', 'moduleId') === moduleId ||
-      m.getFlag?.('task-and-trigger', 'registeredModule') === moduleId
-    ) || [];
+    const macros =
+      (game as any).macros?.filter?.(
+        (m: any) =>
+          m.getFlag?.('task-and-trigger', 'moduleId') === moduleId ||
+          m.getFlag?.('task-and-trigger', 'registeredModule') === moduleId
+      ) || [];
 
     let deletedCount = 0;
     for (const macro of macros) {
@@ -268,7 +267,7 @@ export class MacroManager {
     return {
       name: macro.name || 'Unnamed Macro',
       type: macro.type || 'script',
-      folder: macro.folder?.name
+      folder: macro.folder?.name,
     };
   }
 
@@ -276,10 +275,13 @@ export class MacroManager {
    * Get all task-related macros
    */
   getTaskMacros(): any[] {
-    return (game as any).macros?.filter?.((m: any) => 
-      m.getFlag?.('task-and-trigger', 'isTaskMacro') ||
-      m.folder?.name?.includes('Task & Trigger')
-    ) || [];
+    return (
+      (game as any).macros?.filter?.(
+        (m: any) =>
+          m.getFlag?.('task-and-trigger', 'isTaskMacro') ||
+          m.folder?.name?.includes('Task & Trigger')
+      ) || []
+    );
   }
 
   /**
@@ -310,19 +312,21 @@ export class MacroManager {
    * Get macros created by a specific module
    */
   getMacrosByModule(moduleId: string): any[] {
-    return (game as any).macros?.filter?.((m: any) => 
-      m.getFlag?.('task-and-trigger', 'moduleId') === moduleId
-    ) || [];
+    return (
+      (game as any).macros?.filter?.(
+        (m: any) => m.getFlag?.('task-and-trigger', 'moduleId') === moduleId
+      ) || []
+    );
   }
 
   /**
    * Clean up temporary macros (marked as ephemeral)
    */
   async cleanupTemporaryMacros(): Promise<number> {
-    const tempMacros = (game as any).macros?.filter?.((m: any) => 
-      m.getFlag?.('task-and-trigger', 'isTemporary')
-    ) || [];
-    
+    const tempMacros =
+      (game as any).macros?.filter?.((m: any) => m.getFlag?.('task-and-trigger', 'isTemporary')) ||
+      [];
+
     let cleaned = 0;
     for (const macro of tempMacros) {
       try {
@@ -332,7 +336,7 @@ export class MacroManager {
         console.error('Failed to cleanup temporary macro:', error);
       }
     }
-    
+
     return cleaned;
   }
 }

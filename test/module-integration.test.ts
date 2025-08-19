@@ -43,18 +43,18 @@ describe('ModuleIntegrationAPI', () => {
       id: 'test-task-id',
       name: 'Test Task',
       enabled: true,
-      runCount: 0
+      runCount: 0,
     });
     vi.spyOn(mockScheduler, 'createAccumulatedTimeTask').mockResolvedValue('test-accumulated-id');
 
     // Mock macro manager methods
     vi.spyOn(mockMacroManager, 'createTaskMacro').mockResolvedValue({
       id: 'test-macro-id',
-      name: 'Test Macro'
+      name: 'Test Macro',
     });
     vi.spyOn(mockMacroManager, 'createModuleFolder').mockResolvedValue({
       id: 'test-folder-id',
-      name: 'test-module'
+      name: 'test-module',
     });
   });
 
@@ -79,18 +79,20 @@ describe('ModuleIntegrationAPI', () => {
       const modules = moduleAPI.getRegisteredModules();
 
       expect(modules).toHaveLength(2);
-      expect(modules).toEqual(expect.arrayContaining([
-        expect.objectContaining({
-          moduleId: 'module1',
-          displayName: 'Module One',
-          taskCount: 0
-        }),
-        expect.objectContaining({
-          moduleId: 'module2',
-          displayName: 'Module Two',
-          taskCount: 0
-        })
-      ]));
+      expect(modules).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            moduleId: 'module1',
+            displayName: 'Module One',
+            taskCount: 0,
+          }),
+          expect.objectContaining({
+            moduleId: 'module2',
+            displayName: 'Module Two',
+            taskCount: 0,
+          }),
+        ])
+      );
     });
   });
 
@@ -104,7 +106,7 @@ describe('ModuleIntegrationAPI', () => {
         moduleId: 'test-module',
         taskCode: 'console.log("test");',
         name: 'Test Task',
-        description: 'A test task'
+        description: 'A test task',
       };
 
       const taskId = await moduleAPI.createOneTimeTask({ minutes: 5 }, options);
@@ -114,14 +116,14 @@ describe('ModuleIntegrationAPI', () => {
         name: 'Test Task',
         code: 'console.log("test");',
         folder: 'task-and-trigger/test-module',
-        moduleId: 'test-module'
+        moduleId: 'test-module',
       });
       expect(mockScheduler.setTimeout).toHaveBeenCalledWith(
         { minutes: 5 },
         'test-macro-id',
         expect.objectContaining({
           name: 'Test Task',
-          description: 'A test task'
+          description: 'A test task',
         })
       );
     });
@@ -130,7 +132,7 @@ describe('ModuleIntegrationAPI', () => {
       const options: ModuleTaskOptions = {
         moduleId: 'test-module',
         taskCode: 'ui.notifications.info("recurring");',
-        name: 'Recurring Task'
+        name: 'Recurring Task',
       };
 
       const taskId = await moduleAPI.createRecurringTask({ hours: 1 }, options);
@@ -140,7 +142,7 @@ describe('ModuleIntegrationAPI', () => {
         { hours: 1 },
         'test-macro-id',
         expect.objectContaining({
-          name: 'Recurring Task'
+          name: 'Recurring Task',
         })
       );
     });
@@ -150,7 +152,7 @@ describe('ModuleIntegrationAPI', () => {
       const options: ModuleTaskOptions = {
         moduleId: 'test-module',
         taskCode: 'ui.notifications.info("Happy Holidays!");',
-        name: 'Holiday Task'
+        name: 'Holiday Task',
       };
 
       const taskId = await moduleAPI.createScheduledTask(futureDate, options);
@@ -160,7 +162,7 @@ describe('ModuleIntegrationAPI', () => {
         futureDate,
         'test-macro-id',
         expect.objectContaining({
-          name: 'Holiday Task'
+          name: 'Holiday Task',
         })
       );
     });
@@ -170,7 +172,7 @@ describe('ModuleIntegrationAPI', () => {
       const options: ModuleTaskOptions = {
         moduleId: 'test-module',
         taskCode: 'console.log("calendar event");',
-        name: 'Calendar Task'
+        name: 'Calendar Task',
       };
 
       const taskId = await moduleAPI.createCalendarTask(calendarDate, options);
@@ -180,7 +182,7 @@ describe('ModuleIntegrationAPI', () => {
         calendarDate,
         'test-macro-id',
         expect.objectContaining({
-          name: 'Calendar Task'
+          name: 'Calendar Task',
         })
       );
     });
@@ -189,7 +191,7 @@ describe('ModuleIntegrationAPI', () => {
       const options: ModuleTaskOptions = {
         moduleId: 'test-module',
         taskCode: 'ui.notifications.info("Rest complete!");',
-        name: 'Rest Task'
+        name: 'Rest Task',
       };
 
       const taskId = await moduleAPI.createGameTimeTask({ hours: 8 }, options);
@@ -199,7 +201,7 @@ describe('ModuleIntegrationAPI', () => {
         { hours: 8 },
         'test-macro-id',
         expect.objectContaining({
-          name: 'Rest Task'
+          name: 'Rest Task',
         })
       );
     });
@@ -208,7 +210,7 @@ describe('ModuleIntegrationAPI', () => {
       const options: ModuleTaskOptions = {
         moduleId: 'test-module',
         taskCode: 'console.log("daily check");',
-        name: 'Daily Check'
+        name: 'Daily Check',
       };
 
       const taskId = await moduleAPI.createGameTimeRecurring({ days: 1 }, options);
@@ -218,7 +220,7 @@ describe('ModuleIntegrationAPI', () => {
         { days: 1 },
         'test-macro-id',
         expect.objectContaining({
-          name: 'Daily Check'
+          name: 'Daily Check',
         })
       );
     });
@@ -227,7 +229,7 @@ describe('ModuleIntegrationAPI', () => {
       const options: ModuleTaskOptions = {
         moduleId: 'test-module',
         taskCode: 'console.log("test");',
-        name: 'Test Task'
+        name: 'Test Task',
       };
 
       await moduleAPI.createOneTimeTask({ minutes: 5 }, options);
@@ -244,76 +246,60 @@ describe('ModuleIntegrationAPI', () => {
     });
 
     it('should create notification task', async () => {
-      const taskId = await moduleAPI.createNotificationTask(
-        { minutes: 15 },
-        'Take a break!',
-        {
-          moduleId: 'test-module',
-          name: 'Break Reminder'
-        }
-      );
+      const taskId = await moduleAPI.createNotificationTask({ minutes: 15 }, 'Take a break!', {
+        moduleId: 'test-module',
+        name: 'Break Reminder',
+      });
 
       expect(taskId).toBe('test-task-id');
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith({
         name: 'Break Reminder',
         code: 'ui.notifications?.info("Take a break!");',
         folder: 'task-and-trigger/test-module',
-        moduleId: 'test-module'
+        moduleId: 'test-module',
       });
     });
 
     it('should create chat task', async () => {
-      const taskId = await moduleAPI.createChatTask(
-        { seconds: 30 },
-        'Combat started!',
-        {
-          moduleId: 'test-module',
-          name: 'Combat Alert'
-        }
-      );
+      const taskId = await moduleAPI.createChatTask({ seconds: 30 }, 'Combat started!', {
+        moduleId: 'test-module',
+        name: 'Combat Alert',
+      });
 
       expect(taskId).toBe('test-task-id');
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith({
         name: 'Combat Alert',
         code: 'ChatMessage.create({ content: "Combat started!", whisper: [] });',
         folder: 'task-and-trigger/test-module',
-        moduleId: 'test-module'
+        moduleId: 'test-module',
       });
     });
 
     it('should escape quotes in notification messages', async () => {
-      await moduleAPI.createNotificationTask(
-        { minutes: 5 },
-        'Don\'t forget "important" task',
-        {
-          moduleId: 'test-module',
-          name: 'Reminder'
-        }
-      );
+      await moduleAPI.createNotificationTask({ minutes: 5 }, 'Don\'t forget "important" task', {
+        moduleId: 'test-module',
+        name: 'Reminder',
+      });
 
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith({
         name: 'Reminder',
         code: 'ui.notifications?.info("Don\'t forget \\"important\\" task");',
         folder: 'task-and-trigger/test-module',
-        moduleId: 'test-module'
+        moduleId: 'test-module',
       });
     });
 
     it('should escape quotes in chat messages', async () => {
-      await moduleAPI.createChatTask(
-        { seconds: 10 },
-        'Player says "Hello world!"',
-        {
-          moduleId: 'test-module',
-          name: 'Chat Test'
-        }
-      );
+      await moduleAPI.createChatTask({ seconds: 10 }, 'Player says "Hello world!"', {
+        moduleId: 'test-module',
+        name: 'Chat Test',
+      });
 
       expect(mockMacroManager.createTaskMacro).toHaveBeenCalledWith({
         name: 'Chat Test',
         code: 'ChatMessage.create({ content: "Player says \\"Hello world!\\"", whisper: [] });',
         folder: 'task-and-trigger/test-module',
-        moduleId: 'test-module'
+        moduleId: 'test-module',
       });
     });
   });
@@ -321,14 +307,14 @@ describe('ModuleIntegrationAPI', () => {
   describe('task management', () => {
     beforeEach(async () => {
       await moduleAPI.registerModule('test-module', 'Test Module');
-      
+
       // Create a test task
       await moduleAPI.createOneTimeTask(
         { minutes: 5 },
         {
           moduleId: 'test-module',
           taskCode: 'console.log("test");',
-          name: 'Test Task'
+          name: 'Test Task',
         }
       );
     });
@@ -379,7 +365,7 @@ describe('ModuleIntegrationAPI', () => {
         name: 'Research Task',
         description: 'Research a spell',
         requiredTime: { hours: 10 },
-        macroId: 'research-macro-id'
+        macroId: 'research-macro-id',
       };
 
       const taskId = await moduleAPI.createAccumulatedTimeTask(options);
@@ -393,7 +379,7 @@ describe('ModuleIntegrationAPI', () => {
         moduleId: 'test-module',
         name: 'Research Task',
         requiredTime: { hours: 10 },
-        macroId: 'research-macro-id'
+        macroId: 'research-macro-id',
       };
 
       await moduleAPI.createAccumulatedTimeTask(options);
@@ -407,14 +393,14 @@ describe('ModuleIntegrationAPI', () => {
   describe('module cleanup', () => {
     beforeEach(async () => {
       await moduleAPI.registerModule('test-module', 'Test Module');
-      
+
       // Create multiple tasks
       await moduleAPI.createOneTimeTask(
         { minutes: 5 },
         {
           moduleId: 'test-module',
           taskCode: 'console.log("task1");',
-          name: 'Task 1'
+          name: 'Task 1',
         }
       );
       await moduleAPI.createRecurringTask(
@@ -422,7 +408,7 @@ describe('ModuleIntegrationAPI', () => {
         {
           moduleId: 'test-module',
           taskCode: 'console.log("task2");',
-          name: 'Task 2'
+          name: 'Task 2',
         }
       );
     });
@@ -438,7 +424,7 @@ describe('ModuleIntegrationAPI', () => {
       await moduleAPI.unregisterModule('test-module');
 
       expect(mockScheduler.cancel).toHaveBeenCalledTimes(2);
-      
+
       const modules = moduleAPI.getRegisteredModules();
       const testModule = modules.find(m => m.moduleId === 'test-module');
       expect(testModule).toBeUndefined();
@@ -472,14 +458,14 @@ describe('ModuleIntegrationAPI', () => {
         {
           moduleId: 'test-module',
           taskCode: 'console.log("active");',
-          name: 'Active Task'
+          name: 'Active Task',
         }
       );
 
       mockScheduler.getTaskInfo.mockResolvedValueOnce({
         id: 'test-task-id',
         name: 'Active Task',
-        enabled: true
+        enabled: true,
       });
 
       const stats = await moduleAPI.getModuleTaskStats('test-module');
@@ -487,7 +473,7 @@ describe('ModuleIntegrationAPI', () => {
       expect(stats).toEqual({
         totalTasks: 1,
         activeTasks: 1,
-        completedTasks: 0
+        completedTasks: 0,
       });
     });
 
@@ -503,14 +489,14 @@ describe('ModuleIntegrationAPI', () => {
         {
           moduleId: 'test-module',
           taskCode: 'console.log("disabled");',
-          name: 'Disabled Task'
+          name: 'Disabled Task',
         }
       );
 
       mockScheduler.getTaskInfo.mockResolvedValueOnce({
         id: 'test-task-id',
         name: 'Disabled Task',
-        enabled: false
+        enabled: false,
       });
 
       const stats = await moduleAPI.getModuleTaskStats('test-module');
@@ -518,7 +504,7 @@ describe('ModuleIntegrationAPI', () => {
       expect(stats).toEqual({
         totalTasks: 1,
         activeTasks: 0,
-        completedTasks: 1
+        completedTasks: 1,
       });
     });
   });
@@ -528,7 +514,7 @@ describe('ModuleIntegrationAPI', () => {
       const options: ModuleTaskOptions = {
         moduleId: 'unregistered-module',
         taskCode: 'console.log("test");',
-        name: 'Test Task'
+        name: 'Test Task',
       };
 
       const taskId = await moduleAPI.createOneTimeTask({ minutes: 5 }, options);
@@ -538,7 +524,7 @@ describe('ModuleIntegrationAPI', () => {
         name: 'Test Task',
         code: 'console.log("test");',
         folder: 'task-and-trigger/external',
-        moduleId: 'unregistered-module'
+        moduleId: 'unregistered-module',
       });
     });
 
@@ -546,7 +532,7 @@ describe('ModuleIntegrationAPI', () => {
       const options: ModuleTaskOptions = {
         moduleId: 'unregistered-module',
         taskCode: 'console.log("test");',
-        name: 'Test Task'
+        name: 'Test Task',
       };
 
       await moduleAPI.createOneTimeTask({ minutes: 5 }, options);
@@ -567,11 +553,12 @@ describe('ModuleIntegrationAPI', () => {
       const options: ModuleTaskOptions = {
         moduleId: 'test-module',
         taskCode: 'console.log("test");',
-        name: 'Error Task'
+        name: 'Error Task',
       };
 
-      await expect(moduleAPI.createOneTimeTask({ minutes: 5 }, options))
-        .rejects.toThrow('Macro creation failed');
+      await expect(moduleAPI.createOneTimeTask({ minutes: 5 }, options)).rejects.toThrow(
+        'Macro creation failed'
+      );
     });
 
     it('should handle scheduler errors', async () => {
@@ -580,19 +567,21 @@ describe('ModuleIntegrationAPI', () => {
       const options: ModuleTaskOptions = {
         moduleId: 'test-module',
         taskCode: 'console.log("test");',
-        name: 'Error Task'
+        name: 'Error Task',
       };
 
-      await expect(moduleAPI.createOneTimeTask({ minutes: 5 }, options))
-        .rejects.toThrow('Scheduling failed');
+      await expect(moduleAPI.createOneTimeTask({ minutes: 5 }, options)).rejects.toThrow(
+        'Scheduling failed'
+      );
     });
 
     it('should handle folder creation errors', async () => {
       mockMacroManager.createModuleFolder.mockRejectedValue(new Error('Folder creation failed'));
 
       // Should propagate the folder creation error
-      await expect(moduleAPI.registerModule('error-module', 'Error Module'))
-        .rejects.toThrow('Folder creation failed');
+      await expect(moduleAPI.registerModule('error-module', 'Error Module')).rejects.toThrow(
+        'Folder creation failed'
+      );
     });
   });
 });

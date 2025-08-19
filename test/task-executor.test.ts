@@ -59,12 +59,12 @@ describe('TaskExecutor', () => {
   describe('executeTask', () => {
     it('should execute valid macro', async () => {
       const task = { ...mockTask, macroId: 'test-macro-id' };
-      
+
       // Mock macro manager validation and execution
       const macroManager = MacroManager.getInstance();
       vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
       vi.spyOn(macroManager, 'executeMacro').mockResolvedValue('test result');
-      
+
       const result = await executor.executeTask(task);
 
       expect(result.success).toBe(true);
@@ -73,12 +73,12 @@ describe('TaskExecutor', () => {
 
     it('should handle macro that returns undefined', async () => {
       const task = { ...mockTask, macroId: 'test-macro-id' };
-      
+
       // Mock macro manager validation and execution
       const macroManager = MacroManager.getInstance();
       vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
       vi.spyOn(macroManager, 'executeMacro').mockResolvedValue(undefined);
-      
+
       const result = await executor.executeTask(task);
 
       expect(result.success).toBe(true);
@@ -87,12 +87,12 @@ describe('TaskExecutor', () => {
 
     it('should handle macro execution errors gracefully', async () => {
       const task = { ...mockTask, macroId: 'test-macro-id' };
-      
+
       // Mock macro manager validation and execution error
       const macroManager = MacroManager.getInstance();
       vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
       vi.spyOn(macroManager, 'executeMacro').mockRejectedValue(new Error('Test error'));
-      
+
       const result = await executor.executeTask(task);
 
       expect(result.success).toBe(false);
@@ -103,7 +103,7 @@ describe('TaskExecutor', () => {
       // Mock a macro that doesn't exist to simulate empty/invalid macro
       const macroManager = MacroManager.getInstance();
       vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(false);
-      
+
       const task = { ...mockTask, macroId: 'non-existent-macro' };
       const result = await executor.executeTask(task);
 
@@ -115,8 +115,8 @@ describe('TaskExecutor', () => {
       // Mock a slow executing macro
       const macroManager = MacroManager.getInstance();
       vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
-      vi.spyOn(macroManager, 'executeMacro').mockImplementation(() => 
-        new Promise(resolve => setTimeout(() => resolve('slow result'), 100))
+      vi.spyOn(macroManager, 'executeMacro').mockImplementation(
+        () => new Promise(resolve => setTimeout(() => resolve('slow result'), 100))
       );
 
       const task = { ...mockTask };
@@ -189,8 +189,8 @@ describe('TaskExecutor', () => {
       const macroManager = MacroManager.getInstance();
       vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
       vi.spyOn(macroManager, 'executeMacro')
-        .mockResolvedValueOnce(1)  // task1 first execution
-        .mockResolvedValueOnce(2)  // task2 execution
+        .mockResolvedValueOnce(1) // task1 first execution
+        .mockResolvedValueOnce(2) // task2 execution
         .mockResolvedValueOnce(1); // task1 second execution
 
       const task1 = { ...mockTask, id: 'task-1' };
@@ -222,7 +222,7 @@ describe('TaskExecutor', () => {
 
     it('should limit execution history size', async () => {
       const task = { ...mockTask, macroId: 'test-macro-id' };
-      
+
       // Mock macro manager
       const macroManager = MacroManager.getInstance();
       vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
@@ -241,27 +241,27 @@ describe('TaskExecutor', () => {
   describe('macro validation', () => {
     it('should validate macro exists before execution', async () => {
       const task = { ...mockTask, macroId: 'non-existent-macro' };
-      
+
       // Mock macro manager to return false for validation
       const macroManager = MacroManager.getInstance();
       vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(false);
-      
+
       const result = await executor.executeTask(task);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain('Macro non-existent-macro not found or inaccessible');
     });
 
     it('should execute macro when validation passes', async () => {
       const task = { ...mockTask, macroId: 'valid-macro' };
-      
+
       // Mock macro manager to return true for validation and mock result
       const macroManager = MacroManager.getInstance();
       vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
       vi.spyOn(macroManager, 'executeMacro').mockResolvedValue('macro result');
-      
+
       const result = await executor.executeTask(task);
-      
+
       expect(result.success).toBe(true);
       expect(result.result).toBe('macro result');
     });
@@ -270,12 +270,12 @@ describe('TaskExecutor', () => {
   describe('error handling', () => {
     it('should handle macro execution errors', async () => {
       const task = { ...mockTask, macroId: 'error-macro' };
-      
+
       // Mock macro manager to validate but throw during execution
       const macroManager = MacroManager.getInstance();
       vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
       vi.spyOn(macroManager, 'executeMacro').mockRejectedValue(new Error('Macro execution failed'));
-      
+
       const result = await executor.executeTask(task);
 
       expect(result.success).toBe(false);
@@ -284,11 +284,11 @@ describe('TaskExecutor', () => {
 
     it('should handle macro validation errors', async () => {
       const task = { ...mockTask, macroId: 'missing-macro' };
-      
+
       // Mock macro manager to fail validation
       const macroManager = MacroManager.getInstance();
       vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(false);
-      
+
       const result = await executor.executeTask(task);
 
       expect(result.success).toBe(false);
@@ -297,7 +297,7 @@ describe('TaskExecutor', () => {
 
     it('should handle async macro errors', async () => {
       const task = { ...mockTask, macroId: 'async-error-macro' };
-      
+
       // Mock macro manager
       const macroManager = MacroManager.getInstance();
       vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
@@ -313,12 +313,12 @@ describe('TaskExecutor', () => {
   describe('security measures', () => {
     it('should use secure macro execution', async () => {
       const task = { ...mockTask, macroId: 'secure-macro' };
-      
+
       // Mock macro manager
       const macroManager = MacroManager.getInstance();
       vi.spyOn(macroManager, 'validateMacro').mockResolvedValue(true);
       vi.spyOn(macroManager, 'executeMacro').mockResolvedValue('secure result');
-      
+
       const result = await executor.executeTask(task);
 
       expect(result.success).toBe(true);

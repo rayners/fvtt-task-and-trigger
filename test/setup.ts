@@ -282,10 +282,10 @@ beforeEach(() => {
           if (scope === 'task-and-trigger' && key === 'isTemporary') return data.isTemporary;
           return undefined;
         }),
-        setFlag: vi.fn()
+        setFlag: vi.fn(),
       };
       return macro;
-    })
+    }),
   };
 
   // Mock ApplicationV2 class

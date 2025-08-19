@@ -12,25 +12,13 @@ import { TaskManagerApplication } from './task-manager-application';
 export interface TaskTriggerAPI {
   // Basic scheduling methods (setTimeout/setInterval style)
   setTimeout(delay: TimeSpec, macroId: string, options?: ScheduleOptions): Promise<string>;
-  setInterval(
-    interval: TimeSpec,
-    macroId: string,
-    options?: ScheduleOptions
-  ): Promise<string>;
+  setInterval(interval: TimeSpec, macroId: string, options?: ScheduleOptions): Promise<string>;
   clearTimeout(taskId: string): Promise<boolean>;
   clearInterval(taskId: string): Promise<boolean>;
 
   // Game time scheduling
-  setGameTimeout(
-    delay: TimeSpec,
-    macroId: string,
-    options?: ScheduleOptions
-  ): Promise<string>;
-  setGameInterval(
-    interval: TimeSpec,
-    macroId: string,
-    options?: ScheduleOptions
-  ): Promise<string>;
+  setGameTimeout(delay: TimeSpec, macroId: string, options?: ScheduleOptions): Promise<string>;
+  setGameInterval(interval: TimeSpec, macroId: string, options?: ScheduleOptions): Promise<string>;
 
   // Advanced scheduling
   scheduleAt(dateTime: Date, macroId: string, options?: ScheduleOptions): Promise<string>;
@@ -454,7 +442,6 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
   async cleanupOldTasks(olderThanDays: number = 7): Promise<number> {
     return this.persistence.cleanupOldTasks(olderThanDays);
   }
-
 }
 
 /**

@@ -232,7 +232,7 @@ export class ModuleIntegrationImpl implements ModuleIntegrationAPI {
     message: string,
     options: Omit<ModuleTaskOptions, 'taskCode'>
   ): Promise<string> {
-    const taskCode = `ui.notifications?.info("${message.replace(/"/g, '\\"')}");`;
+    const taskCode = `ui.notifications?.info("${message.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}");`;
     return this.createOneTimeTask(delay, {
       ...options,
       taskCode,
@@ -249,7 +249,7 @@ export class ModuleIntegrationImpl implements ModuleIntegrationAPI {
     message: string,
     options: Omit<ModuleTaskOptions, 'taskCode'>
   ): Promise<string> {
-    const taskCode = `ChatMessage.create({ content: "${message.replace(/"/g, '\\"')}", whisper: [] });`;
+    const taskCode = `ChatMessage.create({ content: "${message.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}", whisper: [] });`;
     return this.createOneTimeTask(delay, {
       ...options,
       taskCode,

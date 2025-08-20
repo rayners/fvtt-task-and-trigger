@@ -21,7 +21,10 @@
   "templates": [
     "templates/task-manager.hbs",
     "templates/task-form.hbs",
-    "templates/task-storage-page.hbs"
+    "templates/task-storage-page.hbs",
+    "templates/player-task-view.hbs",
+    "templates/time-log-dialog.hbs",
+    "templates/gm-approval-queue.hbs"
   ],
   "languages": [
     {

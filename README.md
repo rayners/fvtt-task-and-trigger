@@ -1,24 +1,25 @@
 # Task & Trigger
 
-A sophisticated task scheduling and automation system for FoundryVTT that provides real-time and game-time task scheduling capabilities, calendar integration, and JavaScript execution in a secure environment.
+A GM-centric task scheduling and automation system for FoundryVTT that provides controlled, role-based task management with real-time and game-time scheduling capabilities, accumulated time tracking with approval workflows, and secure JavaScript execution.
 
 ## Overview
 
-Task & Trigger enables Game Masters and developers to schedule automated tasks that execute at specific times or intervals. Whether you need to trigger events based on real-world time, in-game calendar dates, or accumulated time tracking, this module provides comprehensive scheduling capabilities.
+Task & Trigger enables Game Masters to create and manage automated tasks while providing players with structured interfaces for time logging and task interaction. The module features a complete GM-centric architecture where task creation requires GM permissions, but players can view approved tasks and request accumulated time logging through socket-based communication.
 
 **Key Features:**
 
+- **GM-Centric Architecture**: All task creation requires GM permissions with role-based UI components
 - **Real-Time Scheduling**: setTimeout/setInterval style scheduling using system time
 - **Game-Time Scheduling**: Tasks that respond to in-game time changes
-- **Accumulated Time Tasks**: Manual time logging for activities requiring specific durations
+- **Accumulated Time Tasks**: Player-initiated time logging with GM approval workflows
+- **Socket-Based Communication**: Real-time player-to-GM communication for time log requests
+- **Task Visibility Controls**: GM-only, player-visible, and player-notify options
 - **Calendar Integration**: Integration with Seasons & Stars module for visual scheduling
-- **Secure Execution**: Safe JavaScript execution environment for task callbacks
+- **Secure Execution**: Safe JavaScript execution environment using FoundryVTT's macro system
 - **Persistence**: Tasks survive Foundry sessions with automatic restoration
-- **Management UI**: Visual interface for task creation, monitoring, and management
+- **Role-Based UI Suite**: Separate interfaces for GMs (management) and players (interaction)
 
-**Developer Note**: This module was built with AI assistance and is in active development. While core functionality is stable, testing is ongoing (87% test pass rate) with continued improvements planned.
-
-**Architecture Note**: Task & Trigger uses FoundryVTT's secure macro system for task execution instead of direct JavaScript string evaluation. This provides better security, organization, and integration with Foundry's permission system.
+**Architecture Note**: Version 0.1.0 implements a complete GM-centric architecture conversion with comprehensive testing (95% test pass rate with 445+ tests) and role-based UI components. Task execution uses FoundryVTT's secure macro system for better security and integration.
 
 ## Installation
 
@@ -35,57 +36,103 @@ Module JSON URL will be available with the first release.
 ### System Requirements
 
 - **FoundryVTT**: Version 13 or higher (currently tested with v13 only)
-- **Macro Creation**: Tasks require creating FoundryVTT macros (users need macro creation permissions)
-- **GM Permissions**: World-scoped tasks require GM permissions for macro management
-- **JavaScript Knowledge**: Required for creating task macro code
+- **GM-Only Task Creation**: All task creation and management requires GM permissions
+- **Socket Communication**: Requires SocketLib for player-to-GM communication (auto-installed)
+- **JavaScript Knowledge**: Required for GMs creating task macro code
+- **Player Access**: Players can view approved tasks and submit time log requests
 - **Recommended Modules**:
   - **Seasons & Stars**: Enhanced calendar integration and visual scheduling
   - **Errors & Echoes**: Advanced error reporting and debugging
 
 ## Basic Usage
 
-### API Access
+### GM Task Management
 
-The module exposes its API through `game.taskTrigger.api`:
+The module provides a comprehensive GM interface for task creation and management:
 
 ```javascript
-// Check if the module is ready
-if (game.taskTrigger.api.isReady()) {
-  // Schedule tasks here
+// Open the Task Manager (GM only)
+game.taskTrigger.ui.showTaskManager();
+
+// Open the Approval Queue for player time log requests (GM only)
+game.taskTrigger.ui.showApprovalQueue();
+
+// API access for programmatic task creation (GM only)
+if (game.taskTrigger.api.isReady() && game.user.isGM) {
+  // Create tasks here
 }
 ```
 
-### Real-Time Task Scheduling
+### Player Interface
+
+Players have access to view approved tasks and submit time logging requests:
+
+```javascript
+// Show player task view (upcoming events)
+game.taskTrigger.ui.showPlayerView();
+
+// Show time logging dialog for a specific task
+game.taskTrigger.ui.showTimeLogDialog('task-id');
+
+// Get upcoming events visible to current player
+const events = await game.taskTrigger.api.getUpcomingEvents(168); // next 7 days
+```
+
+### Permission System
+
+The module enforces strict GM-only permissions for task creation:
+
+```javascript
+// All task creation methods require GM permissions
+if (!game.user.isGM) {
+  ui.notifications.warn('Only GMs can create tasks');
+  return;
+}
+
+// Players can view approved tasks through the API
+const visibleTasks = await game.taskTrigger.api.getUpcomingEvents();
+```
+
+### Real-Time Task Scheduling (GM Only)
 
 Schedule tasks that execute based on system time:
 
 ```javascript
-// Create a macro for the reminder
+// GM creates a macro for player notifications
 const reminderMacro = await Macro.create({
   name: 'Break Reminder Macro',
   type: 'script',
   command: 'ui.notifications.info("Time for a break!");',
 });
 
-// Schedule a one-time reminder in 30 minutes
+// Schedule a player-visible reminder (players can see in their task view)
 const taskId = await game.taskTrigger.api.setTimeout(
   { minutes: 30 },
   reminderMacro.id,
-  { name: 'Break Reminder', scope: 'client' }
+  { 
+    name: 'Break Reminder', 
+    scope: 'world',
+    visibility: 'player-visible',
+    description: 'Session break coming up'
+  }
 );
 
-// Create a macro for the backup
+// GM creates a private backup task (invisible to players)
 const backupMacro = await Macro.create({
   name: 'Hourly Backup Macro',
   type: 'script',
   command: `console.log("Backup performed at: " + new Date().toLocaleString());`,
 });
 
-// Schedule a recurring backup every hour
+// Schedule a GM-only recurring backup
 const backupId = await game.taskTrigger.api.setInterval(
   { hours: 1 },
   backupMacro.id,
-  { name: 'Hourly Backup', scope: 'world' }
+  { 
+    name: 'Hourly Backup', 
+    scope: 'world',
+    visibility: 'gm-only'
+  }
 );
 ```
 
@@ -156,12 +203,12 @@ const festivalId = await game.taskTrigger.api.scheduleForDate(
 );
 ```
 
-### Accumulated Time Tasks
+### Accumulated Time Tasks with Approval Workflow
 
-Create tasks that require manual time logging to complete:
+GMs create accumulated time tasks, players submit time log requests, and GMs approve/deny them:
 
 ```javascript
-// Create a macro for the research completion
+// GM creates a macro for the research completion
 const researchMacro = await Macro.create({
   name: 'Spell Research Complete',
   type: 'script',
@@ -171,24 +218,26 @@ const researchMacro = await Macro.create({
     `,
 });
 
-// Character needs 40 hours of spell research
+// GM creates accumulated time task with player visibility
 const researchId = await game.taskTrigger.api.createAccumulatedTimeTask({
   name: 'Spell Research',
   description: 'Researching the Fireball spell',
   requiredTime: { hours: 40 },
   macroId: researchMacro.id,
   scope: 'world',
+  visibility: 'player-visible', // Players can see this task
+  targetPlayers: ['player-user-id'], // Optional: specific players
 });
 
-// Log 3 hours of research
-await game.taskTrigger.api.addTimeToTask(researchId, {
-  duration: { hours: 3 },
-  description: 'Studied fire elemental theory',
-});
+// Player submits time log request (through UI or API)
+// This goes to the GM approval queue
+game.taskTrigger.ui.showTimeLogDialog(researchId);
 
-// Check progress
-const progress =
-  await game.taskTrigger.api.getAccumulatedTimeProgress(researchId);
+// GM reviews and approves requests
+game.taskTrigger.ui.showApprovalQueue();
+
+// Check progress (available to both GM and players)
+const progress = await game.taskTrigger.api.getAccumulatedTimeProgress(researchId);
 console.log(`Progress: ${(progress.progress * 100).toFixed(1)}%`);
 ```
 
@@ -223,26 +272,52 @@ Tasks accept flexible time specifications:
 
 ### Task Management
 
+#### GM Task Management
+
 ```javascript
-// List all active tasks
-const tasks = await game.taskTrigger.api.listTasks();
-console.log(`Active tasks: ${tasks.length}`);
+// Show comprehensive task management interface (GM only)
+game.taskTrigger.ui.showTaskManager();
 
-// Get task information
-const taskInfo = await game.taskTrigger.api.getTaskInfo(taskId);
-console.log(`Next execution: ${taskInfo.nextExecution}`);
+// Show approval queue for player time requests (GM only)
+game.taskTrigger.ui.showApprovalQueue();
 
-// Cancel a task
-await game.taskTrigger.api.cancel(taskId);
+// API access for programmatic management (GM only)
+if (game.user.isGM) {
+  // List all tasks
+  const tasks = await game.taskTrigger.api.listTasks();
+  console.log(`Active tasks: ${tasks.length}`);
 
-// Temporarily disable a task
-await game.taskTrigger.api.disable(taskId);
+  // Get task information
+  const taskInfo = await game.taskTrigger.api.getTaskInfo(taskId);
+  console.log(`Next execution: ${taskInfo.nextExecution}`);
 
-// Re-enable a task
-await game.taskTrigger.api.enable(taskId);
+  // Cancel a task
+  await game.taskTrigger.api.cancel(taskId);
 
-// Show task management UI
-game.taskTrigger.api.showTaskManager();
+  // Temporarily disable a task
+  await game.taskTrigger.api.disable(taskId);
+
+  // Re-enable a task
+  await game.taskTrigger.api.enable(taskId);
+}
+```
+
+#### Player Task Interaction
+
+```javascript
+// Show upcoming events visible to the player
+game.taskTrigger.ui.showPlayerView();
+
+// View tasks the player can see
+const visibleTasks = await game.taskTrigger.api.getUpcomingEvents(168); // next 7 days
+console.log(`Visible events: ${visibleTasks.length}`);
+
+// Submit time log request for accumulated time tasks
+game.taskTrigger.ui.showTimeLogDialog('task-id');
+
+// Check progress on tasks the player can see
+const progress = await game.taskTrigger.api.getAccumulatedTimeProgress('task-id');
+console.log(`Task progress: ${(progress.progress * 100).toFixed(1)}%`);
 ```
 
 ## Advanced Features
@@ -370,13 +445,13 @@ try {
 
 #### Permission Error Handling
 
-Handle world-scoped task permission issues:
+Handle GM-only task creation and player access patterns:
 
 ```javascript
-// Check permissions before creating world tasks
-async function scheduleWorldTask(timeSpec, macroCode, options) {
+// Check permissions before creating any tasks
+async function scheduleTaskSafely(timeSpec, macroCode, options) {
   if (!game.user.isGM) {
-    ui.notifications.warn('Only GMs can create world-scoped tasks');
+    ui.notifications.warn('Only GMs can create tasks');
     return null;
   }
 
@@ -390,45 +465,78 @@ async function scheduleWorldTask(timeSpec, macroCode, options) {
     return await game.taskTrigger.api.setTimeout(timeSpec, macro.id, {
       ...options,
       scope: 'world',
+      visibility: options.visibility || 'gm-only', // Default to GM-only
     });
   } catch (error) {
-    ui.notifications.error('Failed to create world task');
-    console.error('World task creation failed:', error);
+    ui.notifications.error('Failed to create task');
+    console.error('Task creation failed:', error);
     throw error;
+  }
+}
+
+// Player access pattern - viewing and interacting with approved tasks
+async function playerTaskInteraction() {
+  try {
+    // Players can view approved tasks
+    const visibleTasks = await game.taskTrigger.api.getUpcomingEvents();
+    console.log(`Player can see ${visibleTasks.length} upcoming events`);
+
+    // Players can submit time log requests for accumulated time tasks
+    // This opens the UI for time logging
+    game.taskTrigger.ui.showPlayerView();
+  } catch (error) {
+    console.error('Player task interaction failed:', error);
+    ui.notifications.error('Failed to access task information');
   }
 }
 ```
 
-## Task Scopes
+## Task Scopes and Visibility
 
-Tasks can be scoped to different storage levels:
+Tasks can be scoped to different storage levels and have visibility controls:
 
-- **`client`**: Stored locally, only visible to the current user
-- **`world`**: Stored globally, visible to all users (GM can manage all world tasks)
+### Storage Scopes
+- **`client`**: Stored locally, only accessible to the GM who created them
+- **`world`**: Stored globally, manageable by any GM
+
+### Visibility Controls
+- **`gm-only`**: Only visible to GMs (default for sensitive tasks)
+- **`player-visible`**: Players can see the task in their upcoming events
+- **`player-notify`**: Players are notified when the task executes
 
 ```javascript
-// Create macro for personal reminder
-const personalMacro = await Macro.create({
-  name: 'Personal Reminder',
+// GM creates a private administrative task
+const adminMacro = await Macro.create({
+  name: 'Admin Backup Task',
   type: 'script',
-  command: 'console.log("Personal reminder");',
+  command: 'console.log("Admin backup performed");',
 });
 
-// Client-only task
-await game.taskTrigger.api.setTimeout({ minutes: 10 }, personalMacro.id, {
-  scope: 'client',
-});
-
-// Create macro for world event
-const worldEventMacro = await Macro.create({
-  name: 'World Event Trigger',
-  type: 'script',
-  command: 'ui.notifications.info("World event triggered!");',
-});
-
-// World-shared task (requires GM permissions for creation)
-await game.taskTrigger.api.setTimeout({ hours: 1 }, worldEventMacro.id, {
+await game.taskTrigger.api.setTimeout({ hours: 1 }, adminMacro.id, {
   scope: 'world',
+  visibility: 'gm-only', // Hidden from players
+  name: 'Server Backup'
+});
+
+// GM creates a world event that players can see
+const eventMacro = await Macro.create({
+  name: 'Dragon Attack Event',
+  type: 'script',
+  command: 'ui.notifications.warn("A dragon has been spotted!");',
+});
+
+await game.taskTrigger.api.setTimeout({ hours: 2 }, eventMacro.id, {
+  scope: 'world',
+  visibility: 'player-visible', // Players see this in their upcoming events
+  name: 'Dragon Sighting',
+  description: 'Something big is coming...'
+});
+
+// GM creates a notification-only task
+await game.taskTrigger.api.setTimeout({ minutes: 30 }, eventMacro.id, {
+  scope: 'world',
+  visibility: 'player-notify', // Players only see notification when it executes
+  name: 'Session Break Reminder'
 });
 ```
 
@@ -598,6 +706,70 @@ console.log('Task folder exists:', !!taskFolder);
 if (taskFolder) {
   console.log('Task folder contents:', taskFolder.contents.length, 'items');
 }
+```
+
+## UI Components
+
+### GM Interfaces
+
+#### Task Manager
+```javascript
+game.taskTrigger.ui.showTaskManager();
+```
+Comprehensive interface for creating, editing, and monitoring all tasks. Features include:
+- Task creation with visibility controls
+- Real-time task monitoring
+- Bulk operations
+- Statistics and reporting
+- Settings management
+
+#### Approval Queue
+```javascript
+game.taskTrigger.ui.showApprovalQueue();
+```
+Dedicated interface for managing player time log requests:
+- Review pending time log submissions
+- Approve or deny with reasons
+- Batch operations for multiple requests
+- Clear processed requests
+
+### Player Interfaces
+
+#### Player Task View
+```javascript
+game.taskTrigger.ui.showPlayerView();
+```
+Player-focused interface showing:
+- Upcoming events visible to the player
+- Time logging buttons for accumulated time tasks
+- Progress indicators
+- Task descriptions and details
+
+#### Time Log Dialog
+```javascript
+game.taskTrigger.ui.showTimeLogDialog('task-id');
+```
+Structured time logging interface featuring:
+- Preset duration options
+- Custom time entry
+- Description fields
+- Form validation
+
+### Access Patterns
+
+```javascript
+// Check what UI components are available
+console.log(game.taskTrigger.ui);
+
+// GM-only components
+if (game.user.isGM) {
+  game.taskTrigger.ui.showTaskManager();
+  game.taskTrigger.ui.showApprovalQueue();
+}
+
+// Player components (available to all users)
+game.taskTrigger.ui.showPlayerView();
+game.taskTrigger.ui.showTimeLogDialog('task-id');
 ```
 
 ## API Reference

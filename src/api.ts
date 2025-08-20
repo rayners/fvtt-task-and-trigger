@@ -3,11 +3,12 @@
  * Exposed as game.taskTrigger.api for other modules and macros
  */
 
-import { TimeSpec, CalendarDate, Task } from './types';
+import { TimeSpec, CalendarDate, Task, PlayerTaskView } from './types';
 import { TaskScheduler, ScheduleOptions, TaskInfo } from './task-scheduler';
 import { TaskPersistence } from './task-persistence';
 import { AccumulatedTimeTaskOptions, TimeLogEntry } from './accumulated-time-manager';
 import { TaskManagerApplication } from './task-manager-application';
+import { TaskManager } from './task-manager';
 
 export interface TaskTriggerAPI {
   // Basic scheduling methods (setTimeout/setInterval style)
@@ -51,6 +52,9 @@ export interface TaskTriggerAPI {
   listTasks(scope?: 'world' | 'client'): Promise<TaskInfo[]>;
   listTasksForDate(calendarDate: CalendarDate): Promise<TaskInfo[]>;
   getStatistics(): Promise<any>;
+  
+  // Player-facing read-only methods
+  getUpcomingEvents(limitHours?: number): Promise<PlayerTaskView[]>;
 
   // Utilities
   formatTimeSpec(timeSpec: TimeSpec, useGameTime?: boolean): string;
@@ -82,10 +86,22 @@ export interface TaskTriggerAPI {
 export class TaskTriggerAPIImpl implements TaskTriggerAPI {
   private scheduler: TaskScheduler;
   private persistence: TaskPersistence;
+  private taskManager: TaskManager;
 
   constructor() {
     this.scheduler = TaskScheduler.getInstance();
     this.persistence = TaskPersistence.getInstance();
+    this.taskManager = TaskManager.getInstance();
+  }
+
+  /**
+   * Validate that the current user has GM permissions for task creation
+   * @throws Error if user is not a GM
+   */
+  private validateGMPermission(): void {
+    if (!game.user?.isGM) {
+      throw new Error('Only GMs can create scheduled tasks');
+    }
   }
 
   /**
@@ -100,6 +116,7 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
     macroId: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
+    this.validateGMPermission();
     return this.scheduler.setTimeout(delay, macroId, options);
   }
 
@@ -115,6 +132,7 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
     macroId: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
+    this.validateGMPermission();
     return this.scheduler.setInterval(interval, macroId, options);
   }
 
@@ -148,6 +166,7 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
     macroId: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
+    this.validateGMPermission();
     return this.scheduler.setGameTimeout(delay, macroId, options);
   }
 
@@ -163,6 +182,7 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
     macroId: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
+    this.validateGMPermission();
     return this.scheduler.setGameInterval(interval, macroId, options);
   }
 
@@ -178,6 +198,7 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
     macroId: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
+    this.validateGMPermission();
     return this.scheduler.scheduleAt(dateTime, macroId, options);
   }
 
@@ -193,6 +214,7 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
     macroId: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
+    this.validateGMPermission();
     return this.scheduler.scheduleForDate(calendarDate, macroId, options);
   }
 
@@ -208,6 +230,7 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
     message: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
+    this.validateGMPermission();
     return this.scheduler.scheduleReminder(delay, message, options);
   }
 
@@ -223,6 +246,7 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
     message: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
+    this.validateGMPermission();
     return this.scheduler.scheduleRecurringReminder(interval, message, options);
   }
 
@@ -238,6 +262,7 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
     message: string,
     options: ScheduleOptions = {}
   ): Promise<string> {
+    this.validateGMPermission();
     return this.scheduler.scheduleGameReminder(delay, message, options);
   }
 
@@ -357,6 +382,7 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
    * @returns Task ID
    */
   async createAccumulatedTimeTask(options: AccumulatedTimeTaskOptions): Promise<string> {
+    this.validateGMPermission();
     return this.scheduler.createAccumulatedTimeTask(options);
   }
 
@@ -441,6 +467,37 @@ export class TaskTriggerAPIImpl implements TaskTriggerAPI {
    */
   async cleanupOldTasks(olderThanDays: number = 7): Promise<number> {
     return this.persistence.cleanupOldTasks(olderThanDays);
+  }
+
+  /**
+   * Get upcoming events visible to current player (read-only view)
+   * @param limitHours Optional limit to events within this many hours (default: 168 hours / 1 week)
+   * @returns Array of player-safe task views
+   */
+  async getUpcomingEvents(limitHours: number = 168): Promise<PlayerTaskView[]> {
+    // Get current time threshold
+    const currentTime = Date.now() / 1000;
+    const timeLimit = currentTime + (limitHours * 3600);
+
+    // Get all tasks from both scopes
+    const allTasks = await this.taskManager.getAllTasks();
+    const tasks = [...allTasks.world, ...allTasks.client];
+
+    // Filter for upcoming, enabled tasks within time limit
+    const upcomingTasks = tasks.filter(task => {
+      if (!task.enabled) return false;
+      if (!task.targetTime || task.targetTime <= currentTime) return false;
+      if (task.targetTime > timeLimit) return false;
+      return true;
+    });
+
+    // Apply visibility filtering for current user
+    const visibleTasks = await this.taskManager.getPlayerVisibleTasks(game.user?.id);
+
+    // Convert to player-safe views and sort by execution time
+    return visibleTasks
+      .filter(task => upcomingTasks.some(upcoming => upcoming.id === task.id))
+      .sort((a, b) => (a.nextExecution || 0) - (b.nextExecution || 0));
   }
 }
 

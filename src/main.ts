@@ -8,6 +8,9 @@ import { TaskScheduler } from './task-scheduler';
 import { TaskPersistence } from './task-persistence';
 import { CalendarIntegration } from './calendar-integration';
 import { TaskManagerApplication } from './task-manager-application';
+import { PlayerTaskView } from './applications/player-task-view';
+import { TimeLogDialog } from './applications/time-log-dialog';
+import { GMApprovalQueue } from './applications/gm-approval-queue';
 import { createAPI } from './api';
 import { createModuleIntegrationAPI } from './module-integration';
 
@@ -112,6 +115,31 @@ async function initialize(): Promise<void> {
     (game as any).taskTrigger = {
       api,
       modules: moduleAPI,
+      // UI Components (public access)
+      ui: {
+        PlayerTaskView,
+        TimeLogDialog,
+        TaskManagerApplication,
+        GMApprovalQueue,
+        // Convenience methods
+        showPlayerView: () => PlayerTaskView.show(),
+        showTaskManager: () => TaskManagerApplication.show(),
+        showApprovalQueue: () => GMApprovalQueue.show(),
+        showTimeLogDialog: (taskId: string, callback?: Function) => {
+          const defaultCallback = async (id: string, entry: any) => {
+            console.log('Time log entry:', { taskId: id, entry });
+            // Try to use socket manager if available
+            try {
+              const socketManager = taskManager.getSocketManager();
+              return await socketManager.requestTimeLog(id, entry);
+            } catch (error) {
+              console.warn('Socket manager not available, logging only:', error);
+              return true;
+            }
+          };
+          TimeLogDialog.show(taskId, callback || defaultCallback);
+        },
+      },
       // Internal components for debugging (not part of public API)
       _internal: {
         taskManager,

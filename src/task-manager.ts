@@ -3,7 +3,7 @@
  * Uses updateWorldTime hook instead of setInterval for game time monitoring
  */
 
-import { Task, TimeSpec, CalendarDate, TaskExecutionResult } from './types';
+import { Task, TimeSpec, CalendarDate, TaskExecutionResult, PlayerTaskView } from './types';
 import { TimeConverter } from './time-converter';
 import { TaskExecutor } from './task-executor';
 import { JournalStorage } from './journal-storage';
@@ -336,6 +336,79 @@ export class TaskManager {
     return {
       world: Array.from(this.worldTasks.values()),
       client: Array.from(this.clientTasks.values()),
+    };
+  }
+
+  /**
+   * Get all tasks as a flat array (helper for visibility filtering)
+   * @returns All tasks in a single array
+   */
+  private async getAllTasksFlat(): Promise<Task[]> {
+    const tasks = await this.getAllTasks();
+    return [...tasks.world, ...tasks.client];
+  }
+
+  /**
+   * Check if a task is visible to a specific player
+   * @param task Task to check
+   * @param userId User ID to check (defaults to current user)
+   * @returns True if task is visible to the user
+   */
+  isVisibleToPlayer(task: Task, userId?: string): boolean {
+    const currentUserId = userId || game.user.id;
+    const user = game.users?.get?.(currentUserId) || game.user;
+    
+    // GMs can always see all tasks
+    if (user?.isGM) return true;
+    
+    // Check visibility settings
+    if (task.visibility === 'gm-only') return false;
+    
+    if (task.visibility === 'player-visible' || task.visibility === 'player-notify') {
+      // If task has specific target players, check if user is in the list
+      if (task.targetPlayers && task.targetPlayers.length > 0) {
+        return task.targetPlayers.includes(currentUserId);
+      }
+      // If no specific targets, visible to all players
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * Get tasks visible to players with safe data exposure
+   * @param userId User ID to filter for (defaults to current user)
+   * @returns Array of PlayerTaskView objects
+   */
+  async getPlayerVisibleTasks(userId?: string): Promise<PlayerTaskView[]> {
+    const allTasks = await this.getAllTasksFlat();
+    return allTasks
+      .filter(task => this.isVisibleToPlayer(task, userId))
+      .map(task => this.createPlayerView(task));
+  }
+
+  /**
+   * Get all tasks for GM with full details
+   * @returns Array of all tasks with complete information
+   */
+  async getGMTasks(): Promise<Task[]> {
+    return this.getAllTasksFlat();
+  }
+
+  /**
+   * Create a safe PlayerTaskView from a full Task
+   * @param task Full task object
+   * @returns Safe PlayerTaskView object
+   */
+  createPlayerView(task: Task): PlayerTaskView {
+    return {
+      id: task.id,
+      name: task.name,
+      description: task.description,
+      nextExecution: task.targetTime,
+      isRecurring: task.recurring,
+      useGameTime: task.useGameTime,
     };
   }
 

@@ -15,8 +15,19 @@ import { beforeEach, vi } from 'vitest';
   };
 };
 
-(globalThis as any).DialogV2 = {
-  confirm: vi.fn().mockResolvedValue(true),
+(globalThis as any).DialogV2 = class MockDialogV2 {
+  static get defaultOptions() {
+    return {};
+  }
+  constructor(options: any = {}) {}
+  render() { return this; }
+  getData() { return {}; }
+  close() { return Promise.resolve(); }
+  static confirm() { return vi.fn().mockResolvedValue(true); }
+  static prompt() { return vi.fn().mockResolvedValue('test'); }
+  activateListeners(html: any) {
+    // Mock parent activateListeners
+  }
 };
 
 (globalThis as any).Tabs = class MockTabs {
@@ -85,6 +96,19 @@ import { beforeEach, vi } from 'vitest';
     },
   },
   applications: {
+    handlebars: {
+      renderTemplate: vi.fn().mockResolvedValue('<div>Mock Template</div>'),
+    },
+    ux: {
+      Tabs: class MockTabs {
+        constructor(options: any) {
+          // Mock constructor
+        }
+        bind(element: any) {
+          // Mock bind method
+        }
+      },
+    },
     api: {
       ApplicationV2: class MockApplicationV2 {
         static DEFAULT_OPTIONS = {
@@ -131,12 +155,20 @@ import { beforeEach, vi } from 'vitest';
           };
         };
       },
-      DialogV2: {
-        confirm: vi.fn().mockResolvedValue(true),
+      DialogV2: class MockDialogV2 {
+        static get defaultOptions() {
+          return {};
+        }
+        constructor(options: any = {}) {}
+        render() { return this; }
+        getData() { return {}; }
+        close() { return Promise.resolve(); }
+        static confirm() { return vi.fn().mockResolvedValue(true); }
+        static prompt() { return vi.fn().mockResolvedValue('test'); }
+        activateListeners(html: any) {
+          // Mock parent activateListeners
+        }
       },
-    },
-    handlebars: {
-      renderTemplate: vi.fn().mockResolvedValue('<div>Mock Template</div>'),
     },
   },
 };

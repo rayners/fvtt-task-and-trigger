@@ -70,6 +70,12 @@ export interface Task {
   requiredTime?: number; // Total seconds required for completion
   accumulatedTime?: number; // Seconds accumulated so far
   timeEntries?: TimeEntry[]; // Log of time entries
+
+  // Task visibility and GM controls (new)
+  visibility: 'gm-only' | 'player-visible' | 'player-notify'; // Who can see this task
+  targetPlayers?: string[]; // For player-specific tasks
+  isPersonalReminder?: boolean; // GM personal vs world management
+  gmNotes?: string; // Private notes only GM can see
 }
 
 export interface TimeEntry {
@@ -133,4 +139,21 @@ export interface TaskTriggerAPI {
     scope: 'world' | 'client'
   ): string;
   getTasksForDate(calendarDate: CalendarDate): Task[];
+}
+
+// Task visibility and GM-centric architecture types
+export interface TaskVisibilityOptions {
+  visibility: 'gm-only' | 'player-visible' | 'player-notify';
+  targetPlayers?: string[];
+  gmNotes?: string;
+}
+
+export interface PlayerTaskView {
+  id: string;
+  name: string;
+  description?: string;
+  nextExecution?: number;
+  isRecurring: boolean;
+  useGameTime: boolean;
+  // Excludes: callback, gmNotes, internal details
 }

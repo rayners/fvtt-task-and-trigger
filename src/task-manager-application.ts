@@ -9,12 +9,10 @@ import { TaskScheduler, TaskInfo } from './task-scheduler';
 import { TaskPersistence } from './task-persistence';
 import { MacroManager } from './macro-manager';
 import { TimeSpec, CalendarDate } from './types';
+import { TaskManager } from './task-manager';
 
 // Declare types to work around namespace resolution issues
-declare const ApplicationV2: any;
-declare const HandlebarsApplicationMixin: any;
 declare const DialogV2: any;
-declare const Tabs: any;
 
 export interface TaskFormData {
   name: string;
@@ -30,10 +28,11 @@ export interface TaskFormData {
   enabled: boolean;
 }
 
-export class TaskManagerApplication extends HandlebarsApplicationMixin(ApplicationV2) {
+export class TaskManagerApplication extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
   private scheduler: TaskScheduler;
   private persistence: TaskPersistence;
   private macroManager: MacroManager;
+  private taskManager: TaskManager;
   private activeTab: string = 'tasks';
   private tasks: TaskInfo[] = [];
   private statistics: any = {};
@@ -52,6 +51,7 @@ export class TaskManagerApplication extends HandlebarsApplicationMixin(Applicati
     this.scheduler = TaskScheduler.getInstance();
     this.persistence = TaskPersistence.getInstance();
     this.macroManager = MacroManager.getInstance();
+    this.taskManager = TaskManager.getInstance();
     this.loadSettings();
   }
 
@@ -119,6 +119,14 @@ export class TaskManagerApplication extends HandlebarsApplicationMixin(Applicati
         { value: 'client', label: 'Client (Personal)' },
         { value: 'world', label: 'World (Shared)' },
       ],
+      // New visibility controls for GM-centric architecture
+      visibilityOptions: [
+        { value: 'gm-only', label: 'GM Only (Private)' },
+        { value: 'player-visible', label: 'Players Can See' },
+        { value: 'player-notify', label: 'Notify Players When Executed' },
+      ],
+      playerList: this.getPlayerList(),
+      pendingApprovals: await this.getPendingApprovals(),
     };
   }
 
@@ -648,7 +656,7 @@ export class TaskManagerApplication extends HandlebarsApplicationMixin(Applicati
       },
     };
 
-    const html = await renderTemplate(template, data);
+    const html = await foundry.applications.handlebars.renderTemplate(template, data);
 
     // Use legacy Dialog - works better with our CSS
     new Dialog({
@@ -689,7 +697,7 @@ export class TaskManagerApplication extends HandlebarsApplicationMixin(Applicati
         }
 
         // Initialize Foundry's tabs system
-        const tabs = new Tabs({
+        const tabs = new foundry.applications.ux.Tabs({
           navSelector: '.tabs',
           contentSelector: '.tab-content',
           initial: 'when',
@@ -1007,6 +1015,84 @@ export class TaskManagerApplication extends HandlebarsApplicationMixin(Applicati
         ui.notifications?.error(`Failed to reset settings: ${error}`);
         console.error('Task & Trigger | Settings reset error:', error);
       }
+    }
+  }
+
+  /**
+   * Get list of non-GM players for visibility targeting
+   */
+  private getPlayerList(): Array<{ id: string; name: string }> {
+    if (!game.users) {
+      return [];
+    }
+
+    return Array.from(game.users)
+      .filter(user => !user.isGM && user.active)
+      .map(user => ({
+        id: user.id,
+        name: user.name || 'Unknown User',
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  /**
+   * Get pending accumulated time approvals (placeholder for future implementation)
+   */
+  private async getPendingApprovals(): Promise<Array<{
+    id: string;
+    taskName: string;
+    playerName: string;
+    duration: string;
+    description: string;
+    timestamp: number;
+  }>> {
+    // For now, return empty array as we're auto-approving in Phase 2
+    // This will be enhanced in future phases for manual approval queue
+    return [];
+  }
+
+  /**
+   * Show player view simulation (what players see)
+   */
+  async showPlayerView(userId?: string): Promise<void> {
+    try {
+      const playerId = userId || game.users?.find(u => !u.isGM)?.id;
+      if (!playerId) {
+        ui.notifications?.warn('No player found to simulate view for');
+        return;
+      }
+
+      const playerTasks = await this.taskManager.getPlayerVisibleTasks(playerId);
+      
+      // Create a simple dialog showing what the player sees
+      const content = `
+        <div class="player-view-simulation">
+          <h3>Player View Simulation</h3>
+          <p><strong>Viewing as:</strong> ${game.users?.get(playerId)?.name || 'Unknown Player'}</p>
+          <div class="visible-tasks">
+            ${playerTasks.length > 0 
+              ? playerTasks.map(task => `
+                  <div class="task-preview">
+                    <strong>${task.name}</strong>
+                    ${task.description ? `<p>${task.description}</p>` : ''}
+                    ${task.nextExecution ? `<small>Next: ${new Date(task.nextExecution * 1000).toLocaleString()}</small>` : ''}
+                  </div>
+                `).join('')
+              : '<p><em>No visible tasks for this player</em></p>'
+            }
+          </div>
+        </div>
+      `;
+
+      await DialogV2.confirm({
+        window: { title: 'Player View Simulation' },
+        content,
+        modal: true,
+        rejectClose: false,
+      });
+    } catch (error) {
+      console.error('Failed to show player view:', error);
+      ui.notifications?.error('Failed to simulate player view');
     }
   }
 

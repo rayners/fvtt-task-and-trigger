@@ -1,0 +1,302 @@
+{{!-- GM Approval Queue Template --}}
+<div class="gm-approval-queue">
+  <header class="queue-header">
+    <h2>Time Log Approval Queue</h2>
+    <div class="queue-controls">
+      <button type="button" class="refresh-btn" title="Refresh">
+        <i class="fas fa-sync-alt"></i> Refresh
+      </button>
+      {{#if hasApprovals}}
+        <button type="button" class="approve-all-btn" title="Approve All">
+          <i class="fas fa-check-double"></i> Approve All
+        </button>
+        <button type="button" class="clear-all-btn" title="Clear Processed">
+          <i class="fas fa-trash"></i> Clear Processed
+        </button>
+      {{/if}}
+    </div>
+  </header>
+
+  <div class="queue-content">
+    {{#if hasApprovals}}
+      <div class="queue-summary">
+        <p><strong>{{totalPending}}</strong> pending approval{{#unless (eq totalPending 1)}}s{{/unless}}</p>
+      </div>
+
+      <div class="approval-list">
+        {{#each pendingApprovals}}
+          <div class="approval-item {{status}}" data-approval-id="{{id}}">
+            <div class="approval-header">
+              <div class="task-info">
+                <h4>{{taskName}}</h4>
+                <span class="task-id">Task ID: {{taskId}}</span>
+              </div>
+              <div class="status-badge status-{{status}}">{{status}}</div>
+            </div>
+
+            <div class="approval-details">
+              <div class="requester-info">
+                <strong>Requested by:</strong> {{requestedByName}}
+                <small>({{requestedBy}})</small>
+              </div>
+              
+              <div class="time-entry">
+                <div class="duration">
+                  <strong>Duration:</strong> 
+                  {{#if entry.duration.hours}}{{entry.duration.hours}}h {{/if}}
+                  {{#if entry.duration.minutes}}{{entry.duration.minutes}}m{{/if}}
+                  {{#if entry.duration.seconds}}{{entry.duration.seconds}}s{{/if}}
+                </div>
+                
+                {{#if entry.description}}
+                  <div class="description">
+                    <strong>Description:</strong> {{entry.description}}
+                  </div>
+                {{/if}}
+              </div>
+
+              <div class="timestamp">
+                <small>Requested: {{dateFormat timestamp}}</small>
+              </div>
+            </div>
+
+            {{#if (eq status 'pending')}}
+              <div class="approval-actions">
+                <button type="button" class="approve-btn" data-approval-id="{{id}}" title="Approve Request">
+                  <i class="fas fa-check"></i> Approve
+                </button>
+                <button type="button" class="deny-btn" data-approval-id="{{id}}" title="Deny Request">
+                  <i class="fas fa-times"></i> Deny
+                </button>
+              </div>
+            {{/if}}
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <div class="empty-queue">
+        <div class="empty-message">
+          <i class="fas fa-clipboard-check"></i>
+          <h3>No Pending Approvals</h3>
+          <p>All time log requests have been processed.</p>
+        </div>
+      </div>
+    {{/if}}
+  </div>
+</div>
+
+<style>
+.gm-approval-queue {
+  font-family: "Signika", sans-serif;
+  padding: 1rem;
+}
+
+.queue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #782e22;
+}
+
+.queue-header h2 {
+  margin: 0;
+  color: #782e22;
+}
+
+.queue-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.queue-controls button {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid #782e22;
+  background: #f0f0e0;
+  color: #191813;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.queue-controls button:hover {
+  background: #e8e8d8;
+}
+
+.queue-controls .approve-all-btn {
+  background: #2e7d32;
+  color: white;
+  border-color: #1b5e20;
+}
+
+.queue-controls .approve-all-btn:hover {
+  background: #1b5e20;
+}
+
+.queue-summary {
+  background: #f8f8f8;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  border-left: 4px solid #ff9800;
+}
+
+.approval-item {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: white;
+}
+
+.approval-item.pending {
+  border-left: 4px solid #ff9800;
+}
+
+.approval-item.approved {
+  border-left: 4px solid #4caf50;
+  opacity: 0.7;
+}
+
+.approval-item.denied {
+  border-left: 4px solid #f44336;
+  opacity: 0.7;
+}
+
+.approval-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.task-info h4 {
+  margin: 0 0 0.25rem 0;
+  color: #782e22;
+}
+
+.task-id {
+  font-size: 0.8rem;
+  color: #666;
+  font-family: monospace;
+}
+
+.status-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.status-pending {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
+.status-approved {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.status-denied {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.approval-details {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.requester-info {
+  font-size: 0.9rem;
+}
+
+.time-entry {
+  background: #f8f9fa;
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+
+.duration {
+  font-weight: bold;
+  color: #495057;
+}
+
+.description {
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+.timestamp {
+  text-align: right;
+  color: #6c757d;
+}
+
+.approval-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.approve-btn {
+  background: #28a745;
+  color: white;
+  border: 1px solid #1e7e34;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.approve-btn:hover {
+  background: #218838;
+}
+
+.deny-btn {
+  background: #dc3545;
+  color: white;
+  border: 1px solid #c82333;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.deny-btn:hover {
+  background: #c82333;
+}
+
+.empty-queue {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.empty-message i {
+  font-size: 3rem;
+  color: #28a745;
+  margin-bottom: 1rem;
+}
+
+.empty-message h3 {
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.empty-message p {
+  color: #6c757d;
+}
+</style>
